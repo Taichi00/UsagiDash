@@ -11,6 +11,8 @@ class BoneList
 public:
 	BoneList();
 
+	static BoneList Copy(const BoneList& boneList);
+
 	typedef std::vector<Bone*>::iterator iterator;
 	typedef std::vector<Bone*>::const_iterator const_iterator;
 
@@ -23,7 +25,7 @@ public:
 
 	void Append(Bone* bone);
 	Bone* Find(std::string name);
-	int Index(Bone* bone);
+	int Index(Bone* bone) const;
 	int Size();
 	void Clear();
 

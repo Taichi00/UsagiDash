@@ -34,6 +34,7 @@ MeshRenderer::~MeshRenderer()
 void MeshRenderer::SetProperties(MeshRendererProperty prop)
 {
 	m_model = prop.Model;
+	m_model.Bones = BoneList::Copy(m_model.Bones);
 }
 
 bool MeshRenderer::Init()
@@ -81,6 +82,22 @@ bool MeshRenderer::Init()
 			printf("ボーン用定数バッファの生成に失敗\n");
 			return false;
 		}
+	}
+
+	for (size_t i = 0; i < m_model.Materials.size(); i++)
+	{
+		ConstantBuffer* cb = new ConstantBuffer(sizeof(MaterialParameter));
+		if (!cb->IsValid())
+		{
+			printf("マテリアル用定数バッファの生成に失敗\n");
+			return false;
+		}
+
+		auto ptr = cb->GetPtr<MaterialParameter>();
+		ptr->BaseColor = m_model.Materials[i].BaseColor;
+		ptr->OutlineWidth = 0.01; //0.003
+
+		m_pMaterialCBs.push_back(cb);
 	}
 
 	// マテリアルの読み込み
@@ -155,7 +172,7 @@ void MeshRenderer::Draw()
 		m_pDescriptorHeap->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(4, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
 	for (Mesh mesh : m_model.Meshes)
@@ -175,10 +192,12 @@ void MeshRenderer::Draw()
 			break;
 		}
 
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(3, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -196,10 +215,12 @@ void MeshRenderer::Draw()
 			continue;
 		}
 
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+
 		commandList->SetPipelineState(m_pOutlinePSO->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(3, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -221,7 +242,7 @@ void MeshRenderer::DrawAlpha()
 		m_pDescriptorHeap->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(4, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
 	for (Mesh mesh : m_model.Meshes)
@@ -241,10 +262,12 @@ void MeshRenderer::DrawAlpha()
 			continue;
 		}
 
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(3, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -279,7 +302,7 @@ void MeshRenderer::DrawShadow()
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(3, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -292,7 +315,7 @@ bool MeshRenderer::PreparePSO()
 	m_pOpaquePSO->SetRootSignature(m_pRootSignature->Get());
 	m_pOpaquePSO->SetVS(L"../x64/Debug/SimpleVS.cso");
 	m_pOpaquePSO->SetPS(L"../x64/Debug/SimplePS.cso");
-	m_pOpaquePSO->SetCullMode(D3D12_CULL_MODE_NONE);
+	m_pOpaquePSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 	m_pOpaquePSO->Create();
 	if (!m_pOpaquePSO->IsValid())
 	{
@@ -390,6 +413,7 @@ void MeshRenderer::UpdateCB()
 		auto mtx = bone->GetWorldMatrix() * bone->GetInvBindMatrix();
 		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
 	}
+
 }
 
 Bone* MeshRenderer::FindBone(std::string name)

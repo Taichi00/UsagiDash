@@ -15,6 +15,12 @@ cbuffer Light : register(b1)
     float3 LightDir;
 }
 
+cbuffer MaterialParameter : register(b3)
+{
+    float4 BaseColor;
+    float OutlineWidth;
+}
+
 SamplerState smp : register(s0); // サンプラー
 Texture2D _MainTex : register(t0); // テクスチャ
 Texture2D ShadowMap : register(t1); // シャドウマップ
@@ -22,7 +28,7 @@ Texture2D ShadowMap : register(t1); // シャドウマップ
 float4 main(VSOutput input) : SV_TARGET
 {
     
-    float4 diffuse = _MainTex.Sample(smp, input.uv);
+    float4 diffuse = _MainTex.Sample(smp, input.uv) * BaseColor;
     if (diffuse.a == 0.0f)
     {
         discard;

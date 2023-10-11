@@ -258,14 +258,24 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     {
         dst.AlphaMode = 0;
     }
+
+    // F‚ðŽæ“¾
+    aiColor4D color;
+    src->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+    dst.BaseColor.x = color.r;
+    dst.BaseColor.y = color.g;
+    dst.BaseColor.z = color.b;
+    dst.BaseColor.w = color.a;
+
+    printf("%f, %f, %f\n", color.r, color.g, color.b);
     
-    /*printf("%s\n", path.C_Str());
+    printf("%s\n", path.C_Str());
     auto prop = src->mProperties;
     int len = src->mNumProperties;
     for (int i = 0; i < len; i++)
     {
         printf("\t%s\n", prop[i]->mKey.C_Str());
-    }*/
+    }
     
 }
 

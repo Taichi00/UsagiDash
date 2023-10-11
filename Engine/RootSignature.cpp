@@ -15,12 +15,13 @@ RootSignature::RootSignature()
 	CD3DX12_DESCRIPTOR_RANGE shadowTexRange;
 	shadowTexRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);		// t1 : shadow map
 
-	CD3DX12_ROOT_PARAMETER rootParam[5] = {};
+	CD3DX12_ROOT_PARAMETER rootParam[6] = {};
 	rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);	// b0 : transform
 	rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);	// b1 : light
 	rootParam[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);	// b2 : bone parameter
-	rootParam[3].InitAsDescriptorTable(1, &diffuseTexRange, D3D12_SHADER_VISIBILITY_ALL);
-	rootParam[4].InitAsDescriptorTable(1, &shadowTexRange, D3D12_SHADER_VISIBILITY_ALL);
+	rootParam[3].InitAsConstantBufferView(3, 0, D3D12_SHADER_VISIBILITY_ALL);	// b3 : material parameter
+	rootParam[4].InitAsDescriptorTable(1, &diffuseTexRange, D3D12_SHADER_VISIBILITY_ALL);
+	rootParam[5].InitAsDescriptorTable(1, &shadowTexRange, D3D12_SHADER_VISIBILITY_ALL);
 
 	// スタティックサンプラーの設定
 	auto sampler = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);

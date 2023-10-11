@@ -36,8 +36,8 @@ void ShadowMap::BeginRender()
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// ビューポートとシザー矩形を設定
-	auto width = 1024;
-	auto height = 1024;
+	auto width = m_width;
+	auto height = m_height;
 	auto viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, float(width), float(height));
 	auto scissor = CD3DX12_RECT(0, 0, LONG(width), LONG(height));
 	commandList->RSSetViewports(1, &viewport);
@@ -68,7 +68,7 @@ bool ShadowMap::CreateShadowBuffer()
 	// リソースの生成
 	auto colorDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_R32G32B32A32_FLOAT,
-		1024, 1024,
+		m_width, m_height,
 		1, 1,
 		1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
@@ -76,7 +76,7 @@ bool ShadowMap::CreateShadowBuffer()
 
 	auto depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
 		DXGI_FORMAT_D32_FLOAT,
-		1024, 1024,
+		m_width, m_height,
 		1, 1,
 		1, 0,
 		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL

@@ -6,12 +6,19 @@ struct VSOutput
     float2 uv : TEXCOORD;
 };
 
+cbuffer MaterialParameter : register(b3)
+{
+    float4 BaseColor;
+    float OutlineWidth;
+}
+
 SamplerState smp : register(s0); // サンプラー
 Texture2D _MainTex : register(t0); // テクスチャ
 
+
 float4 main(VSOutput input) : SV_TARGET
 {
-    float4 diffuse = _MainTex.Sample(smp, input.uv);
+    float4 diffuse = _MainTex.Sample(smp, input.uv) * BaseColor;
     
     if (diffuse.a == 0.0f)
     {

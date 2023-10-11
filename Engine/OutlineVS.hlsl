@@ -18,6 +18,12 @@ cbuffer BoneParameter : register(b2)
     float4x4 boneMatrices[512];
 }
 
+cbuffer MaterialParameter : register(b3)
+{
+    float4 BaseColor;
+    float OutlineWidth;
+}
+
 struct VSInput
 {
     float3 pos : POSITION;
@@ -98,7 +104,7 @@ VSOutput main(VSInput input)
     float2 offset = normalize(projNormal.xy);
     
     output.svpos = projPos;
-    output.svpos.xy += offset * 0.003f * projPos.w;
+    output.svpos.xy += offset * OutlineWidth * projPos.w;
     
     output.normal = input.normal;
     output.color = input.color;

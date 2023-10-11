@@ -56,6 +56,12 @@ struct alignas(256) BoneParameter
 	XMFLOAT4X4 bone[512];
 };
 
+struct alignas(256) MaterialParameter
+{
+	XMFLOAT4 BaseColor;
+	float OutlineWidth;
+};
+
 struct Mesh
 {
 	std::vector<Vertex> Vertices;	// 頂点データの配列
@@ -71,6 +77,7 @@ struct Material
 	DescriptorHandle* pHandle;
 	PipelineState* pPipelineState;
 	int AlphaMode;
+	XMFLOAT4 BaseColor;
 };
 
 struct Model

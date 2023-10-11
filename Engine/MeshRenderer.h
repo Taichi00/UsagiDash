@@ -45,6 +45,7 @@ private:
 	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];
 	ConstantBuffer* m_pLightCB[Engine::FRAME_BUFFER_COUNT];
 	ConstantBuffer* m_pBoneCB[Engine::FRAME_BUFFER_COUNT];
+	std::vector<ConstantBuffer*> m_pMaterialCBs;
 	RootSignature* m_pRootSignature;
 
 	PipelineState* m_pOpaquePSO;

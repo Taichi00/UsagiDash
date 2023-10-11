@@ -1,7 +1,6 @@
 #include "App.h"
 #include "Engine.h"
 #include "Entity.h"
-#include "MeshEntity.h"
 #include "Camera.h"
 #include "Vec.h"
 #include "Animator.h"
@@ -36,29 +35,30 @@ void App::Init()
 	Model model;
 	std::vector<Animation*> animations;
 
-	AssimpLoader::Load(L"Assets/Fox.glb", model, animations);
+	AssimpLoader::Load(L"Assets/PlatformerPack/Character.gltf", model, animations);
 	man = new Entity();
 	man->AddComponent(new MeshRenderer({ model }));
 	man->AddComponent(new Animator({ animations }));
 	CreateEntity(man);
 	
-	//man->SetScale(100, 100, 100);
-	man->GetComponent<Animator>()->Play("Run", 2.0f);
+	man->SetScale(20, 20, 20);
+	man->GetComponent<Animator>()->Play("Walk", 2.0f);
 
+	/*AssimpLoader::Load(L"Assets/Fox.glb", model, animations);
 	auto man2 = new Entity();
 	man2->AddComponent(new MeshRenderer({ model }));
-	//man2->AddComponent(new Animator({ animations }));
+	man2->AddComponent(new Animator({ animations }));
 	CreateEntity(man2);
 	man2->SetPosition(50, 0, 0);
-	man2->SetRotation(0, 1.57, 0);
-	//man2->GetComponent<Animator>()->Play("Walk", 1.0f);
+	man2->GetComponent<Animator>()->Play("Walk", 1.0f);*/
 
-	AssimpLoader::Load(L"Assets/checker_plane.obj", model, animations);
+	AssimpLoader::Load(L"Assets/PlatformerPack/Cube_Grass_Single.gltf", model, animations);
 	auto plane = new Entity();
 	plane->AddComponent(new MeshRenderer({ model }));
 	CreateEntity(plane);
 
-	plane->SetScale(100, 100, 100);
+	plane->SetScale(20, 20, 20);
+	plane->SetPosition(0, -20, 0);
 
 }
 

@@ -85,7 +85,7 @@ void Animator::Stop()
 
 Vec3 Animator::CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTime)
 {
-	float keyIndex[2] = { 0, 0 };
+	int keyIndex[2] = { 0, 0 };
 	float time[2] = { 0, 0 };
 
 	for (int i = 0; i < keys->size(); i++)
@@ -104,7 +104,7 @@ Vec3 Animator::CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTi
 	Vec3 pos[2] = { (*keys)[keyIndex[0]].Value, (*keys)[keyIndex[1]].Value };
 
 	float dur = time[1] - time[0];
-	float rate = Easing::Linear((currentTime - time[0]) / dur);
+	float rate = dur > 0 ? Easing::Linear((currentTime - time[0]) / dur) : 0;
 	Vec3 currentPos = pos[0] * (1 - rate) + pos[1] * rate;
 
 	return currentPos;
@@ -112,7 +112,7 @@ Vec3 Animator::CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTi
 
 Quaternion Animator::CalcCurrentRotation(std::vector<QuatKey>* keys, float currentTime)
 {
-	float keyIndex[2] = { 0, 0 };
+	int keyIndex[2] = { 0, 0 };
 	float time[2] = { 0, 0 };
 
 	for (int i = 0; i < keys->size(); i++)
@@ -131,7 +131,7 @@ Quaternion Animator::CalcCurrentRotation(std::vector<QuatKey>* keys, float curre
 	Quaternion rot[2] = { (*keys)[keyIndex[0]].Value, (*keys)[keyIndex[1]].Value };
 
 	float dur = time[1] - time[0];
-	float rate = Easing::Linear((currentTime - time[0]) / dur);
+	float rate = dur > 0 ? Easing::Linear((currentTime - time[0]) / dur) : 0;
 	Quaternion currentRot = Quaternion::slerp(rot[0], rot[1], rate);
 	
 	return currentRot;
@@ -139,7 +139,7 @@ Quaternion Animator::CalcCurrentRotation(std::vector<QuatKey>* keys, float curre
 
 Vec3 Animator::CalcCurrentScale(std::vector<VectorKey>* keys, float currentTime)
 {
-	float keyIndex[2] = { 0, 0 };
+	int keyIndex[2] = { 0, 0 };
 	float time[2] = { 0, 0 };
 
 	for (int i = 0; i < keys->size(); i++)
@@ -158,7 +158,7 @@ Vec3 Animator::CalcCurrentScale(std::vector<VectorKey>* keys, float currentTime)
 	Vec3 scale[2] = { (*keys)[keyIndex[0]].Value, (*keys)[keyIndex[1]].Value };
 
 	float dur = time[1] - time[0];
-	float rate = Easing::Linear((currentTime - time[0]) / dur);
+	float rate = dur > 0 ? Easing::Linear((currentTime - time[0]) / dur) : 0;
 	Vec3 currentScale = scale[0] * (1 - rate) + scale[1] * rate;
 
 	return currentScale;
