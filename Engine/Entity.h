@@ -1,12 +1,14 @@
 #pragma once
 #include "Vec.h"
 #include "Component.h"
+#include "Transform.h"
 #include <vector>
 #include <string>
 #include <map>
+#include <typeinfo>
 
 class Game;
-
+class Transform;
 
 class Entity
 {
@@ -31,24 +33,10 @@ public:
 	virtual void Draw();
 	virtual void DrawAlpha();
 
-	void SetPosition(Vec3 position);
-	void SetPosition(float x, float y, float z);
-
-	void SetRotation(Vec3 rotation);
-	void SetRotation(float x, float y, float z);
-
-	void SetScale(Vec3 scale);
-	void SetScale(float x, float y, float z);
-
-	Vec3 Position();
-	Vec3 Rotation();
-	Vec3 Scale();
+public:
+	Transform* transform;
 
 protected:
-	Vec3 m_position;
-	Vec3 m_rotation;
-	Vec3 m_scale;
-
 	Game* m_pGame;
 	
 	std::vector<Component*> m_components;

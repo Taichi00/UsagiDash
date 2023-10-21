@@ -46,9 +46,9 @@ void ShadowMap::BeginRender()
 }
 
 void ShadowMap::EndRender()
-{
+{	
 	auto commandList = g_Engine->CommandList();
-
+	
 	// ƒoƒŠƒAİ’è
 	auto barrierToSR = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_pColor.Get(),

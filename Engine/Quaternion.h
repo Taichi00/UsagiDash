@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DirectXMath.h>
+#include "Vec.h"
 
 # define PI 3.14159265359
 
@@ -9,23 +10,35 @@ class Quaternion
 public:
 	Quaternion() {}
 	Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+	Quaternion(DirectX::XMVECTOR v) : x(v.m128_f32[0]), y(v.m128_f32[1]), z(v.m128_f32[2]), w(v.m128_f32[3]) {}
 
-	Quaternion operator +(Quaternion q) const
+	operator DirectX::XMVECTOR() const
+	{
+		return { x, y, z, w };
+	}
+
+	const Quaternion operator +(const Quaternion& q) const
 	{
 		return Quaternion(x + q.x, y + q.y, z + q.z, w + q.w);
 	}
 
-	Quaternion operator -(Quaternion q) const
+	const Quaternion operator -(const Quaternion& q) const
 	{
 		return Quaternion(x - q.x, y - q.y, z - q.z, w - q.w);
 	}
 
-	Quaternion operator *(float n) const
+	const Quaternion operator *(const float& n) const
 	{
 		return Quaternion(x * n, y * n, z * n, w * n);
 	}
 
-	Quaternion operator *(Quaternion q) const
+	const Vec3 operator *(const Vec3& v) const
+	{
+		Quaternion q = *this * Quaternion(v.x, v.y, v.z, 0) * (*this).conjugate();
+		return Vec3(q.x, q.y, q.z);
+	}
+
+	const Quaternion operator *(const Quaternion& q) const
 	{
 		return Quaternion(
 			q.w * x - q.z * y + q.y * z + q.x * w,
@@ -64,12 +77,13 @@ public:
 		return Quaternion(0.0, 0.0, 0.0, 1.0);
 	}
 
-	static Quaternion slerp(Quaternion q1, Quaternion q2, float t)
+	static Quaternion slerp(const Quaternion& q1, const Quaternion& q2, const float& t)
 	{
 		float d = dot(q1, q2);
+		auto q = q2;
 		
 		// •½s‚È‚ç
-		if (d >= 1.0)
+		if (abs(d) >= 1.0)
 		{
 			return q1;
 		}
@@ -77,14 +91,31 @@ public:
 		// ¬‚³‚¢Šp“x‚ğ‘I‚Ô
 		if (d < 0)
 		{
-			q2 = q2 * -1;
+			q = q * -1;
 			d = -d;
 		}
-
-		float r = acos(d);
-		Quaternion q = q1 * (sin((1.0f - t) * r) / sin(r)) + q2 * (sin(t * r) / sin(r));
 		
-		return q;
+		float r = acos(d);
+		Quaternion res = q1 * (sin((1.0f - t) * r) / sin(r)) + q * (sin(t * r) / sin(r));
+		
+		return res;
+	}
+
+	static Quaternion FromEuler(const float& x, const float& y, const float& z)
+	{
+		auto cx = cos(0.5f * x);
+		auto sx = sin(0.5f * x);
+		auto cy = cos(0.5f * y);
+		auto sy = sin(0.5f * y);
+		auto cz = cos(0.5f * z);
+		auto sz = sin(0.5f * z);
+
+		return Quaternion(
+			cx * sy * sz + sx * cy * cz,
+			-sx * cy * sz + cx * sy * cz,
+			cx * cy * sz + sx * sy * cz,
+			-sx * sy * sz + cx * cy * cz
+		);
 	}
 
 	operator DirectX::XMFLOAT4() const

@@ -1,19 +1,18 @@
 #include "Entity.h"
-#include "Animator.h"
 #include <stdio.h>
 #include <typeinfo>
 
 Entity::Entity()
 {
-	m_position = Vec3(0.0f, 0.0f, 0.0f);
-	m_rotation = Vec3(0.0f, 0.0f, 0.0f);
-	m_scale = Vec3(1.0f, 1.0f, 1.0f);
+	transform = new Transform();
+	AddComponent(transform);
 
 	m_pGame = nullptr;
 }
 
 Entity::~Entity()
 {
+	
 }
 
 void Entity::AddComponent(Component* component)
@@ -90,47 +89,3 @@ void Entity::DrawShadow()
 	}
 }
 
-void Entity::SetPosition(Vec3 position)
-{
-	m_position = position;
-}
-
-void Entity::SetPosition(float x, float y, float z)
-{
-	m_position = Vec3(x, y, z);
-}
-
-void Entity::SetRotation(Vec3 rotation)
-{
-	m_rotation = rotation;
-}
-
-void Entity::SetRotation(float x, float y, float z)
-{
-	m_rotation = Vec3(x, y, z);
-}
-
-void Entity::SetScale(Vec3 scale)
-{
-	m_scale = scale;
-}
-
-void Entity::SetScale(float x, float y, float z)
-{
-	m_scale = Vec3(x, y, z);
-}
-
-Vec3 Entity::Position()
-{
-	return m_position;
-}
-
-Vec3 Entity::Rotation()
-{
-	return m_rotation;
-}
-
-Vec3 Entity::Scale()
-{
-	return m_scale;
-}

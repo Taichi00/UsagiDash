@@ -25,7 +25,7 @@ float4 main(VSOutput input) : SV_TARGET
         discard;
     }
     
-    float4 result = float4(diffuse.rgb * 0.5, 1.0f);
+    float4 result = float4(diffuse.rgb * 0.2, 1.0f);
     
     return result;
 }

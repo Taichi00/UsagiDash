@@ -8,15 +8,28 @@ class Window;
 
 class Input
 {
-public:
+private:
 	Input(Window* win);
 	~Input();
 
+public:
+	Input(const Input&) = delete;
+	Input& operator =(const Input&) = delete;
+	Input(Input&&) = delete;
+	Input& operator =(Input&&) = delete;
+
+	static void Create(Window* win);
+	static void Destroy();
+
 	// キー入力
-	bool CheckKey(UINT index);
+	static bool GetKey(UINT index);
 	// トリガーの入力
-	bool TriggerKey(UINT index);
+	static bool GetKeyDown(UINT index);
 	
+private:
+	bool _GetKey(UINT index);
+	bool _GetKeyDown(UINT index);
+
 private:
 	// インプットの生成
 	HRESULT CreateInput(void);
@@ -39,4 +52,7 @@ private:
 	BYTE m_keys[KEY_MAX];
 	// 前のキー情報
 	BYTE m_olds[KEY_MAX];
+
+	static Input* m_instance;
 };
+

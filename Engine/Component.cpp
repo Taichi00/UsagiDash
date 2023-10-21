@@ -1,7 +1,9 @@
 #include "Component.h"
+#include "Entity.h"
 
 Component::Component()
 {
+	
 }
 
 Component::~Component()
@@ -36,6 +38,7 @@ void Component::DrawShadow()
 void Component::RegisterEntity(Entity* entity)
 {
 	m_pEntity = entity;
+	transform = m_pEntity->transform;
 }
 
 Entity* Component::GetEntity()

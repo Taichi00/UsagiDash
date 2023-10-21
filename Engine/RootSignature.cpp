@@ -17,7 +17,7 @@ RootSignature::RootSignature()
 
 	CD3DX12_ROOT_PARAMETER rootParam[6] = {};
 	rootParam[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);	// b0 : transform
-	rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);	// b1 : light
+	rootParam[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);	// b1 : scene
 	rootParam[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);	// b2 : bone parameter
 	rootParam[3].InitAsConstantBufferView(3, 0, D3D12_SHADER_VISIBILITY_ALL);	// b3 : material parameter
 	rootParam[4].InitAsDescriptorTable(1, &diffuseTexRange, D3D12_SHADER_VISIBILITY_ALL);

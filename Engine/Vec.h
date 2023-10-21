@@ -73,30 +73,75 @@ class Vec3
 public:
 	Vec3() {}
 	Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
+	Vec3(DirectX::XMFLOAT3 v) : x(v.x), y(v.y), z(v.z) {}
 
-	Vec3 operator +(Vec3 v) const
+	const Vec3 operator +(const Vec3& v) const
 	{
 		return Vec3(x + v.x, y + v.y, z + v.z);
 	}
 
-	Vec3 operator -(Vec3 v) const
+	const Vec3 operator -(const Vec3& v) const
 	{
 		return Vec3(x - v.x, y - v.y, z - v.z);
 	}
 
-	Vec3 operator *(float n) const
+	const Vec3 operator *(const float& n) const
 	{
 		return Vec3(x * n, y * n, z * n);
 	}
 
-	Vec3 operator /(float n) const
+	const Vec3 operator /(const float& n) const
 	{
 		return Vec3(x / n, y / n, z / n);
+	}
+
+	const Vec3 operator -() const
+	{
+		return Vec3(-x, -y, -z);
+	}
+
+	Vec3& operator +=(const Vec3& v)
+	{
+		x += v.x;
+		y += v.y;
+		z += v.z;
+		return *this;
+	}
+
+	Vec3& operator -=(const Vec3& v)
+	{
+		x -= v.x;
+		y -= v.y;
+		z -= v.z;
+		return *this;
+	}
+
+	Vec3& operator *=(const float n)
+	{
+		x *= n;
+		y *= n;
+		z *= n;
+		return *this;
 	}
 
 	operator DirectX::XMFLOAT3() const
 	{
 		return DirectX::XMFLOAT3(x, y, z);
+	}
+
+	operator DirectX::XMVECTOR() const
+	{
+		return { x, y, z };
+	}
+
+	bool operator ==(const Vec3& v)
+	{
+		return (x == v.x) && (y == v.y) && (z == v.z);
+	}
+
+	bool operator !=(const Vec3& v)
+	{
+		return (x != v.x) || (y != v.y) || (z != v.z);
 	}
 
 	float length() const
@@ -125,6 +170,16 @@ public:
 		res.y = v1.z * v2.x - v1.x * v2.z;
 		res.z = v1.x * v2.y - v1.y + v2.z;
 		return res;
+	}
+
+	static Vec3 Zero()
+	{
+		return Vec3(0, 0, 0);
+	}
+
+	static Vec3 Scale(const Vec3& v, const float& x, const float& y, const float& z)
+	{
+		return Vec3(v.x * x, v.y * y, v.z * z);
 	}
 
 	std::string getString() const

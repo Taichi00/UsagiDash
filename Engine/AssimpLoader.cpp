@@ -88,12 +88,6 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     flag |= aiProcess_Triangulate;
     flag |= aiProcess_LimitBoneWeights;
     flag |= aiProcess_FlipUVs;
-    //flag |= aiProcess_PreTransformVertices;
-    //flag |= aiProcess_CalcTangentSpace;
-    //flag |= aiProcess_GenSmoothNormals;
-    //flag |= aiProcess_GenUVCoords;
-    //flag |= aiProcess_RemoveRedundantMaterials;
-    //flag |= aiProcess_OptimizeMeshes;
 
     auto pScene = importer.ReadFile(path, flag);
     
@@ -114,7 +108,7 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
 
     // Mesh, Boneの読み込み
     ProcessNode(model, pScene->mRootNode, pScene);
-    
+
     // Materialの読み込み
     materials.clear();
     materials.resize(pScene->mNumMaterials);
@@ -133,10 +127,54 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
         LoadAnimation(animations[i], pScene->mAnimations[i], &bones);
     }
 
-    for (int i = 0; i < bones.Size(); i++)
+    // SmoothNormalの生成
+    flag |= aiProcess_GenSmoothNormals;
+    flag |= aiProcess_ForceGenNormals;
+    pScene = importer.ReadFile(path, flag);
+
+    for (size_t i = 0; i < meshes.size(); ++i)
     {
-        printf("%d\t%s\n", i, bones[i]->GetName().c_str());
+        auto mesh = &(meshes[i]);
+        auto aimesh = pScene->mMeshes[i];
+        for (size_t j = 0; j < meshes[i].Vertices.size(); ++j)
+        {
+            auto vertex = &(meshes[i].Vertices[j]);
+            auto normal = &(aimesh->mNormals[j]);
+            vertex->SmoothNormal = DirectX::XMFLOAT3(normal->x, normal->y, normal->z);
+        }
     }
+
+    
+    for (size_t i = 0; i < meshes.size(); i++)
+    {
+        // 頂点バッファの生成
+        auto vSize = sizeof(Vertex) * meshes[i].Vertices.size();
+        auto stride = sizeof(Vertex);
+        auto vertices = meshes[i].Vertices.data();
+        auto pVB = new VertexBuffer(vSize, stride, vertices);
+        if (!pVB->IsValid())
+        {
+            printf("頂点バッファの生成に失敗\n");
+            break;
+        }
+        meshes[i].pVertexBuffer = pVB;
+
+        // インデックスバッファの生成
+        auto iSize = sizeof(uint32_t) * meshes[i].Indices.size();
+        auto indices = meshes[i].Indices.data();
+        auto pIB = new IndexBuffer(iSize, indices);
+        if (!pIB->IsValid())
+        {
+            printf("インデックスバッファの生成に失敗\n");
+            break;
+        }
+        meshes[i].pIndexBuffer = pIB;
+    }
+
+    //for (int i = 0; i < bones.Size(); i++)
+    //{
+    //    printf("%d\t%s\n", i, bones[i]->GetName().c_str());
+    //}
 
     pScene = nullptr;
     return true;
@@ -154,31 +192,9 @@ void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
         LoadMesh(meshes[meshIndex], pMesh);
         
         LoadBones(bones, meshes[meshIndex], pMesh);
-        
-        // 頂点バッファの生成
-        auto vSize = sizeof(Vertex) * meshes[meshIndex].Vertices.size();
-        auto stride = sizeof(Vertex);
-        auto vertices = meshes[meshIndex].Vertices.data();
-        auto pVB = new VertexBuffer(vSize, stride, vertices);
-        if (!pVB->IsValid())
-        {
-            printf("頂点バッファの生成に失敗\n");
-            break;
-        }
 
-        meshes[meshIndex].pVertexBuffer = pVB;
-
-        // インデックスバッファの生成
-        auto iSize = sizeof(uint32_t) * meshes[meshIndex].Indices.size();
-        auto indices = meshes[meshIndex].Indices.data();
-        auto pIB = new IndexBuffer(iSize, indices);
-        if (!pIB->IsValid())
-        {
-            printf("インデックスバッファの生成に失敗\n");
-            break;
-        }
-
-        meshes[meshIndex].pIndexBuffer = pIB;
+        // アウトライン用のスムーズな法線を生成
+        //GenSmoothNormal(meshes[meshIndex]);
     }
 
     for (UINT i = 0; i < node->mNumChildren; i++)
@@ -267,15 +283,14 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     dst.BaseColor.z = color.b;
     dst.BaseColor.w = color.a;
 
-    printf("%f, %f, %f\n", color.r, color.g, color.b);
-    
-    printf("%s\n", path.C_Str());
+    // プロパティ一覧の表示
+    /*printf("%s\n", path.C_Str());
     auto prop = src->mProperties;
     int len = src->mNumProperties;
     for (int i = 0; i < len; i++)
     {
         printf("\t%s\n", prop[i]->mKey.C_Str());
-    }
+    }*/
     
 }
 
@@ -428,6 +443,33 @@ void AssimpLoader::LoadAnimation(Animation* animation, aiAnimation* pAnimation, 
         animation->AddChannel(ch);
     }
 
+}
+
+void AssimpLoader::GenSmoothNormal(Mesh& dst)
+{
+    float distance = 1e-8f;
+
+    for (int i = 0; i < dst.Vertices.size(); i++)
+    {
+        auto position1 = (Vec3)dst.Vertices[i].Position;
+        auto normal = Vec3(0, 0, 0);
+
+        for (int j = 0; j < dst.Vertices.size(); j++)
+        {
+            auto position2 = (Vec3)dst.Vertices[j].Position;
+            auto v = position1 - position2;
+
+            if (v.length() < distance)
+            {
+                normal = normal + dst.Vertices[j].Normal;
+            }
+        }
+
+        normal = normal.normalized();
+
+        auto vertex = &(dst.Vertices[i]);
+        vertex->SmoothNormal = normal;
+    }
 }
 
 

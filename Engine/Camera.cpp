@@ -1,17 +1,6 @@
 #include "Camera.h"
 #include "Engine.h"
 
-Camera::Camera()
-{
-    m_focusPos = XMFLOAT3(0, 0, 0);
-    m_upDir = XMFLOAT3(0, 1, 0);
-    m_fov = 60;
-    m_near = 0.3f;
-    m_far = 100000;
-
-    m_mtxView = XMMatrixIdentity();
-    m_mtxProj = XMMatrixIdentity();
-}
 
 XMMATRIX Camera::GetViewMatrix()
 {
@@ -21,6 +10,16 @@ XMMATRIX Camera::GetViewMatrix()
 XMMATRIX Camera::GetProjMatrix()
 {
     return m_mtxProj;
+}
+
+Vec3 Camera::GetFocusPosition()
+{
+    return m_focusPos;
+}
+
+Vec3 Camera::GetViewDirection()
+{
+    return Vec3(m_focusPos) - transform->position;
 }
 
 void Camera::SetFocusPosition(XMFLOAT3 focusPos)
@@ -50,15 +49,28 @@ void Camera::SetFov(float fov)
 
 bool Camera::Init()
 {
+    m_focusPos = XMFLOAT3(0, 0, 0);
+    m_upDir = XMFLOAT3(0, 1, 0);
+    m_fov = 60;
+    m_near = 0.3f;
+    m_far = 100000;
+
+    m_mtxView = XMMatrixIdentity();
+    m_mtxProj = XMMatrixIdentity();
+
     return true;
 }
 
 void Camera::CameraUpdate()
 {
-    auto pos = XMFLOAT3(m_pEntity->Position());
+    auto pos = XMFLOAT3(transform->position);
     auto fov = XMConvertToRadians(m_fov);
     auto aspect = g_Engine->AspectRate();
 
-    m_mtxView = XMMatrixLookAtRH(XMLoadFloat3(&pos), XMLoadFloat3(&m_focusPos), XMLoadFloat3(&m_upDir));
+    if (transform->position != m_focusPos)
+    {
+        m_mtxView = XMMatrixLookAtRH(XMLoadFloat3(&pos), XMLoadFloat3(&m_focusPos), XMLoadFloat3(&m_upDir));
+        transform->rotation = XMQuaternionRotationMatrix(m_mtxView);
+    }
     m_mtxProj = XMMatrixPerspectiveFovRH(fov, aspect, m_near, m_far);
 }

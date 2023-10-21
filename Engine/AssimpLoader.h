@@ -44,6 +44,9 @@ private:
 
 	static void LoadAnimation(Animation* animation, aiAnimation* pAnimation, BoneList* bones);
 
+	static void GenSmoothNormal(Mesh& dst);
+	static void GenSmoothNormals(Model& model, aiNode* node, const aiScene* scene);
+
 private:
 	
 };

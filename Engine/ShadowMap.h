@@ -25,7 +25,7 @@ private:
 	DescriptorHandle* m_pRtvHandle;
 	DescriptorHandle* m_pDsvHandle;
 
-	int m_width = 5096;
-	int m_height = 5096;
+	int m_width = 1024;
+	int m_height = 1024;
 
 };

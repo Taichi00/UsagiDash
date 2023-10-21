@@ -5,12 +5,13 @@ cbuffer Transform : register(b0)
     float4x4 Proj;
 }
 
-cbuffer Light : register(b1)
+cbuffer Scene : register(b1)
 {
     float4x4 LightView;
     float4x4 LightProj;
     float4 LightColor;
     float3 LightDir;
+    float3 CameraPos;
 }
 
 cbuffer BoneParameter : register(b2)

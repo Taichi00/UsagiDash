@@ -29,26 +29,28 @@ struct Vertex
 	XMUINT4  BoneIndices;
 	XMFLOAT4 BoneWeights;
 	UINT BoneNum = 0;
+	XMFLOAT3 SmoothNormal;	// アウトライン用のスムーズな法線
 
 	static const D3D12_INPUT_LAYOUT_DESC InputLayout;
 private:
-	static const int InputElementCount = 8;
+	static const int InputElementCount = 9;
 	static const D3D12_INPUT_ELEMENT_DESC InputElements[InputElementCount];
 };
 
-struct alignas(256) Transform
+struct alignas(256) TransformParameter
 {
-	XMMATRIX World;	// ワールド行列
+	XMMATRIX World;		// ワールド行列
 	XMMATRIX View;		// ビュー行列
 	XMMATRIX Proj;		// 投影行列
 };
 
-struct alignas(256) Light
+struct alignas(256) SceneParameter
 {
-	XMMATRIX View;
-	XMMATRIX Proj;
-	XMFLOAT4 Color;
-	XMFLOAT3 Direction;
+	XMMATRIX LightView;
+	XMMATRIX LightProj;
+	XMVECTOR LightColor;
+	XMVECTOR LightDirection;
+	XMVECTOR CameraPosition;
 };
 
 struct alignas(256) BoneParameter

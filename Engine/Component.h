@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <typeinfo>
 
 class Entity;
+class Transform;
 
 class Component
 {
@@ -19,9 +21,14 @@ public:
 
 	void RegisterEntity(Entity* entity);
 
+	/*template<class T> T* GetComponent()
+	{
+		return (T*)(m_pEntity->GetComponent<T>());
+	}*/
+
 public:
 	Entity* GetEntity();
 
-protected:
 	Entity* m_pEntity;
+	Transform* transform;
 };

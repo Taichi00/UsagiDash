@@ -11,10 +11,12 @@ using namespace DirectX;
 class Camera : public Component
 {
 public:
-	Camera();
 
 	XMMATRIX GetViewMatrix();
 	XMMATRIX GetProjMatrix();
+
+	Vec3 GetFocusPosition();
+	Vec3 GetViewDirection();
 
 	void SetFocusPosition(XMFLOAT3 focusPos);
 	void SetFocusPosition(float x, float y, float z);

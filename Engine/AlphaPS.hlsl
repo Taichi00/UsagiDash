@@ -1,18 +1,20 @@
 struct VSOutput
 {
     float4 svpos : SV_POSITION;
+    float4 worldPos : WORLD_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
 
-cbuffer Light : register(b1)
+cbuffer Scene : register(b1)
 {
     float4x4 LightView;
     float4x4 LightProj;
     float4 LightColor;
     float3 LightDir;
+    float3 CameraPos;
 }
 
 cbuffer MaterialParameter : register(b3)

@@ -78,25 +78,6 @@ void Game::SetWindowTitle(std::wstring title)
 	m_windowTitle = title;
 }
 
-bool Game::CheckInput(int mode, UINT index)
-{
-	bool flag = false;
-
-	switch (mode)
-	{
-	case 0:
-		flag = m_pInput->CheckKey(index);
-		break;
-	case 1:
-		flag = m_pInput->TriggerKey(index);
-		break;
-	default:
-		break;
-	}
-
-	return flag;
-}
-
 void Game::CreateEntity(Entity* entity)
 {
 	m_pEntities.push_back(entity);
@@ -107,6 +88,11 @@ void Game::CreateEntity(Entity* entity)
 void Game::SetMainCamera(Entity* camera)
 {
 	m_pMainCamera = camera->GetComponent<Camera>();
+}
+
+Camera* Game::GetMainCamera()
+{
+	return m_pMainCamera;
 }
 
 DirectX::XMMATRIX Game::GetViewMatrix()
@@ -137,7 +123,7 @@ void Game::Init()
 	}
 
 	// キー入力
-	m_pInput = new Input(m_pWindow);
+	Input::Create(m_pWindow);
 
 	// エンティティのクリア
 	m_pEntities.clear();
@@ -152,13 +138,14 @@ void Game::Update()
 
 void Game::End()
 {
-	delete m_pWindow;
-	delete g_Engine;
-	delete m_pInput;
 	delete m_pShadowMap;
-	
+
 	for (auto entity : m_pEntities)
 	{
 		delete entity;
 	}
+
+	Input::Destroy();
+	delete g_Engine;
+	delete m_pWindow;
 }

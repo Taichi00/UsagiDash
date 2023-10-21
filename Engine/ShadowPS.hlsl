@@ -7,12 +7,13 @@ struct VSOutput
     float2 uv : TEXCOORD;
 };
 
-cbuffer Light : register(b1)
+cbuffer Scene : register(b1)
 {
     float4x4 LightView;
     float4x4 LightProj;
     float4 LightColor;
     float3 LightDir;
+    float3 CameraPos;
 }
 
 SamplerState smp : register(s0); // ƒTƒ“ƒvƒ‰[
@@ -29,5 +30,5 @@ float4 main(VSOutput input) : SV_TARGET
     
     float d = input.posSM.z / input.posSM.w;
     
-    return float4(d, d, d, 1);
+    return float4(d, d * d, d, 1);
 }

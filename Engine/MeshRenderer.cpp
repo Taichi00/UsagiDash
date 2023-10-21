@@ -9,6 +9,7 @@
 #include "PipelineState.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "Camera.h"
 #include "Bone.h"
 
 
@@ -20,7 +21,7 @@ MeshRenderer::MeshRenderer(MeshRendererProperty prop)
 MeshRenderer::~MeshRenderer()
 {
 	delete[] m_pTransformCB;
-	delete[] m_pLightCB;
+	delete[] m_pSceneCB;
 	delete[] m_pBoneCB;
 	delete m_pRootSignature;
 	delete m_pOpaquePSO;
@@ -41,7 +42,7 @@ bool MeshRenderer::Init()
 {
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pTransformCB[i] = new ConstantBuffer(sizeof(Transform));
+		m_pTransformCB[i] = new ConstantBuffer(sizeof(TransformParameter));
 		if (!m_pTransformCB[i]->IsValid())
 		{
 			printf("変換行列用定数バッファの生成に失敗\n");
@@ -54,24 +55,25 @@ bool MeshRenderer::Init()
 		//ptr->Proj = XMMatrixIdentity();
 	}
 
-	const auto eye = XMVectorSet(10.0f, 150.0f, 50.0f, 0.0f);
-	const auto target = XMVectorSet(0.0f, 90.0f, 0.0f, 0.0f);
+	const auto eye = XMVectorSet(0.5f, 7.5f, 2.5f, 0.0f);
+	const auto target = XMVectorSet(0.0f, 4.0f, 0.0f, 0.0f);
 	const auto up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	auto dir = Vec3(0.0f - 10.0f, 90.0f - 150.0f, 0.0f - 50.0f).normalized();
+	auto dir = Vec3(0.0f - 0.5f, 4.0f - 7.5f, 0.0f - 2.5f).normalized();
 
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pLightCB[i] = new ConstantBuffer(sizeof(Light));
-		if (!m_pLightCB[i]->IsValid())
+		m_pSceneCB[i] = new ConstantBuffer(sizeof(SceneParameter));
+		if (!m_pSceneCB[i]->IsValid())
 		{
 			printf("ライト用定数バッファの生成に失敗\n");
 			return false;
 		}
 
-		auto ptr = m_pLightCB[i]->GetPtr<Light>();
-		ptr->Direction = XMFLOAT3(dir.x, dir.y, dir.z);
-		ptr->View = XMMatrixLookAtRH(eye, target, up);
-		ptr->Proj = XMMatrixOrthographicRH(500, 500, 0.1f, 1000.0f);
+		auto ptr = m_pSceneCB[i]->GetPtr<SceneParameter>();
+		ptr->LightDirection = { dir.x, dir.y, dir.z };
+		ptr->LightView = XMMatrixLookAtRH(eye, target, up);
+		ptr->LightProj = XMMatrixOrthographicRH(25, 25, 0.1f, 100.0f);
+		ptr->CameraPosition = { 0, 0, 1 };
 	}
 
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
@@ -95,7 +97,7 @@ bool MeshRenderer::Init()
 
 		auto ptr = cb->GetPtr<MaterialParameter>();
 		ptr->BaseColor = m_model.Materials[i].BaseColor;
-		ptr->OutlineWidth = 0.01; //0.003
+		ptr->OutlineWidth = 0.005; //0.003
 
 		m_pMaterialCBs.push_back(cb);
 	}
@@ -164,10 +166,10 @@ void MeshRenderer::Draw()
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
-	commandList->SetGraphicsRootConstantBufferView(1, m_pLightCB[currentIndex]->GetAddress());
+	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, m_pBoneCB[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	
 	ID3D12DescriptorHeap* heaps[] = {
 		m_pDescriptorHeap->GetHeap(),
 	};
@@ -234,7 +236,7 @@ void MeshRenderer::DrawAlpha()
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
-	commandList->SetGraphicsRootConstantBufferView(1, m_pLightCB[currentIndex]->GetAddress());
+	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, m_pBoneCB[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -280,7 +282,7 @@ void MeshRenderer::DrawShadow()
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
-	commandList->SetGraphicsRootConstantBufferView(1, m_pLightCB[currentIndex]->GetAddress());
+	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, m_pBoneCB[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -352,7 +354,7 @@ bool MeshRenderer::PreparePSO()
 	m_pShadowPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pShadowPSO->SetVS(L"../x64/Debug/ShadowVS.cso");
 	m_pShadowPSO->SetPS(L"../x64/Debug/ShadowPS.cso");
-	m_pShadowPSO->SetCullMode(D3D12_CULL_MODE_NONE);
+	m_pShadowPSO->SetCullMode(D3D12_CULL_MODE_BACK);
 	m_pShadowPSO->Create();
 	if (!m_pShadowPSO->IsValid())
 	{
@@ -380,18 +382,16 @@ void MeshRenderer::UpdateCB()
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 
 	// Transform
-	auto currentTransform = m_pTransformCB[currentIndex]->GetPtr<Transform>();
+	auto currentTransform = m_pTransformCB[currentIndex]->GetPtr<TransformParameter>();
 
 	// world行列
-	auto scale = m_pEntity->Scale();
-	auto rotation = m_pEntity->Rotation();
-	auto position = m_pEntity->Position();
+	auto scale = transform->scale;
+	auto rotation = transform->rotation;
+	auto position = transform->position;
 
 	auto world = XMMatrixIdentity();
 	world *= XMMatrixScaling(scale.x, scale.y, scale.z);
-	world *= XMMatrixRotationZ(rotation.z);
-	world *= XMMatrixRotationY(rotation.y);
-	world *= XMMatrixRotationX(rotation.x);
+	world *= XMMatrixRotationQuaternion(XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 	world *= XMMatrixTranslation(position.x, position.y, position.z);
 
 	// view行列
@@ -414,6 +414,12 @@ void MeshRenderer::UpdateCB()
 		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
 	}
 
+	// SceneParameter
+	auto currentScene = m_pSceneCB[currentIndex]->GetPtr<SceneParameter>();
+
+	auto cameraPos = m_pEntity->GetGame()->GetMainCamera()->transform->position;
+	currentScene->CameraPosition = cameraPos;
+	//printf("%s\n", cameraPos.getString().c_str());
 }
 
 Bone* MeshRenderer::FindBone(std::string name)

@@ -20,11 +20,10 @@ public:
 	void SetWindowSize(unsigned int width, unsigned int height);
 	void SetWindowTitle(std::wstring title);
 
-	bool CheckInput(int mode, UINT index);
-
 	void CreateEntity(Entity* entity);
 
 	void SetMainCamera(Entity* camera);
+	Camera* GetMainCamera();
 	DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetProjMatrix();
 

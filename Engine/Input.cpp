@@ -8,6 +8,8 @@
 // 解放マクロ
 //#define Release(X) { if ((X) != nullptr) (X)->Release(); (X) = nullptr; }
 
+Input* Input::m_instance = nullptr;
+
 Input::Input(Window* win)
 {
 	m_pWindow = win;
@@ -31,11 +33,36 @@ Input::~Input()
 	m_input->Release();
 }
 
+void Input::Create(Window* win)
+{
+	if (!m_instance)
+	{
+		m_instance = new Input(win);
+	}
+}
+
+void Input::Destroy()
+{
+	delete m_instance;
+	m_instance = nullptr;
+}
+
 // キー入力
-bool Input::CheckKey(UINT index)
+bool Input::GetKey(UINT index)
+{
+	return m_instance->_GetKey(index);
+}
+
+// トリガーの入力
+bool Input::GetKeyDown(UINT index)
+{
+	return m_instance->_GetKeyDown(index);
+}
+
+bool Input::_GetKey(UINT index)
 {
 	bool flag = false;
-	
+
 	auto hr = m_key->GetDeviceState(sizeof(m_keys), &m_keys);
 	if (FAILED(hr))
 	{
@@ -51,11 +78,10 @@ bool Input::CheckKey(UINT index)
 	return flag;
 }
 
-// トリガーの入力
-bool Input::TriggerKey(UINT index)
+bool Input::_GetKeyDown(UINT index)
 {
 	bool flag = false;
-	
+
 	auto hr = m_key->GetDeviceState(sizeof(m_keys), &m_keys);
 	if (FAILED(hr))
 	{
