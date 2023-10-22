@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "ShadowMap.h"
 #include "Input.h"
+#include "Scene.h"
 
 Game::Game()
 {
@@ -27,40 +28,11 @@ void Game::Run()
 		{
 			Update();
 
-			// Cameraの更新
-			for (auto entity : m_pEntities)
-			{
-				entity->CameraUpdate();
-			}
+			if (m_pCurrentScene == nullptr)
+				continue;
 
-			// エンティティの更新
-			for (auto entity : m_pEntities)
-			{
-				entity->Update();
-			}
-
-			// レンダリングの準備
-			g_Engine->InitRender();
-
-			// シャドウマップの描画
-			m_pShadowMap->BeginRender();
-			for (auto entity : m_pEntities)
-			{
-				entity->DrawShadow();
-			}
-			m_pShadowMap->EndRender();
-
-			// レンダリング
-			g_Engine->BeginRenderMSAA();
-			for (auto entity : m_pEntities)
-			{
-				entity->Draw();
-			}
-			for (auto entity : m_pEntities)
-			{
-				entity->DrawAlpha();
-			}
-			g_Engine->EndRenderMSAA();
+			m_pCurrentScene->Update();
+			m_pCurrentScene->Draw();
 		}
 	}
 
@@ -78,36 +50,11 @@ void Game::SetWindowTitle(std::wstring title)
 	m_windowTitle = title;
 }
 
-void Game::CreateEntity(Entity* entity)
+Scene* Game::LoadScene(Scene* scene)
 {
-	m_pEntities.push_back(entity);
-	entity->RegisterGame(this);
-	entity->Init();
-}
-
-void Game::SetMainCamera(Entity* camera)
-{
-	m_pMainCamera = camera->GetComponent<Camera>();
-}
-
-Camera* Game::GetMainCamera()
-{
-	return m_pMainCamera;
-}
-
-DirectX::XMMATRIX Game::GetViewMatrix()
-{
-	return m_pMainCamera->GetViewMatrix();
-}
-
-DirectX::XMMATRIX Game::GetProjMatrix()
-{
-	return m_pMainCamera->GetProjMatrix();
-}
-
-ShadowMap* Game::GetShadowMap()
-{
-	return m_pShadowMap;
+	m_pCurrentScene = scene;
+	scene->Init();
+	return scene;
 }
 
 void Game::Init()
@@ -124,12 +71,6 @@ void Game::Init()
 
 	// キー入力
 	Input::Create(m_pWindow);
-
-	// エンティティのクリア
-	m_pEntities.clear();
-
-	// シャドウマップの生成
-	m_pShadowMap = new ShadowMap();
 }
 
 void Game::Update()
@@ -138,13 +79,7 @@ void Game::Update()
 
 void Game::End()
 {
-	delete m_pShadowMap;
-
-	for (auto entity : m_pEntities)
-	{
-		delete entity;
-	}
-
+	delete m_pCurrentScene;
 	Input::Destroy();
 	delete g_Engine;
 	delete m_pWindow;

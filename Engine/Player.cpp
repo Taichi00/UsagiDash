@@ -3,7 +3,7 @@
 #include "Entity.h"
 #include "Animator.h"
 #include "Camera.h"
-#include "Game.h"
+#include "Scene.h"
 
 Player::Player(PlayerProperty prop)
 {
@@ -30,7 +30,7 @@ void Player::Update()
 
 void Player::Move()
 {
-	auto camera = m_pEntity->GetGame()->GetMainCamera();
+	auto camera = m_pEntity->GetScene()->GetMainCamera();
 	auto cameraRot = camera->transform->rotation;
 	auto forward = Vec3::Scale(cameraRot * Vec3(0, 0, -1), 1, 0, 1).normalized();
 	auto left = Vec3::Scale(cameraRot * Vec3(-1, 0, 0), 1, 0, 1).normalized();

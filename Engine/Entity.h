@@ -7,7 +7,7 @@
 #include <map>
 #include <typeinfo>
 
-class Game;
+class Scene;
 class Transform;
 
 class Entity
@@ -23,8 +23,8 @@ public:
 		return (T*)m_componentMap[typeid(T).name()];
 	}
 
-	void RegisterGame(Game* game);
-	Game* GetGame();
+	void RegisterScene(Scene* scene);
+	Scene* GetScene();
 
 	virtual bool Init();
 	virtual void CameraUpdate();
@@ -37,7 +37,7 @@ public:
 	Transform* transform;
 
 protected:
-	Game* m_pGame;
+	Scene* m_pScene;
 	
 	std::vector<Component*> m_components;
 	std::map<std::string, Component*> m_componentMap;

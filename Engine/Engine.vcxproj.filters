@@ -124,7 +124,13 @@
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="SphereMesh.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="MainScene.cpp">
+      <Filter>ソース ファイル\App</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,8 +230,14 @@
     <ClInclude Include="Transform.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
+    <ClInclude Include="MainScene.h">
+      <Filter>ヘッダー ファイル\App</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>ヘッダー ファイル\Game</Filter>
+    </ClInclude>
     <ClInclude Include="SphereMesh.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

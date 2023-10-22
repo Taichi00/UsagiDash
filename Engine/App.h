@@ -7,5 +7,4 @@ public:
 	App();
 
 	void Init();
-	void Update();
 };

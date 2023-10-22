@@ -3,7 +3,7 @@
 #include "DescriptorHeap.h"
 #include "Texture2D.h"
 #include "Entity.h"
-#include "Game.h"
+#include "Scene.h"
 #include "ShadowMap.h"
 #include "RootSignature.h"
 #include "PipelineState.h"
@@ -125,7 +125,7 @@ bool MeshRenderer::Init()
 	}
 
 	// シャドウマップの登録
-	auto pShadowMap = m_pEntity->GetGame()->GetShadowMap();
+	auto pShadowMap = m_pEntity->GetScene()->GetShadowMap();
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -397,10 +397,11 @@ void MeshRenderer::UpdateCB()
 	world *= XMMatrixTranslation(position.x, position.y, position.z);
 
 	// view行列
-	auto view = m_pEntity->GetGame()->GetViewMatrix();
+	auto camera = m_pEntity->GetScene()->GetMainCamera();
+	auto view = camera->GetViewMatrix();
 
 	// proj行列
-	auto proj = m_pEntity->GetGame()->GetProjMatrix();
+	auto proj = camera->GetProjMatrix();
 
 	currentTransform->World = world;
 	currentTransform->View = view;
@@ -419,9 +420,8 @@ void MeshRenderer::UpdateCB()
 	// SceneParameter
 	auto currentScene = m_pSceneCB[currentIndex]->GetPtr<SceneParameter>();
 
-	auto cameraPos = m_pEntity->GetGame()->GetMainCamera()->transform->position;
+	auto cameraPos = camera->transform->position;
 	currentScene->CameraPosition = cameraPos;
-	//printf("%s\n", cameraPos.getString().c_str());
 }
 
 Bone* MeshRenderer::FindBone(std::string name)

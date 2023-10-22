@@ -7,7 +7,7 @@ Entity::Entity()
 	transform = new Transform();
 	AddComponent(transform);
 
-	m_pGame = nullptr;
+	m_pScene = nullptr;
 }
 
 Entity::~Entity()
@@ -30,14 +30,14 @@ void Entity::AddComponent(Component* component)
 }
 
 
-void Entity::RegisterGame(Game* game)
+void Entity::RegisterScene(Scene* scene)
 {
-	m_pGame = game;
+	m_pScene = scene;
 }
 
-Game* Entity::GetGame()
+Scene* Entity::GetScene()
 {
-	return m_pGame;
+	return m_pScene;
 }
 
 bool Entity::Init()

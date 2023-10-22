@@ -145,10 +145,12 @@
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainScene.cpp" />
     <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="RootSignature.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="SharedStruct.cpp" />
     <ClCompile Include="SphereMesh.cpp" />
@@ -176,11 +178,13 @@
     <ClInclude Include="GameCamera.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="MainScene.h" />
     <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Quaternion.h" />
     <ClInclude Include="RootSignature.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="SharedStruct.h" />
     <ClInclude Include="SphereMesh.h" />

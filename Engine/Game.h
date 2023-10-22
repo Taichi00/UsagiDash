@@ -9,6 +9,7 @@ class Entity;
 class Camera;
 class ShadowMap;
 class Input;
+class Scene;
 
 class Game
 {
@@ -20,14 +21,10 @@ public:
 	void SetWindowSize(unsigned int width, unsigned int height);
 	void SetWindowTitle(std::wstring title);
 
-	void CreateEntity(Entity* entity);
-
-	void SetMainCamera(Entity* camera);
-	Camera* GetMainCamera();
-	DirectX::XMMATRIX GetViewMatrix();
-	DirectX::XMMATRIX GetProjMatrix();
-
-	ShadowMap* GetShadowMap();
+	Scene* LoadScene(Scene* scene);
+	
+	/*DirectX::XMMATRIX GetViewMatrix();
+	DirectX::XMMATRIX GetProjMatrix();*/
 
 protected:
 	virtual void Init();
@@ -41,10 +38,6 @@ private:
 	std::wstring m_windowTitle = L"Game";
 
 	Input* m_pInput;
-	
-	std::vector<Entity*> m_pEntities;
 
-	Camera* m_pMainCamera = nullptr;
-
-	ShadowMap* m_pShadowMap;
+	Scene* m_pCurrentScene;
 };
