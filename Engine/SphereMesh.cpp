@@ -117,6 +117,7 @@ Model SphereMesh::Load(int sliceNum, int stackNum)
     auto material = Material{};
     material.BaseColor = { 0.5, 0.5, 0.5, 1 };
     material.Texture = Texture2D::GetWhite();
+    material.Shininess = 10;
 
     std::vector<Material> materials;
     materials.push_back(material);

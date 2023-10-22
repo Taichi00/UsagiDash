@@ -22,6 +22,7 @@ cbuffer BoneParameter : register(b2)
 cbuffer MaterialParameter : register(b3)
 {
     float4 BaseColor;
+    float Shininess;
     float OutlineWidth;
 }
 
@@ -100,14 +101,16 @@ VSOutput main(VSInput input)
     float3 localNormal = TransformNormal(input.normal, input);
     float3 worldNormal = mul((float3x3) World, localNormal);
     float3 viewNormal = mul((float3x3) View, worldNormal);
-    float3 projNormal = mul((float3x3) Proj, viewNormal);
-    //float3 norm = mul((float3x3) View, mul((float3x3) World, input.normal));
-    float2 offset = normalize(projNormal.xy);
+    float3 projNormal = mul((float3x3) Proj, normalize(viewNormal));
+    float2 offset = projNormal.xy;
+    
+    //float outlinePower = lerp(0.6, 1, dot(normalize(worldNormal), LightDir) * 0.5 + 0.5);
+    //float outlineWidth = OutlineWidth * outlinePower;
     
     output.svpos = projPos;
-    output.svpos.xy += offset * OutlineWidth * projPos.w;
+    output.svpos.xy += projNormal.xy * OutlineWidth * projPos.w;
     
-    output.normal = input.normal;
+    output.normal = worldNormal;
     output.color = input.color;
     output.uv = input.uv;
     return output;

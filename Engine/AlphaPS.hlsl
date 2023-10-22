@@ -20,6 +20,7 @@ cbuffer Scene : register(b1)
 cbuffer MaterialParameter : register(b3)
 {
     float4 BaseColor;
+    float Shininess;
     float OutlineWidth;
 }
 

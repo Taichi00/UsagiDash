@@ -73,6 +73,12 @@ void Animator::RegisterAnimations(std::vector<Animation*> animations)
 
 void Animator::Play(std::string name, float speed)
 {
+	if (m_animationMap.find(name) == m_animationMap.end())
+	{
+		m_currentAnimation = nullptr;
+		return;
+	}
+		
 	m_currentAnimation = m_animationMap[name];
 	m_currentTime = 0;
 	m_speed = speed;

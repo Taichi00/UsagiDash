@@ -21,6 +21,7 @@ cbuffer Scene : register(b1)
 cbuffer MaterialParameter : register(b3)
 {
     float4 BaseColor;
+    float Shininess;
     float OutlineWidth;
 }
 
@@ -71,7 +72,7 @@ float hashedAlpha(float4 objCoord)
 float3 CalcPhongSpecular(float3 lightDirection, float3 lightColor, float3 toEye, float3 normal, float shinePower)
 {
     // 反射ベクトルを求める
-    float3 refVec = reflect(lightDirection, normal);
+    float3 refVec = normalize(reflect(lightDirection, normal));
     // 光が当たったサーフェイスから視点に伸びるベクトルを求める
     toEye = normalize(toEye);
     // 鏡面反射の強さを求める
@@ -173,7 +174,7 @@ float4 pixel(VSOutput input) : SV_TARGET
     shade = inverseLerp(0.25, 0.4, shade);
     
     // スペキュラ
-    float3 specularLightColor = CalcPhongSpecular(LightDir, 0, -viewDir, input.normal, 10);
+    float3 specularLightColor = CalcPhongSpecular(-LightDir, 0.2, viewDir, input.normal, Shininess);
     
     // シャドウマップ
     float4 possm = input.posSM;

@@ -87,6 +87,11 @@ void Player::Move()
 
 void Player::Animate()
 {
+	if (m_pAnimator == nullptr)
+	{
+		return;
+	}
+
 	if (m_isRunning == true && _m_isRunning == false)
 	{
 		m_pAnimator->Play("Run", 2.0);

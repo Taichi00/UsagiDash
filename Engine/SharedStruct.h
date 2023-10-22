@@ -60,7 +60,8 @@ struct alignas(256) BoneParameter
 
 struct alignas(256) MaterialParameter
 {
-	XMFLOAT4 BaseColor;
+	XMVECTOR BaseColor;
+	float Shininess;
 	float OutlineWidth;
 };
 
@@ -79,7 +80,8 @@ struct Material
 	DescriptorHandle* pHandle;
 	PipelineState* pPipelineState;
 	int AlphaMode;
-	XMFLOAT4 BaseColor;
+	XMVECTOR BaseColor;
+	float Shininess;
 };
 
 struct Model

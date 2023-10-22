@@ -278,10 +278,12 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     // 色を取得
     aiColor4D color;
     src->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-    dst.BaseColor.x = color.r;
-    dst.BaseColor.y = color.g;
-    dst.BaseColor.z = color.b;
-    dst.BaseColor.w = color.a;
+    dst.BaseColor = { color.r, color.g, color.b, color.a };
+    
+    // 光沢度を取得
+    float shininess;
+    src->Get(AI_MATKEY_SHININESS, shininess);
+    dst.Shininess = shininess;
 
     // プロパティ一覧の表示
     /*printf("%s\n", path.C_Str());

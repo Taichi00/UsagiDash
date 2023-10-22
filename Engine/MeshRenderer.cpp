@@ -95,9 +95,11 @@ bool MeshRenderer::Init()
 			return false;
 		}
 
+		auto mat = &m_model.Materials[i];
 		auto ptr = cb->GetPtr<MaterialParameter>();
-		ptr->BaseColor = m_model.Materials[i].BaseColor;
-		ptr->OutlineWidth = 0.005; //0.003
+		ptr->BaseColor = mat->BaseColor;
+		ptr->Shininess = mat->Shininess;
+		ptr->OutlineWidth = 0.004;
 
 		m_pMaterialCBs.push_back(cb);
 	}
