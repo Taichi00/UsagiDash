@@ -6,17 +6,17 @@
 class Animator;
 class Rigidbody;
 
-struct PlayerProperty
+struct FloatingPlayerProperty
 {
 	float Speed;
 	float Acceleration;
 };
 
-class Player : public Component
+class FloatingPlayer : public Component
 {
 public:
-	Player(PlayerProperty prop);
-	~Player();
+	FloatingPlayer(FloatingPlayerProperty prop);
+	~FloatingPlayer();
 
 	bool Init();
 	void Update();
@@ -32,8 +32,6 @@ private:
 	float m_angle;
 
 	bool m_isRunning, _m_isRunning;
-	int m_jumpFrame;
-	int m_jumpFrameMax = 15;
 
 	Animator* m_pAnimator;
 	Rigidbody* m_pRigidbody;

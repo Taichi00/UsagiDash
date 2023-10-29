@@ -37,7 +37,7 @@ bool MainScene::Init()
 	plane->transform->position = Vec3(0, -2, 0);
 
 
-	model = SphereMesh::Load(40, 20);
+	model = SphereMesh::Load(1, 0.5, 0.5, 0.5);
 	auto sphere = new Entity();
 	sphere->AddComponent(new MeshRenderer({ model }));
 	CreateEntity(sphere);

@@ -23,6 +23,7 @@ public:
 	~MeshRenderer();
 
 	void SetProperties(MeshRendererProperty prop);
+	void SetOutlineWidth(float width);
 
 	bool Init() override;
 	void Update() override;
@@ -56,4 +57,6 @@ private:
 	DescriptorHeap* m_pDescriptorHeap;
 
 	DescriptorHandle* m_pShadowHandle;
+
+	float m_outlineWidth;
 };

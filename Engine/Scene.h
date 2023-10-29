@@ -5,6 +5,9 @@
 class Entity;
 class Camera;
 class ShadowMap;
+class CollisionManager;
+class Collider;
+class Rigidbody;
 
 class Scene
 {
@@ -13,8 +16,8 @@ public:
 	~Scene();
 
 	virtual bool Init();
-	void Update();
-	void Draw();
+	virtual void Update();
+	virtual void Draw();
 
 	void CreateEntity(Entity* entity);
 
@@ -23,9 +26,12 @@ public:
 
 	ShadowMap* GetShadowMap();
 
+	CollisionManager* GetCollisionManager();
+
 private:
 	std::vector<Entity*> m_pEntities;
 
 	Camera* m_pMainCamera = nullptr;
 	ShadowMap* m_pShadowMap;
+	CollisionManager* m_pCollisionManager;
 };

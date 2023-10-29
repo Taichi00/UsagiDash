@@ -9,6 +9,7 @@ struct Model;
 struct Mesh;
 struct Material;
 struct Vertex;
+struct CollisionModel;
 class Bone;
 class BoneList;
 class Animation;
@@ -30,6 +31,7 @@ public:
 	AssimpLoader();
 
 	static bool Load(const wchar_t* filename, Model& model, std::vector<Animation*>& animations);	// モデルをロードする
+	static bool LoadCollision(const wchar_t* filename, CollisionModel& model);	// コリジョンをロード
 
 private:
 	static void ProcessNode(Model& model, aiNode* node, const aiScene* scene);

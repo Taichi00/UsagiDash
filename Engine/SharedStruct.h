@@ -90,3 +90,20 @@ struct Model
 	std::vector<Material> Materials;
 	BoneList Bones;
 };
+
+struct CollisionVertex
+{
+	XMFLOAT3 Position;	// à íuç¿ïW
+	XMFLOAT3 Normal;	// ñ@ê¸
+};
+
+struct CollisionMesh
+{
+	std::vector<CollisionVertex> Vertices;
+	std::vector<uint32_t> Indices;
+};
+
+struct CollisionModel
+{
+	std::vector<CollisionMesh> Meshes;
+};

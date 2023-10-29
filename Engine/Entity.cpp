@@ -15,18 +15,20 @@ Entity::~Entity()
 	
 }
 
-void Entity::AddComponent(Component* component)
+Component* Entity::AddComponent(Component* component)
 {
 	std::string key = typeid(*component).name();
 
 	// すでに同じ型のコンポーネントが存在する場合、追加しない
 	if (m_componentMap.find(key) != m_componentMap.end())
-		return;
+		return nullptr;
 
 	m_components.push_back(component);
 	m_componentMap[typeid(*component).name()] = component;
 
 	component->RegisterEntity(this);
+
+	return component;
 }
 
 
@@ -62,6 +64,14 @@ void Entity::Update()
 	for (auto component : m_components)
 	{
 		component->Update();
+	}
+}
+
+void Entity::PhysicsUpdate()
+{
+	for (auto component : m_components)
+	{
+		component->PhysicsUpdate();
 	}
 }
 

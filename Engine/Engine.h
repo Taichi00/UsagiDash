@@ -86,7 +86,7 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	std::shared_ptr<DescriptorHandle> m_pDsvHandle = nullptr;
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer = nullptr;	// 深度ステンシルバッファ
 
-	UINT m_sampleCount = 4;
+	UINT m_sampleCount;
 	ComPtr<ID3D12Resource> m_pMSAAColorTarget = nullptr;
 	ComPtr<ID3D12Resource> m_pMSAADepthTarget = nullptr;
 	std::shared_ptr<DescriptorHandle> m_pMSAARtvHandle = nullptr;

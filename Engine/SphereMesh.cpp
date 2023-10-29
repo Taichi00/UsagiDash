@@ -10,12 +10,15 @@
 
 using namespace DirectX;
 
-Model SphereMesh::Load(int sliceNum, int stackNum)
+Model SphereMesh::Load(float radius, float r, float g, float b)
 {
+    int sliceNum = 40;
+    int stackNum = 20;
+
     std::vector<Vertex> vertices;
 
     auto v0 = Vertex{};
-    v0.Position = XMFLOAT3(0, 1, 0);
+    v0.Position = Vec3(0, 1, 0) * radius;
     v0.Normal = XMFLOAT3(0, 1, 0);
     v0.SmoothNormal = v0.Normal;
     vertices.push_back(v0);
@@ -31,7 +34,7 @@ Model SphereMesh::Load(int sliceNum, int stackNum)
             auto z = sin(phi) * sin(theta);
 
             auto v = Vertex{};
-            v.Position = XMFLOAT3(x, y, z);
+            v.Position = Vec3(x, y, z) * radius;
             v.Normal = Vec3(x, y, z).normalized();
             v.SmoothNormal = v.Normal;
             vertices.push_back(v);
@@ -39,7 +42,7 @@ Model SphereMesh::Load(int sliceNum, int stackNum)
     }
 
     auto v1 = Vertex{};
-    v1.Position = XMFLOAT3(0, -1, 0);
+    v1.Position = Vec3(0, -1, 0) * radius;
     v1.Normal = XMFLOAT3(0, -1, 0);
     v1.SmoothNormal = v1.Normal;
     vertices.push_back(v1);
@@ -115,7 +118,7 @@ Model SphereMesh::Load(int sliceNum, int stackNum)
     }
 
     auto material = Material{};
-    material.BaseColor = { 0.5, 0.5, 0.5, 1 };
+    material.BaseColor = { r, g, b, 1 };
     material.Texture = Texture2D::GetWhite();
     material.Shininess = 10;
 

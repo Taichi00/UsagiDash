@@ -180,6 +180,72 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     return true;
 }
 
+bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
+{
+    if (filename == nullptr)
+    {
+        return false;
+    }
+
+    directoryPath = GetDirectoryPath(filename);
+
+    auto path = ToUTF8(filename);
+
+    Assimp::Importer importer;
+    int flag = 0;
+    flag |= aiProcess_Triangulate;
+    flag |= aiProcess_PreTransformVertices;
+
+    auto pScene = importer.ReadFile(path, flag);
+
+    if (pScene == nullptr)
+    {
+        // もし読み込みエラーが出たら表示する
+        printf(importer.GetErrorString());
+        printf("\n");
+        return false;
+    }
+
+    auto& meshes = model.Meshes;
+    meshes.clear();
+    meshes.resize(pScene->mNumMeshes);
+
+    for (auto i = 0; i < pScene->mNumMeshes; i++)
+    {
+        const auto pMesh = pScene->mMeshes[i];
+
+        model.Meshes[i].Vertices.resize(pMesh->mNumVertices);
+        for (auto j = 0; j < pMesh->mNumVertices; j++)
+        {
+            auto position = &(pMesh->mVertices[j]);
+            auto normal = &(pMesh->mNormals[j]);
+
+            CollisionVertex vertex = {};
+            vertex.Position = DirectX::XMFLOAT3(position->x, position->y, position->z);
+            vertex.Normal = DirectX::XMFLOAT3(normal->x, normal->y, normal->z);
+
+            model.Meshes[i].Vertices[j] = vertex;
+        }
+
+        model.Meshes[i].Indices.resize(pMesh->mNumFaces * 3);
+        for (auto j = 0; j < pMesh->mNumFaces; j++)
+        {
+            const auto& face = pMesh->mFaces[j];
+
+            int id0 = face.mIndices[0];
+            int id1 = face.mIndices[1];
+            int id2 = face.mIndices[2];
+
+            model.Meshes[i].Indices[j * 3 + 0] = id0;
+            model.Meshes[i].Indices[j * 3 + 1] = id1;
+            model.Meshes[i].Indices[j * 3 + 2] = id2;
+        }
+    }
+
+    pScene = nullptr;
+    return true;
+}
+
 void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 {
     auto& meshes = model.Meshes;
@@ -282,8 +348,16 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     
     // 光沢度を取得
     float shininess;
-    src->Get(AI_MATKEY_SHININESS, shininess);
-    dst.Shininess = shininess;
+    auto result = src->Get(AI_MATKEY_SHININESS, shininess);
+    if (result)
+    {
+        dst.Shininess = shininess;
+    }
+    else
+    {
+        dst.Shininess = 250;
+    }
+    
 
     // プロパティ一覧の表示
     /*printf("%s\n", path.C_Str());

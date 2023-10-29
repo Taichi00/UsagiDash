@@ -2,6 +2,7 @@ struct VSOutput
 {
     float4 svpos : SV_POSITION;
     float4 worldPos : WORLD_POSITION;
+    float4 viewPos : VIEW_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
     float4 color : COLOR;

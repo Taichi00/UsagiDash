@@ -2,6 +2,7 @@ struct VSOutput
 {
     float4 svpos : SV_POSITION;
     float4 worldPos : WORLD_POSITION;
+    float4 viewPos : VIEW_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
     float4 color : COLOR;
@@ -145,13 +146,14 @@ float4 pixel(VSOutput input) : SV_TARGET
         }
     }
     
-    float3 shadowColor = saturate(0.5 * normalize(diffuse.rgb)) + 0.5;
+    float3 shadowColor = saturate(0.7 * normalize(diffuse.rgb)) + 0.3;
+    //float3 shadowColor = saturate(0.8 * normalize(diffuse.rgb)) + 0.1;
     
     // リム陰
     float rimPower = 1 - dot(input.normal, -viewDir);
     float rimShade = lerp(0.5, 1, inverseLerp(0.98, 1, 1 - pow(rimPower, 3)));
     rimShade *= inverseLerp(0.98, 1, 1 - pow(rimPower, 5));
-    float3 rimShadeColor = lerp(shadowColor, 1, rimShade);
+    float3 rimShadeColor = lerp(saturate(0.5 * normalize(diffuse.rgb)) + 0.5, 1, rimShade);
     
     // リムマスク
     float rimMask = pow(rimPower, 8);
@@ -159,10 +161,10 @@ float4 pixel(VSOutput input) : SV_TARGET
     rimShadeColor = saturate(rimShadeColor + rimMask);
     
     // リムライト
-    float3 rimColor = 1; //normalize(diffuse.rgb) * 2.5;
+    float3 rimColor = 0.2; //normalize(diffuse.rgb) * 2.5;
     float rimLightPower = max(0, dot(input.normal, -LightDir));
     float rimLight = pow(saturate(rimPower * rimLightPower), 5);
-    //rimLight = inverseLerp(0, 0.2, rimLight);
+    rimLight = inverseLerp(0, 0.2, rimLight);
     float3 rimLightColor = rimColor * rimLight;
     
     // 陰
@@ -210,8 +212,12 @@ float4 pixel(VSOutput input) : SV_TARGET
     rimLightColor *= lerp(0.5, 1.0, shade);
     specularLightColor *= lerp(0, 1.0, shade);
     
-    float4 ret = float4(diffuse.rgb * shadeColor * rimShadeColor + rimLightColor + specularLightColor, diffuse.a);
+    // フォグ
+    float fog = inverseLerp(0.5, 1, inverseLerp(0, 150, -input.viewPos.z));
+    float3 fogColor = fog;
+    
+    float4 ret = float4(diffuse.rgb * shadeColor * rimShadeColor + rimLightColor + specularLightColor + fog, diffuse.a);
     
     return ret;
-    //return float4(shade, shade, shade, 1);
+    //return float4(input.viewPos.x, input.viewPos.y, -input.viewPos.z, 1);
 }

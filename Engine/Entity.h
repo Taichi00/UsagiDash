@@ -16,7 +16,7 @@ public:
 	Entity();
 	~Entity();
 	
-	void AddComponent(Component* component);
+	Component* AddComponent(Component* component);
 
 	template<class T> T* GetComponent()
 	{
@@ -29,6 +29,7 @@ public:
 	virtual bool Init();
 	virtual void CameraUpdate();
 	virtual void Update();
+	virtual void PhysicsUpdate();
 	virtual void DrawShadow();
 	virtual void Draw();
 	virtual void DrawAlpha();

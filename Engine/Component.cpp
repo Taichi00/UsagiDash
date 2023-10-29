@@ -23,6 +23,10 @@ void Component::Update()
 {
 }
 
+void Component::PhysicsUpdate()
+{
+}
+
 void Component::Draw()
 {
 }

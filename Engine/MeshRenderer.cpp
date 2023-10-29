@@ -16,6 +16,8 @@
 MeshRenderer::MeshRenderer(MeshRendererProperty prop)
 {
 	SetProperties(prop);
+
+	m_outlineWidth = 0.002;
 }
 
 MeshRenderer::~MeshRenderer()
@@ -36,6 +38,11 @@ void MeshRenderer::SetProperties(MeshRendererProperty prop)
 {
 	m_model = prop.Model;
 	m_model.Bones = BoneList::Copy(m_model.Bones);
+}
+
+void MeshRenderer::SetOutlineWidth(float width)
+{
+	m_outlineWidth = width;
 }
 
 bool MeshRenderer::Init()
@@ -72,7 +79,7 @@ bool MeshRenderer::Init()
 		auto ptr = m_pSceneCB[i]->GetPtr<SceneParameter>();
 		ptr->LightDirection = { dir.x, dir.y, dir.z };
 		ptr->LightView = XMMatrixLookAtRH(eye, target, up);
-		ptr->LightProj = XMMatrixOrthographicRH(25, 25, 0.1f, 100.0f);
+		ptr->LightProj = XMMatrixOrthographicRH(45, 45, 0.1f, 100.0f);
 		ptr->CameraPosition = { 0, 0, 1 };
 	}
 
@@ -99,7 +106,7 @@ bool MeshRenderer::Init()
 		auto ptr = cb->GetPtr<MaterialParameter>();
 		ptr->BaseColor = mat->BaseColor;
 		ptr->Shininess = mat->Shininess;
-		ptr->OutlineWidth = 0.004;
+		ptr->OutlineWidth = m_outlineWidth;
 
 		m_pMaterialCBs.push_back(cb);
 	}
@@ -207,6 +214,9 @@ void MeshRenderer::Draw()
 	}
 
 	// アウトラインの描画
+	if (m_outlineWidth <= 0)
+		return;
+
 	for (Mesh mesh : m_model.Meshes)
 	{
 		auto vbView = mesh.pVertexBuffer->View();
@@ -422,6 +432,11 @@ void MeshRenderer::UpdateCB()
 
 	auto cameraPos = camera->transform->position;
 	currentScene->CameraPosition = cameraPos;
+
+	auto targetPos = camera->GetFocusPosition();
+	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 20;
+	currentScene->LightView = XMMatrixLookAtRH(lightPos, targetPos, {0, 1, 0});
+	currentScene->LightProj = XMMatrixOrthographicRH(50, 50, 0.1f, 100.0f);
 }
 
 Bone* MeshRenderer::FindBone(std::string name)

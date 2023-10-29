@@ -89,6 +89,11 @@ void Animator::Stop()
 	m_currentAnimation = nullptr;
 }
 
+void Animator::SetSpeed(float speed)
+{
+	m_speed = speed;
+}
+
 Vec3 Animator::CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTime)
 {
 	int keyIndex[2] = { 0, 0 };

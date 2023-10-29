@@ -17,7 +17,7 @@ PipelineState::PipelineState()
 	desc.NumRenderTargets			= 1;											// 描画対象は1
 	desc.RTVFormats[0]				= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	desc.DSVFormat					= DXGI_FORMAT_D32_FLOAT;
-	desc.SampleDesc.Count			= 1;											// サンプラーは1
+	desc.SampleDesc.Count			= 4;											// サンプラーは1
 	desc.SampleDesc.Quality			= 0;
 }
 

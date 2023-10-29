@@ -15,6 +15,7 @@ public:
 	virtual bool Init();
 	virtual void CameraUpdate();
 	virtual void Update();
+	virtual void PhysicsUpdate();
 	virtual void Draw();
 	virtual void DrawAlpha();
 	virtual void DrawShadow();

@@ -3,6 +3,8 @@
 #include "ShadowMap.h"
 #include "Entity.h"
 #include "Camera.h"
+#include "CollisionManager.h"
+#include "Collider.h"
 
 Scene::Scene()
 {
@@ -10,6 +12,7 @@ Scene::Scene()
 
 Scene::~Scene()
 {
+	delete m_pCollisionManager;
 	delete m_pShadowMap;
 
 	for (auto entity : m_pEntities)
@@ -25,6 +28,9 @@ bool Scene::Init()
 
 	// シャドウマップの生成
 	m_pShadowMap = new ShadowMap();
+
+	// CollisionManagerの生成
+	m_pCollisionManager = new CollisionManager();
 
     return true;
 }
@@ -42,6 +48,15 @@ void Scene::Update()
 	{
 		entity->Update();
 	}
+
+	// 物理の更新
+	for (auto entity : m_pEntities)
+	{
+		entity->PhysicsUpdate();
+	}
+
+	// 衝突判定
+	m_pCollisionManager->Update();
 }
 
 void Scene::Draw()
@@ -91,3 +106,9 @@ ShadowMap* Scene::GetShadowMap()
 {
 	return m_pShadowMap;
 }
+
+CollisionManager* Scene::GetCollisionManager()
+{
+	return m_pCollisionManager;
+}
+

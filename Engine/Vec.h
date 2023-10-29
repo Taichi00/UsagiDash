@@ -4,6 +4,9 @@
 #include <string>
 #include <DirectXMath.h>
 
+#undef min
+#undef max
+
 class Vec2
 {
 public:
@@ -168,7 +171,7 @@ public:
 		Vec3 res;
 		res.x = v1.y * v2.z - v1.z * v2.y;
 		res.y = v1.z * v2.x - v1.x * v2.z;
-		res.z = v1.x * v2.y - v1.y + v2.z;
+		res.z = v1.x * v2.y - v1.y * v2.x;
 		return res;
 	}
 
@@ -180,6 +183,11 @@ public:
 	static Vec3 Scale(const Vec3& v, const float& x, const float& y, const float& z)
 	{
 		return Vec3(v.x * x, v.y * y, v.z * z);
+	}
+
+	static Vec3 Scale(const Vec3& v, const Vec3& scale)
+	{
+		return Scale(v, scale.x, scale.y, scale.z);
 	}
 
 	std::string getString() const

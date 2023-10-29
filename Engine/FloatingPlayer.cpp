@@ -1,4 +1,4 @@
-#include "Player.h"
+#include "FloatingPlayer.h"
 #include "Input.h"
 #include "Entity.h"
 #include "Animator.h"
@@ -6,48 +6,61 @@
 #include "Scene.h"
 #include "Rigidbody.h"
 
-Player::Player(PlayerProperty prop)
+FloatingPlayer::FloatingPlayer(FloatingPlayerProperty prop)
 {
 	m_speed = prop.Speed;
 	m_acceleration = prop.Acceleration;
 }
 
-Player::~Player()
+FloatingPlayer::~FloatingPlayer()
 {
 }
 
-bool Player::Init()
+bool FloatingPlayer::Init()
 {
 	m_pAnimator = m_pEntity->GetComponent<Animator>();
 	m_pRigidbody = m_pEntity->GetComponent<Rigidbody>();
 	return true;
 }
 
-void Player::Update()
+void FloatingPlayer::Update()
 {
 	Move();
 	Animate();
 	_m_isRunning = m_isRunning;
 }
 
-void Player::Move()
+void FloatingPlayer::Move()
 {
 	auto camera = m_pEntity->GetScene()->GetMainCamera();
 	auto cameraRot = camera->transform->rotation;
 	auto forward = Vec3::Scale(cameraRot * Vec3(0, 0, -1), 1, 0, 1).normalized();
 	auto left = Vec3::Scale(cameraRot * Vec3(-1, 0, 0), 1, 0, 1).normalized();
+	auto up = Vec3(0, 1, 0);
 
-	auto velocity = &(m_pRigidbody->velocity);
-	
 	Vec3 v = Vec3::Zero();
 
-	if (Input::GetKey(DIK_UP))
+	if (Input::GetKey(DIK_LSHIFT))
 	{
-		v += forward;
+		if (Input::GetKey(DIK_UP))
+		{
+			v += up;
+		}
+		else if (Input::GetKey(DIK_DOWN))
+		{
+			v += -up;
+		}
 	}
-	else if (Input::GetKey(DIK_DOWN))
+	else
 	{
-		v += -forward;
+		if (Input::GetKey(DIK_UP))
+		{
+			v += forward;
+		}
+		else if (Input::GetKey(DIK_DOWN))
+		{
+			v += -forward;
+		}
 	}
 
 	if (Input::GetKey(DIK_LEFT))
@@ -58,12 +71,12 @@ void Player::Move()
 	{
 		v += -left;
 	}
-	
+
 	if (v == Vec3::Zero())
 	{
 		m_isRunning = false;
-		(*velocity).x *= 0.9;
-		(*velocity).z *= 0.9;
+		m_pRigidbody->velocity.x *= 0.9;
+		m_pRigidbody->velocity.z *= 0.9;
 	}
 	else
 	{
@@ -71,27 +84,20 @@ void Player::Move()
 	}
 
 	v = v.normalized();
-	*velocity += v * m_acceleration;
-	
-	if (Vec3::Scale(*velocity, 1, 0, 1).length() > m_speed)
-	{
-		auto xz = Vec3::Scale(*velocity, 1, 0, 1).normalized() * m_speed;
-		(*velocity).x = xz.x;
-		(*velocity).z = xz.z;
-	}
-	
-	//transform->position += m_velocity;
+	m_pRigidbody->velocity += v * m_acceleration;
 
-	// ƒWƒƒƒ“ƒv
+	if (Vec3::Scale(m_pRigidbody->velocity, 1, 0, 1).length() > m_speed)
+	{
+		auto xz = Vec3::Scale(m_pRigidbody->velocity, 1, 0, 1).normalized() * m_speed;
+		m_pRigidbody->velocity.x = xz.x;
+		m_pRigidbody->velocity.z = xz.z;
+	}
+
+	//transform->position += m_pRigidbody->velocity;
+
 	if (Input::GetKeyDown(DIK_SPACE))
 	{
-		m_jumpFrame = 1;
-		(*velocity).y = 0;
-	}
-	if (Input::GetKey(DIK_SPACE) && m_jumpFrame <= m_jumpFrameMax)
-	{
-		(*velocity).y += 0.09 * std::pow((m_jumpFrameMax - m_jumpFrame) / (float)m_jumpFrameMax, 2);
-		m_jumpFrame++;
+		m_pRigidbody->velocity.y += 0.3;
 	}
 
 	// ‰ñ“]
@@ -104,7 +110,7 @@ void Player::Move()
 	transform->rotation = quat;
 }
 
-void Player::Animate()
+void FloatingPlayer::Animate()
 {
 	if (m_pAnimator == nullptr)
 	{
@@ -119,11 +125,4 @@ void Player::Animate()
 	{
 		m_pAnimator->Play("Idle", 2.0);
 	}
-
-	if (m_isRunning)
-	{
-		auto speed = m_pRigidbody->velocity.length() * 6 + 1.0;
-		m_pAnimator->SetSpeed(speed);
-	}
-	
 }

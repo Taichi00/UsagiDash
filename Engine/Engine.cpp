@@ -552,6 +552,7 @@ bool Engine::CreateMSAA()
 	auto format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	auto width = m_FrameBufferWidth;
 	auto height = m_FrameBufferHeight;
+	m_sampleCount = 4;
 
 	// MSAA 描画先バッファ（カラー）の準備
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS levels{};

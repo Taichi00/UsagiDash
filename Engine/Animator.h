@@ -30,6 +30,7 @@ public:
 	void RegisterAnimations(std::vector<Animation*> animations);
 	void Play(std::string name, float speed = 1.0f);
 	void Stop();
+	void SetSpeed(float speed);
 
 private:
 	Vec3 CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTime);

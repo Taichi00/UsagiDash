@@ -35,6 +35,7 @@ struct VSOutput
 {
     float4 svpos : SV_POSITION;
     float4 worldPos : WORLD_POSITION;
+    float4 viewPos : VIEW_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
     float4 color : COLOR;
@@ -112,6 +113,7 @@ VSOutput main(VSInput input)
     
     output.svpos = projPos;
     output.worldPos = worldPos;
+    output.viewPos = viewPos;
     output.posSM = GetShadowMapPosition(worldPos, input);
     output.normal = worldNormal;
     output.color = input.color;

@@ -30,6 +30,6 @@ private:
 
 	Vec3 m_angleVelocity;
 	Vec3 m_angle;
-	float m_distance = 10;
+	float m_distance = 20;
 
 };

@@ -5,5 +5,5 @@ struct Model;
 class SphereMesh
 {
 public:
-	static Model Load(int sliceNum, int stackNum);
+	static Model Load(float radius, float r, float g, float b);
 };
