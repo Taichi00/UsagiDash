@@ -15,6 +15,10 @@ bool Component::Init()
 	return true;
 }
 
+void Component::BeforeCameraUpdate()
+{
+}
+
 void Component::CameraUpdate()
 {
 }
@@ -36,6 +40,18 @@ void Component::DrawAlpha()
 }
 
 void Component::DrawShadow()
+{
+}
+
+void Component::DrawDepth()
+{
+}
+
+void Component::DrawGBuffer()
+{
+}
+
+void Component::DrawOutline()
 {
 }
 

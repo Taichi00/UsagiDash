@@ -4,6 +4,7 @@
 #include "SharedStruct.h"
 
 class SphereCollider;
+class CapsuleCollider;
 
 struct MeshColliderProperty
 {
@@ -19,9 +20,13 @@ public:
 	bool Init();
 
 	bool Intersects(SphereCollider* sphere);
+	bool Intersects(CapsuleCollider* capsule);
 
 private:
-	Vec3 ClosestPointOnLineSegment(Vec3 a, Vec3 b, Vec3 point);
+	bool SphereIntersectsMesh(
+		const Vec3& center, const float radius,
+		const CollisionMesh& mesh, const uint32_t* indices,
+		Vec3& normal, float& distance);
 
 public:
 	CollisionModel model;

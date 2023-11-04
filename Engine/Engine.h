@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 #include <d3d12.h>
 #include <dxgi.h>
 #include <dxgi1_4.h>
@@ -12,6 +13,30 @@
 class Window;
 class DescriptorHeap;
 class DescriptorHandle;
+
+struct GBuffer
+{
+	ComPtr<ID3D12Resource> pPositionTex = nullptr;
+	ComPtr<ID3D12Resource> pNormalTex = nullptr;
+	ComPtr<ID3D12Resource> pAlbedoTex = nullptr;
+	ComPtr<ID3D12Resource> pDepthTex = nullptr;
+	ComPtr<ID3D12Resource> pLightingTex = nullptr;
+	ComPtr<ID3D12Resource> pPostProcessTex = nullptr;
+
+	std::shared_ptr<DescriptorHandle> pPositionSrvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pNormalSrvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pAlbedoSrvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pDepthSrvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pLightingSrvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pPostProcessSrvHandle = nullptr;
+
+	std::shared_ptr<DescriptorHandle> pPositionRtvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pNormalRtvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pAlbedoRtvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pDepthRtvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pLightingRtvHandle = nullptr;
+	std::shared_ptr<DescriptorHandle> pPostProcessRtvHandle = nullptr;
+};
 
 class Engine
 {
@@ -29,6 +54,14 @@ public:
 	void BeginRenderMSAA();
 	void EndRenderMSAA();
 
+	void BeginDeferredRender();
+	void DepthPrePath();
+	void GBufferPath();
+	void LightingPath();
+	void PostProcessPath();
+	void FXAAPath();
+	void EndDeferredRender();
+
 public: // 外からアクセスしたいのでGetterとして公開するもの
 	ID3D12Device6* Device();
 	ID3D12GraphicsCommandList* CommandList();
@@ -36,12 +69,14 @@ public: // 外からアクセスしたいのでGetterとして公開するもの
 	ID3D12CommandQueue* Queue();
 	DescriptorHeap* RtvHeap();
 	DescriptorHeap* DsvHeap();
+	DescriptorHeap* GBufferHeap();
+	GBuffer* GetGBuffer();
 	UINT CurrentBackBufferIndex();
 
 	float AspectRate();
 
 public:
-	ID3D12Resource* UploadTexture(
+	bool UploadTexture(
 		ID3D12Resource* textureData, std::vector<D3D12_SUBRESOURCE_DATA> subresources);
 
 private: // DirectX12初期化に使う関数たち
@@ -64,6 +99,7 @@ private: // 描画に使うDirectX12のオブジェクトたち
 	ComPtr<ID3D12CommandQueue> m_pQueue = nullptr;	// コマンドキュー
 	ComPtr<IDXGISwapChain3> m_pSwapChain = nullptr;	// スワップチェイン
 	ComPtr<ID3D12CommandAllocator> m_pAllocator[FRAME_BUFFER_COUNT] = { nullptr };	// コマンドアロケーター
+	ComPtr<ID3D12CommandAllocator> m_pOneshotAllocator = nullptr;
 	ComPtr<ID3D12GraphicsCommandList> m_pCommandList = nullptr;	// コマンドリスト
 	HANDLE m_fenceEvent = nullptr;					// フェンスで使うイベント
 	ComPtr<ID3D12Fence> m_pFence = nullptr;			// フェンス
@@ -75,6 +111,7 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	bool CreateRenderTarget();	// レンダーターゲットを生成
 	bool CreateDepthStencil();	// 深度ステンシルバッファを生成
 	bool CreateMSAA();
+	bool CreateGBuffer();		// ディファードレンダリング用のG-Bufferを生成
 
 	UINT m_RtvDescriptorSize = 0;												// レンダーターゲットビューのディスクリプタサイズ
 	std::shared_ptr<DescriptorHeap> m_pRtvHeap = nullptr;						// レンダーターゲットのディスクリプタヒープ
@@ -98,6 +135,9 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	std::shared_ptr<DescriptorHandle> m_pShadowTexHandle = nullptr;
 	ComPtr<ID3D12Resource> m_pShadowTex = nullptr;
 	ComPtr<ID3D12Resource> m_pShadowDepth = nullptr;
+
+	GBuffer m_gbuffer;
+	std::shared_ptr<DescriptorHeap> m_pGBufferHeap = nullptr;
 
 private: // 描画ループで使用するもの
 	ID3D12Resource* m_currentRenderTarget = nullptr;	// 現在フレームのレンダーターゲットを一時的に保存しておく変数

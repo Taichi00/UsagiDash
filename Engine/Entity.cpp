@@ -51,6 +51,14 @@ bool Entity::Init()
 	return true;
 }
 
+void Entity::BeforeCameraUpdate()
+{
+	for (auto component : m_components)
+	{
+		component->BeforeCameraUpdate();
+	}
+}
+
 void Entity::CameraUpdate()
 {
 	for (auto component : m_components)
@@ -72,6 +80,30 @@ void Entity::PhysicsUpdate()
 	for (auto component : m_components)
 	{
 		component->PhysicsUpdate();
+	}
+}
+
+void Entity::DrawDepth()
+{
+	for (auto component : m_components)
+	{
+		component->DrawDepth();
+	}
+}
+
+void Entity::DrawGBuffer()
+{
+	for (auto component : m_components)
+	{
+		component->DrawGBuffer();
+	}
+}
+
+void Entity::DrawOutline()
+{
+	for (auto component : m_components)
+	{
+		component->DrawOutline();
 	}
 }
 
@@ -98,4 +130,3 @@ void Entity::DrawShadow()
 		component->DrawShadow();
 	}
 }
-

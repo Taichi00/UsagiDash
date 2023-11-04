@@ -57,6 +57,11 @@ Scene* Game::LoadScene(Scene* scene)
 	return scene;
 }
 
+DirectX::XMVECTOR Game::GetSWindowSize()
+{
+	return { (float)m_windowWidth, (float)m_windowHeight };
+}
+
 void Game::Init()
 {
 	// ウィンドウの生成

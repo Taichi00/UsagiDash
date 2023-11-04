@@ -6,6 +6,7 @@
 #include "CollisionManager.h"
 #include "FloorCollider.h"
 #include "MeshCollider.h"
+#include "CapsuleCollider.h"
 #include <typeinfo>
 
 bool Collider::Init()
@@ -50,6 +51,10 @@ bool Collider::Intersects(Collider* collider)
     {
         return Intersects((SphereCollider*)collider);
     }
+    else if (typeid(*collider) == typeid(CapsuleCollider))
+    {
+        return Intersects((CapsuleCollider*)collider);
+    }
     else if (typeid(*collider) == typeid(FloorCollider))
     {
         return Intersects((FloorCollider*)collider);
@@ -67,6 +72,11 @@ bool Collider::Intersects(SphereCollider* sphere)
     return false;
 }
 
+bool Collider::Intersects(CapsuleCollider* sphere)
+{
+    return false;
+}
+
 bool Collider::Intersects(FloorCollider* floor)
 {
     return false;
@@ -76,3 +86,11 @@ bool Collider::Intersects(MeshCollider* collider)
 {
     return false;
 }
+
+Vec3 Collider::ClosestPointOnLineSegment(const Vec3& a, const Vec3& b, const Vec3& point)
+{
+    Vec3 ab = b - a;
+    float t = Vec3::dot(point - a, ab) / Vec3::dot(ab, ab);
+    return a + ab * (std::min)((std::max)(t, 0.0f), 1.0f);
+}
+

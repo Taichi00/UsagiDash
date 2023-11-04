@@ -26,13 +26,17 @@ public:
 	void RegisterScene(Scene* scene);
 	Scene* GetScene();
 
-	virtual bool Init();
-	virtual void CameraUpdate();
-	virtual void Update();
-	virtual void PhysicsUpdate();
-	virtual void DrawShadow();
-	virtual void Draw();
-	virtual void DrawAlpha();
+	bool Init();
+	void BeforeCameraUpdate();
+	void CameraUpdate();
+	void Update();
+	void PhysicsUpdate();
+	void DrawShadow();
+	void Draw();
+	void DrawAlpha();
+	void DrawDepth();
+	void DrawGBuffer();
+	void DrawOutline();
 
 public:
 	Transform* transform;

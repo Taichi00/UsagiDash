@@ -4,6 +4,7 @@
 #include "Entity.h"
 #include "Scene.h"
 #include "CollisionManager.h"
+#include <math.h>
 
 Rigidbody::Rigidbody(RigidbodyProperty prop)
 {
@@ -74,6 +75,13 @@ void Rigidbody::Resolve()
 				}
 			}*/
 			//B = 0;
+			
+			// ’n–Ê‚È‚ç
+			if (Vec3::Angle(normal, Vec3(0, 1, 0)) < 0.5)
+			{
+				normal = Vec3::Scale(normal, 0, 1, 0);
+				tangent = -(velocity - normal * Vec3::dot(normal, velocity)).normalized();
+			}
 		}
 		else
 		{
@@ -86,7 +94,16 @@ void Rigidbody::Resolve()
 			B = std::min(friction, hitFriction) * J;
 
 			k = 0.3;
+
+			// ’n–Ê‚È‚ç
+			if (Vec3::Angle(normal, Vec3(0, 1, 0)) < 0.5)
+			{
+				normal = Vec3::Scale(normal, 0, 1, 0);
+				tangent = -(v - normal * Vec3::dot(normal, v)).normalized();
+			}
 		}
+
+		
 		
 		velocity += normal * J / mass;
 		velocity += tangent * B / mass;

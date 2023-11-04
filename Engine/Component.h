@@ -13,12 +13,16 @@ public:
 	~Component();
 
 	virtual bool Init();
+	virtual void BeforeCameraUpdate();
 	virtual void CameraUpdate();
 	virtual void Update();
 	virtual void PhysicsUpdate();
 	virtual void Draw();
 	virtual void DrawAlpha();
 	virtual void DrawShadow();
+	virtual void DrawDepth();
+	virtual void DrawGBuffer();
+	virtual void DrawOutline();
 
 	void RegisterEntity(Entity* entity);
 

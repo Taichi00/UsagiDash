@@ -18,7 +18,7 @@ public:
 	~GameCamera();
 
 	bool Init();
-	void Update();
+	void BeforeCameraUpdate();
 
 private:
 	void Move();

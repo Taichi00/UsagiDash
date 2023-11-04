@@ -31,6 +31,10 @@ public:
 	void DrawAlpha() override;
 	void DrawShadow() override;
 
+	void DrawDepth() override;
+	void DrawGBuffer() override;
+	void DrawOutline() override;
+
 private:
 	bool PreparePSO();
 
@@ -53,6 +57,8 @@ private:
 	PipelineState* m_pAlphaPSO;
 	PipelineState* m_pOutlinePSO;
 	PipelineState* m_pShadowPSO;
+	PipelineState* m_pDepthPSO;
+	PipelineState* m_pGBufferPSO;
 
 	DescriptorHeap* m_pDescriptorHeap;
 

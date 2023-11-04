@@ -70,6 +70,11 @@ bool Engine::Init(Window* window)
 		printf("MSAAリソースの生成に失敗\n");
 	}
 
+	if (!CreateGBuffer())
+	{
+		printf("G-Bufferの生成に失敗\n");
+	}
+
 	printf("描画エンジンの初期化に成功\n");
 	return true;
 }
@@ -97,7 +102,7 @@ void Engine::BeginRender()
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
 
 	// レンダーターゲットをクリア
-	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const float clearColor[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 
 	// 深度ステンシルビューをクリア
@@ -213,6 +218,192 @@ void Engine::EndRenderMSAA()
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
+void Engine::BeginDeferredRender()
+{
+	// ビューポートとシザー矩形を設定
+	m_pCommandList->RSSetViewports(1, &m_Viewport);
+	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
+
+	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+
+	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	// レンダーターゲットが使用可能になるまで待つ
+	D3D12_RESOURCE_BARRIER barriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_currentRenderTarget,
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pPositionTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pNormalTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pAlbedoTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pDepthTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pLightingTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pPostProcessTex.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+	};
+	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+	// レンダーターゲットをクリア
+	const float clearColor[] = { 0.9f, 0.9f, 0.9f, 1.0f };
+	const float zeroFloat[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	const float zeroAlbedo[] = { 0, 0, 0, 1 };	// Aはアウトラインマスクなので１で初期化
+	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pPositionRtvHandle->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pNormalRtvHandle->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pAlbedoRtvHandle->HandleCPU(), zeroAlbedo, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pDepthRtvHandle->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pLightingRtvHandle->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_gbuffer.pPostProcessRtvHandle->HandleCPU(), zeroFloat, 0, nullptr);
+
+	// 深度ステンシルビューをクリア
+	m_pCommandList->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+}
+
+void Engine::DepthPrePath()
+{
+	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+
+	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	// レンダーターゲットを設定
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
+}
+
+void Engine::GBufferPath()
+{
+	// レンダーターゲットを設定
+	D3D12_CPU_DESCRIPTOR_HANDLE handleRtvs[] = {
+		m_gbuffer.pPositionRtvHandle->HandleCPU(),
+		m_gbuffer.pNormalRtvHandle->HandleCPU(),
+		m_gbuffer.pAlbedoRtvHandle->HandleCPU(),
+		m_gbuffer.pDepthRtvHandle->HandleCPU()
+	};
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	m_pCommandList->OMSetRenderTargets(_countof(handleRtvs), handleRtvs, FALSE, &currentDsvHandle);
+}
+
+void Engine::LightingPath()
+{
+	// レンダーターゲットに書き込み終わるまで待つ
+	D3D12_RESOURCE_BARRIER barriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pPositionTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pNormalTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pAlbedoTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pDepthTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+	};
+	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_gbuffer.pLightingRtvHandle->HandleCPU();
+
+	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	// レンダーターゲットを設定
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
+}
+
+void Engine::PostProcessPath()
+{
+	D3D12_RESOURCE_BARRIER barriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pLightingTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+	};
+	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
+	
+	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_gbuffer.pPostProcessRtvHandle->HandleCPU();
+
+	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	// レンダーターゲットを設定
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
+}
+
+void Engine::FXAAPath()
+{
+	D3D12_RESOURCE_BARRIER barriers[] = {
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_gbuffer.pPostProcessTex.Get(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+	};
+	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
+
+	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+
+	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
+	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+
+	// レンダーターゲットを設定
+	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
+}
+
+void Engine::EndDeferredRender()
+{
+	// レンダーターゲットに書き込み終わるまで待つ
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_currentRenderTarget,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT);
+	m_pCommandList->ResourceBarrier(1, &barrier);
+
+	// コマンドの記録を終了
+	m_pCommandList->Close();
+
+	// コマンドを実行
+	ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
+	m_pQueue->ExecuteCommandLists(1, ppCmdLists);
+
+	// スワップチェーンを切り替え
+	m_pSwapChain->Present(1, 0);
+
+	// 描画完了を待つ
+	WaitRender();
+
+	// バックバッファ番号更新
+	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+}
+
 ID3D12Device6* Engine::Device()
 {
 	return m_pDevice.Get();
@@ -242,6 +433,10 @@ DescriptorHeap* Engine::DsvHeap()
 {
 	return m_pDsvHeap.get();
 }
+DescriptorHeap* Engine::GBufferHeap()
+{
+	return m_pGBufferHeap.get();
+}
 
 UINT Engine::CurrentBackBufferIndex()
 {
@@ -253,7 +448,7 @@ float Engine::AspectRate()
 	return m_pWindow->AspectRate();
 }
 
-ID3D12Resource* Engine::UploadTexture(
+bool Engine::UploadTexture(
 	ID3D12Resource* textureData, std::vector<D3D12_SUBRESOURCE_DATA> subresources)
 {
 	ComPtr<ID3D12Resource> staging;
@@ -272,7 +467,7 @@ ID3D12Resource* Engine::UploadTexture(
 	);
 	if (FAILED(hr))
 	{
-		return nullptr;
+		return false;
 	}
 
 	// 転送処理
@@ -280,13 +475,13 @@ ID3D12Resource* Engine::UploadTexture(
 	hr = m_pDevice->CreateCommandList(
 		0, 
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		m_pAllocator[m_CurrentBackBufferIndex].Get(),
+		m_pOneshotAllocator.Get(),
 		nullptr, 
 		IID_PPV_ARGS(&command)
 	);
 	if (FAILED(hr))
 	{
-		return nullptr;
+		return false;
 	}
 	
 	UpdateSubresources(
@@ -313,7 +508,9 @@ ID3D12Resource* Engine::UploadTexture(
 
 	WaitRender();
 
-	return staging.Get();
+	m_pOneshotAllocator->Reset();
+
+	return true;
 }
 
 bool Engine::CreateDevice()
@@ -406,6 +603,16 @@ bool Engine::CreateCommandList()
 		return false;
 	}
 
+	hr = m_pDevice->CreateCommandAllocator(
+		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		IID_PPV_ARGS(&m_pOneshotAllocator)
+	);
+
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
 	// コマンドリストの生成
 	hr = m_pDevice->CreateCommandList(
 		0,
@@ -469,7 +676,7 @@ bool Engine::CreateRenderTarget()
 {
 	// RTV用のディスクリプタヒープを作成する
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors	= FRAME_BUFFER_COUNT + 2;
+	desc.NumDescriptors = 100; //FRAME_BUFFER_COUNT + 2;
 	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
@@ -502,7 +709,7 @@ bool Engine::CreateDepthStencil()
 	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	
 	m_pDsvHeap = std::make_shared<DescriptorHeap>(desc);
-	if (!m_pRtvHeap->IsValid())
+	if (!m_pDsvHeap->IsValid())
 	{
 		return false;
 	}
@@ -632,6 +839,173 @@ bool Engine::CreateMSAA()
 	return true;
 }
 
+bool Engine::CreateGBuffer()
+{
+	auto width = m_FrameBufferWidth;
+	auto height = m_FrameBufferHeight;
+
+	// リソースの生成
+	auto float4Desc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		width, height,
+		1, 1,
+		1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	auto colorDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+		DXGI_FORMAT_R16G16B16A16_UNORM,
+		width, height,
+		1, 1,
+		1, 0,
+		D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+	);
+
+	D3D12_CLEAR_VALUE clearZero{}, clearBlack{};
+	clearZero.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	clearBlack.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
+
+	auto device = g_Engine->Device();
+	const auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	auto hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&float4Desc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearZero,
+		IID_PPV_ARGS(m_gbuffer.pPositionTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&float4Desc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearZero,
+		IID_PPV_ARGS(m_gbuffer.pNormalTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&colorDesc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearBlack,
+		IID_PPV_ARGS(m_gbuffer.pAlbedoTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&float4Desc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearZero,
+		IID_PPV_ARGS(m_gbuffer.pDepthTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&colorDesc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearBlack,
+		IID_PPV_ARGS(m_gbuffer.pLightingTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	hr = device->CreateCommittedResource(
+		&heapProps,
+		D3D12_HEAP_FLAG_NONE,
+		&colorDesc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&clearBlack,
+		IID_PPV_ARGS(m_gbuffer.pPostProcessTex.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(hr))
+		return false;
+
+	m_gbuffer.pPositionTex->SetName(L"GBufferPosition");
+	m_gbuffer.pNormalTex->SetName(L"GBufferNormal");
+	m_gbuffer.pAlbedoTex->SetName(L"GBufferAlbedo");
+	m_gbuffer.pDepthTex->SetName(L"GBufferDepth");
+	m_gbuffer.pLightingTex->SetName(L"GBufferLighting");
+	m_gbuffer.pPostProcessTex->SetName(L"GBufferPostProcess");
+
+	// SRV用のディスクリプタヒープを作成
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
+	srvHeapDesc.NodeMask = 1;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.NumDescriptors = 6 + 1 + 1;	// GBuffer * 6 + ShadowMap + Skybox
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	m_pGBufferHeap = std::make_shared<DescriptorHeap>(srvHeapDesc);
+	if (!m_pGBufferHeap->IsValid())
+		return false;
+
+	// SRV生成
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDescFloat4{};
+	srvDescFloat4.Format = float4Desc.Format;
+	srvDescFloat4.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDescFloat4.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDescFloat4.Texture2D.MipLevels = float4Desc.MipLevels;
+	srvDescFloat4.Texture2D.MostDetailedMip = 0;
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDescColor{};
+	srvDescColor.Format = colorDesc.Format;
+	srvDescColor.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDescColor.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDescColor.Texture2D.MipLevels = colorDesc.MipLevels;
+	srvDescColor.Texture2D.MostDetailedMip = 0;
+
+	m_gbuffer.pPositionSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+	m_gbuffer.pNormalSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+	m_gbuffer.pAlbedoSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+	m_gbuffer.pDepthSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+	m_gbuffer.pLightingSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+	m_gbuffer.pPostProcessSrvHandle = std::make_shared<DescriptorHandle>(m_pGBufferHeap->Alloc());
+
+	device->CreateShaderResourceView(m_gbuffer.pPositionTex.Get(), &srvDescFloat4, m_gbuffer.pPositionSrvHandle->HandleCPU());
+	device->CreateShaderResourceView(m_gbuffer.pNormalTex.Get(), &srvDescFloat4, m_gbuffer.pNormalSrvHandle->HandleCPU());
+	device->CreateShaderResourceView(m_gbuffer.pAlbedoTex.Get(), &srvDescColor, m_gbuffer.pAlbedoSrvHandle->HandleCPU());
+	device->CreateShaderResourceView(m_gbuffer.pDepthTex.Get(), &srvDescFloat4, m_gbuffer.pDepthSrvHandle->HandleCPU());
+	device->CreateShaderResourceView(m_gbuffer.pLightingTex.Get(), &srvDescColor, m_gbuffer.pLightingSrvHandle->HandleCPU());
+	device->CreateShaderResourceView(m_gbuffer.pPostProcessTex.Get(), &srvDescColor, m_gbuffer.pPostProcessSrvHandle->HandleCPU());
+
+	// RTV生成
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDescFloat4{};
+	rtvDescFloat4.Format = srvDescFloat4.Format;
+	rtvDescFloat4.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDescColor{};
+	rtvDescColor.Format = srvDescColor.Format;
+	rtvDescColor.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+
+	m_gbuffer.pPositionRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+	m_gbuffer.pNormalRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+	m_gbuffer.pAlbedoRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+	m_gbuffer.pDepthRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+	m_gbuffer.pLightingRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+	m_gbuffer.pPostProcessRtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+
+	device->CreateRenderTargetView(m_gbuffer.pPositionTex.Get(), &rtvDescFloat4, m_gbuffer.pPositionRtvHandle->HandleCPU());
+	device->CreateRenderTargetView(m_gbuffer.pNormalTex.Get(), &rtvDescFloat4, m_gbuffer.pNormalRtvHandle->HandleCPU());
+	device->CreateRenderTargetView(m_gbuffer.pAlbedoTex.Get(), &rtvDescColor, m_gbuffer.pAlbedoRtvHandle->HandleCPU());
+	device->CreateRenderTargetView(m_gbuffer.pDepthTex.Get(), &rtvDescFloat4, m_gbuffer.pDepthRtvHandle->HandleCPU());
+	device->CreateRenderTargetView(m_gbuffer.pLightingTex.Get(), &rtvDescColor, m_gbuffer.pLightingRtvHandle->HandleCPU());
+	device->CreateRenderTargetView(m_gbuffer.pPostProcessTex.Get(), &rtvDescColor, m_gbuffer.pPostProcessRtvHandle->HandleCPU());
+	
+	return true;
+}
+
 void Engine::WaitRender()
 {
 	// 描画終了待ち
@@ -655,6 +1029,11 @@ void Engine::WaitRender()
 			return;
 		}
 	}
+}
+
+GBuffer* Engine::GetGBuffer()
+{
+	return &m_gbuffer;
 }
 
 

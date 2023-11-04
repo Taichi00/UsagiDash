@@ -18,6 +18,7 @@ public:
 	void Create();	// パイプラインステートを生成
 
 	ID3D12PipelineState* Get();
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC* GetDesc();
 
 private:
 	bool m_IsValid = false;		// 生成に成功したかどうか

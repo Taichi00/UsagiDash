@@ -190,6 +190,11 @@ public:
 		return Scale(v, scale.x, scale.y, scale.z);
 	}
 
+	static float Angle(const Vec3& v1, const Vec3& v2)
+	{
+		return acos(dot(v1.normalized(), v2.normalized()));
+	}
+
 	std::string getString() const
 	{
 		std::string sx = std::to_string(x);

@@ -5,6 +5,7 @@
 
 class Rigidbody;
 class SphereCollider;
+class CapsuleCollider;
 class FloorCollider;
 class MeshCollider;
 
@@ -20,8 +21,11 @@ public:
 
 	bool Intersects(Collider* collider);
 	virtual bool Intersects(SphereCollider* sphere);
+	virtual bool Intersects(CapsuleCollider* sphere);
 	virtual bool Intersects(FloorCollider* floor);
 	virtual bool Intersects(MeshCollider* collider);
+
+	static Vec3 ClosestPointOnLineSegment(const Vec3& a, const Vec3& b, const Vec3& point);
 
 public:
 	Vec3 offset;

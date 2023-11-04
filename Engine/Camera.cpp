@@ -53,7 +53,7 @@ bool Camera::Init()
     m_upDir = XMFLOAT3(0, 1, 0);
     m_fov = 60;
     m_near = 0.3f;
-    m_far = 100000;
+    m_far = 1000;
 
     m_mtxView = XMMatrixIdentity();
     m_mtxProj = XMMatrixIdentity();

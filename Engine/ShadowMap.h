@@ -14,6 +14,8 @@ public:
 	void BeginRender();
 	void EndRender();
 
+
+
 	ID3D12Resource* Resource();
 
 private:

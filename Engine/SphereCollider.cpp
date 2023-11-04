@@ -3,6 +3,7 @@
 #include "Rigidbody.h"
 #include "FloorCollider.h"
 #include "MeshCollider.h"
+#include "CapsuleCollider.h"
 
 SphereCollider::SphereCollider(SphereColliderProperty prop)
 {
@@ -46,6 +47,11 @@ bool SphereCollider::Intersects(SphereCollider* sphere)
 	}
 
 	return false;
+}
+
+bool SphereCollider::Intersects(CapsuleCollider* capsule)
+{
+	return capsule->Intersects(this);
 }
 
 bool SphereCollider::Intersects(FloorCollider* floor)

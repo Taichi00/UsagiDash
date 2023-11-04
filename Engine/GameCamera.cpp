@@ -19,7 +19,7 @@ bool GameCamera::Init()
 	return true;
 }
 
-void GameCamera::Update()
+void GameCamera::BeforeCameraUpdate()
 {
 	Move();
 }

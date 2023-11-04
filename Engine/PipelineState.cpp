@@ -9,7 +9,7 @@ PipelineState::PipelineState()
 {
 	// パイプラインステートの設定
 	desc.RasterizerState			= CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);		// ラスタライザーはデフォルト
-	desc.RasterizerState.CullMode	= D3D12_CULL_MODE_NONE;						// カリング
+	desc.RasterizerState.CullMode	= D3D12_CULL_MODE_NONE;							// カリング
 	desc.BlendState					= CD3DX12_BLEND_DESC(D3D12_DEFAULT);			// ブレンドステートもデフォルト
 	desc.DepthStencilState			= CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);	// 深度ステンシルはデフォルトを使う
 	desc.SampleMask					= UINT_MAX;
@@ -17,7 +17,7 @@ PipelineState::PipelineState()
 	desc.NumRenderTargets			= 1;											// 描画対象は1
 	desc.RTVFormats[0]				= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	desc.DSVFormat					= DXGI_FORMAT_D32_FLOAT;
-	desc.SampleDesc.Count			= 4;											// サンプラーは1
+	desc.SampleDesc.Count			= 1;											// サンプラーは1
 	desc.SampleDesc.Quality			= 0;
 }
 
@@ -98,6 +98,11 @@ void PipelineState::Create()
 ID3D12PipelineState* PipelineState::Get()
 {
 	return m_pPipelineState.Get();
+}
+
+D3D12_GRAPHICS_PIPELINE_STATE_DESC* PipelineState::GetDesc()
+{
+	return &desc;
 }
 
 

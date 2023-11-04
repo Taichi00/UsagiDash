@@ -46,6 +46,7 @@ struct alignas(256) TransformParameter
 
 struct alignas(256) SceneParameter
 {
+	//XMVECTOR ScreenSize;
 	XMMATRIX LightView;
 	XMMATRIX LightProj;
 	XMVECTOR LightColor;

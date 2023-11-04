@@ -41,7 +41,7 @@ float4 main(VSOutput input) : SV_TARGET
     }
     
     float outlinePower = 1 - (dot(normalize(input.normal), LightDir) * 0.5 + 0.5);
-    outlinePower = lerp(0.2, 0.9, inverseLerp(0.6, 1, outlinePower));
+    outlinePower = lerp(0.1, 0.5, inverseLerp(0.6, 1, outlinePower));
     float3 outlineColor = diffuse.rgb * outlinePower;
     
     float4 result = float4(outlineColor, 1.0f);

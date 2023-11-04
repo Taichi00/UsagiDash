@@ -22,6 +22,8 @@ public:
 	void SetWindowTitle(std::wstring title);
 
 	Scene* LoadScene(Scene* scene);
+
+	DirectX::XMVECTOR GetSWindowSize();
 	
 	/*DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetProjMatrix();*/

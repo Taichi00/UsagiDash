@@ -4,18 +4,19 @@
 
 class FloorCollider;
 class MeshCollider;
-class CapsuleCollider;
+class SphereCollider;
 
-struct SphereColliderProperty
+struct CapsuleColliderProperty
 {
 	float Radius;
+	float Height;
 };
 
-class SphereCollider : public Collider
+class CapsuleCollider : public Collider
 {
 public:
-	SphereCollider(SphereColliderProperty prop);
-	~SphereCollider();
+	CapsuleCollider(CapsuleColliderProperty prop);
+	~CapsuleCollider();
 
 	bool Init();
 
@@ -26,4 +27,5 @@ public:
 
 public:
 	float radius;
+	float height;
 };

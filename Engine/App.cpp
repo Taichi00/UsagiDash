@@ -5,6 +5,7 @@
 App::App()
 {
 	SetWindowSize(1280, 720);
+	//SetWindowSize(1920, 1080);
 	SetWindowTitle(L"DirectX12 Game");
 }
 

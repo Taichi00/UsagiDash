@@ -127,6 +127,10 @@ bool Texture2D::Load(std::wstring& path)
 	{
 		hr = LoadFromTGAFile(path.c_str(), &meta, image);
 	}
+	else if (ext == L"dds")
+	{
+		hr = LoadFromDDSFile(path.c_str(), DDS_FLAGS_NONE, &meta, image);
+	}
 	if (FAILED(hr))
 	{
 		return false;
@@ -141,8 +145,8 @@ bool Texture2D::Load(std::wstring& path)
 		static_cast<UINT16>(meta.mipLevels)
 	);
 
-	return CreateResource(desc, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
-	//return CreateResource(&image, meta);
+	//return CreateResource(desc, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
+	return CreateResource(&image, meta);
 }
 
 bool Texture2D::Load(const void* pSource, size_t size)
@@ -165,7 +169,7 @@ bool Texture2D::Load(const void* pSource, size_t size)
 		static_cast<UINT16>(meta.arraySize),
 		static_cast<UINT16>(meta.mipLevels)
 	);
-
+	
 	return CreateResource(desc, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
 	//return CreateResource(&image, meta);
 }
@@ -204,22 +208,31 @@ bool Texture2D::CreateResource(
 	return true;
 }
 
+
 bool Texture2D::CreateResource(
 	const DirectX::ScratchImage* image, const DirectX::TexMetadata& metadata)
 {
+	// テクスチャ生成
+	ComPtr<ID3D12Resource> texture;
+	CreateTexture(g_Engine->Device(), metadata, &texture);
+
+	// アップロードヒープ用準備
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-	
 	PrepareUpload(
 		g_Engine->Device(), image->GetImages(), image->GetImageCount(),
 		metadata, subresources
 	);
 
-	ComPtr<ID3D12Resource> texture;
-	CreateTexture(g_Engine->Device(), metadata, &texture);
+	// アップロード
+	if (!g_Engine->UploadTexture(texture.Get(), subresources))
+	{
+		printf("テクスチャのアップロードに失敗\n");
+		return false;
+	}
 
-	m_pResource = g_Engine->UploadTexture(texture.Get(), subresources);
+	m_pResource = texture;
 	m_pFormat = metadata.format;
-
+	
 	return true;
 }
 
