@@ -118,6 +118,14 @@ public:
 		);
 	}
 
+	static Quaternion FromToRotation(const Vec3& from, const Vec3& to)
+	{
+		auto f = -Vec3::Angle(from, to) / 2;
+		auto u = Vec3::cross(from, to).normalized() * sin(f);
+
+		return Quaternion(u.x, u.y, u.z, cos(f));
+	}
+
 	operator DirectX::XMFLOAT4() const
 	{
 		return DirectX::XMFLOAT4(x, y, z, w);

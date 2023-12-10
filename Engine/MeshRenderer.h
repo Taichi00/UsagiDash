@@ -43,6 +43,7 @@ private:
 
 public:
 	Bone* FindBone(std::string name);
+	BoneList* GetBones();
 
 private:
 	Model m_model;

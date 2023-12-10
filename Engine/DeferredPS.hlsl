@@ -161,7 +161,7 @@ float4 main(VSOutput input) : SV_TARGET
     
     
     float3 viewDir = normalize(worldPos.xyz - CameraPos);
-    float3 shadowColor = saturate(0.7 * normalize(albedo.rgb)) + 0.3;
+    float3 shadowColor = saturate(normalize(albedo.rgb) * float3(0.7, 0.7, 0.9)) + 0.2;
     //float3 shadowColor = saturate(0.8 * normalize(diffuse.rgb)) + 0.1;
     
     // ƒŠƒ€‰A
@@ -210,11 +210,11 @@ float4 main(VSOutput input) : SV_TARGET
     specularLightColor *= lerp(0, 1.0, shade);
     
     // ƒtƒHƒO
-    float fog = inverseLerp(0.4, 0.5, inverseLerp(0, 120, depth));
-    float3 fogColor = float3(0.7, 0.7, 0.7);
+    float fog = inverseLerp(30, 120, depth);
+    float3 fogColor = float3(0.5, 0.5, 0.5);
     
     float4 color = float4(albedo * shadeColor * rimShadeColor + rimLightColor + specularLightColor, 1);
-    //color.rgb = lerp(color.rgb, fogColor, fog);
+    color.rgb = lerp(color.rgb, fogColor, fog);
     
     return color;
     //return float4(outlineMask, 0, 0, 1);

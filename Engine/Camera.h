@@ -4,8 +4,6 @@
 #include "Vec.h"
 #include "Component.h"
 
-class Game;
-
 using namespace DirectX;
 
 class Camera : public Component

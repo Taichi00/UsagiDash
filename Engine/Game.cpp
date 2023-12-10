@@ -7,14 +7,13 @@
 #include "Input.h"
 #include "Scene.h"
 
-Game::Game()
-{
-	
-}
 
-void Game::Run()
+void Game::Run(Scene* scene)
 {
 	Init();
+
+	// ‰ŠúƒV[ƒ“‚ð“Ç‚Ýž‚Þ
+	LoadScene(scene);
 
 	MSG msg = {};
 	while (WM_QUIT != msg.message)
@@ -55,6 +54,11 @@ Scene* Game::LoadScene(Scene* scene)
 	m_pCurrentScene = scene;
 	scene->Init();
 	return scene;
+}
+
+Scene* Game::GetCurrentScene()
+{
+	return m_pCurrentScene;
 }
 
 DirectX::XMVECTOR Game::GetSWindowSize()

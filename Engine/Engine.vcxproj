@@ -155,8 +155,10 @@
     <ClCompile Include="MainScene.cpp" />
     <ClCompile Include="MeshCollider.cpp" />
     <ClCompile Include="MeshRenderer.cpp" />
+    <ClCompile Include="Physics.cpp" />
     <ClCompile Include="PipelineState.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Ray.cpp" />
     <ClCompile Include="Rigidbody.cpp" />
     <ClCompile Include="RootSignature.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -201,6 +203,8 @@
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="Physics.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="Rigidbody.h" />
     <ClInclude Include="RootSignature.h" />
     <ClInclude Include="Scene.h" />
@@ -251,6 +255,10 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="PBR.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="PostProcessPS.hlsl">

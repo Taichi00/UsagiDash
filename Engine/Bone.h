@@ -32,14 +32,19 @@ public:
 	Bone* GetParent();
 	std::vector<Bone*> GetChildren();
 
+	void SaveBuffer();
+	XMVECTOR GetPositionBuffer();
+	XMVECTOR GetRotationBuffer();
+	XMVECTOR GetScaleBuffer();
+
 private:
 	void UpdateLocalMatrix();
 	void UpdateWorldMatrix();
 
 private:
-	XMVECTOR m_position;
-	XMVECTOR m_rotation;
-	XMVECTOR m_scale;
+	XMVECTOR m_position, m_positionBuf;
+	XMVECTOR m_rotation, m_rotationBuf;
+	XMVECTOR m_scale, m_scaleBuf;
 	XMMATRIX m_mtxLocal;
 	XMMATRIX m_mtxWorld;
 	XMMATRIX m_mtxInvBind;

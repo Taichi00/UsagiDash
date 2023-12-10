@@ -6,26 +6,45 @@
 
 void CollisionManager::Update()
 {
-	// €”õ
-	for (auto collider : m_pColliders)
+	for (auto rigidbody : m_pRigidbodies)
 	{
-		collider->Prepare();
+		rigidbody->isGrounded = false;
 	}
 
-	// Õ“Ë”»’è
-	for (auto i = 0; i < m_pColliders.size(); i++)
+	// €”õ
+	for (int i = 0; i < 3; i++)
 	{
-		auto collider = m_pColliders[i];
-		for (auto j = i + 1; j < m_pColliders.size(); j++)
+		for (auto collider : m_pColliders)
 		{
-			auto ret = collider->Intersects(m_pColliders[j]);
+			collider->Prepare();
+		}
+
+		// Õ“Ë”»’è
+		for (auto i = 0; i < m_pColliders.size(); i++)
+		{
+			auto collider = m_pColliders[i];
+			for (auto j = i + 1; j < m_pColliders.size(); j++)
+			{
+				auto ret = collider->Intersects(m_pColliders[j]);
+			}
+		}
+
+		// Õ“Ë‰“š
+		for (auto rigidbody : m_pRigidbodies)
+		{
+			rigidbody->Resolve();
 		}
 	}
 
-	// Õ“Ë‰“š
 	for (auto rigidbody : m_pRigidbodies)
 	{
-		rigidbody->Resolve();
+		// ˆÊ’u‚ÌXV
+		rigidbody->transform->position += rigidbody->velocity;
+
+		if (rigidbody->useGravity)
+		{
+			rigidbody->velocity += Vec3(0, -0.016, 0);
+		}
 	}
 }
 
@@ -37,4 +56,19 @@ void CollisionManager::Add(Collider* collider)
 void CollisionManager::Add(Rigidbody* rigidbody)
 {
 	m_pRigidbodies.push_back(rigidbody);
+}
+
+void CollisionManager::Detect(Ray* ray)
+{
+	// €”õ
+	for (auto collider : m_pColliders)
+	{
+		collider->Prepare();
+	}
+
+	// Õ“Ë”»’è
+	for (auto i = 0; i < m_pColliders.size(); i++)
+	{
+		m_pColliders[i]->Intersects(ray);
+	}
 }

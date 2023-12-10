@@ -1,7 +1,9 @@
 #include "MeshCollider.h"
 #include "SphereCollider.h"
 #include "CapsuleCollider.h"
+#include "Ray.h"
 #include "Vec.h"
+#include <algorithm>
 
 MeshCollider::MeshCollider(MeshColliderProperty prop)
 {
@@ -22,6 +24,8 @@ bool MeshCollider::Intersects(SphereCollider* sphere)
 {
 	bool res = false;
 
+	std::vector<Vec3> collidedPoints;
+
 	auto center = sphere->GetPosition() + sphere->offset;
 	auto radius = sphere->radius;
 
@@ -29,20 +33,20 @@ bool MeshCollider::Intersects(SphereCollider* sphere)
 	{
 		auto mesh = &(model.Meshes[i]);
 		
-		for (int j = 0; j < mesh->Indices.size(); j += 3)
+		for (int j = 0; j < mesh->Faces.size(); j++)
 		{
-			int j0 = j, j1 = j + 1, j2 = j + 2;
+			auto face = &(mesh->Faces[j]);
 
-			int idx0 = mesh->Indices[j0];
-			int idx1 = mesh->Indices[j1];
-			int idx2 = mesh->Indices[j2];
+			int idx0 = face->Indices[0];
+			int idx1 = face->Indices[1];
+			int idx2 = face->Indices[2];
 
 			uint32_t indices[3] = { idx0, idx1, idx2 };
 			Vec3 normal;
 			float distance;
 
 			// 衝突
-			if (SphereIntersectsMesh(center, radius, *mesh, indices, normal, distance))
+			if (SphereIntersectsMesh(center, radius, *mesh, *face, normal, distance, collidedPoints))
 			{
 				hitColliders.push_back(sphere);
 				hitNormals.push_back(-normal);
@@ -65,6 +69,8 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 {
 	bool res = false;
 
+	std::vector<Vec3> collidedPoints;
+
 	float radius = capsule->radius;
 	float height = capsule->height;
 
@@ -80,13 +86,13 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 	{
 		auto mesh = &(model.Meshes[i]);
 
-		for (int j = 0; j < mesh->Indices.size(); j += 3)
+		for (int j = 0; j < mesh->Faces.size(); j++)
 		{
-			int j0 = j, j1 = j + 1, j2 = j + 2;
+			auto face = &(mesh->Faces[j]);
 
-			int idx0 = mesh->Indices[j0];
-			int idx1 = mesh->Indices[j1];
-			int idx2 = mesh->Indices[j2];
+			int idx0 = face->Indices[0];
+			int idx1 = face->Indices[1];
+			int idx2 = face->Indices[2];
 
 			auto p0 = Vec3(mesh->Vertices[idx0].Position);
 			auto p1 = Vec3(mesh->Vertices[idx1].Position);
@@ -95,11 +101,7 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 			p1 = Vec3::Scale(p1, m_scale) + m_position + offset;
 			p2 = Vec3::Scale(p2, m_scale) + m_position + offset;
 
-			auto n0 = Vec3(mesh->Vertices[idx0].Normal);
-			auto n1 = Vec3(mesh->Vertices[idx1].Normal);
-			auto n2 = Vec3(mesh->Vertices[idx2].Normal);
-
-			Vec3 N = (n0 + n1 + n2).normalized();	// 平面の法線
+			Vec3 N = face->Normal;	// 平面の法線
 
 			Vec3 referencePoint;	// カプセルに最も近いポリゴン上の点
 
@@ -163,8 +165,10 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 			float distance;
 
 			// 衝突
-			if (SphereIntersectsMesh(center, radius, *mesh, indices, normal, distance))
+			if (SphereIntersectsMesh(center, radius, *mesh, *face, normal, distance, collidedPoints))
 			{
+				distance -= 0.0;
+
 				hitColliders.push_back(capsule);
 				hitNormals.push_back(-normal);
 				hitDistances.push_back(distance);
@@ -178,32 +182,95 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 
 		}
 	}
+	//if (collidedPoints.size() > 0)
+	//{
+	//	//printf("test");
+	//}
+	return res;
+}
+
+bool MeshCollider::Intersects(Ray* ray)
+{
+	bool res = false;
+
+	auto rayOrigin = ray->origin;
+	auto rayDirection = ray->direction;
+	auto rayDistance = ray->distance;
+
+	for (int i = 0; i < model.Meshes.size(); i++)
+	{
+		auto mesh = &(model.Meshes[i]);
+
+		for (int j = 0; j < mesh->Faces.size(); j++)
+		{
+			auto face = &(mesh->Faces[j]);
+
+			int idx0 = face->Indices[0];
+			int idx1 = face->Indices[1];
+			int idx2 = face->Indices[2];
+
+			auto p0 = Vec3(mesh->Vertices[idx0].Position);
+			auto p1 = Vec3(mesh->Vertices[idx1].Position);
+			auto p2 = Vec3(mesh->Vertices[idx2].Position);
+			p0 = Vec3::Scale(p0, m_scale) + m_position + offset;
+			p1 = Vec3::Scale(p1, m_scale) + m_position + offset;
+			p2 = Vec3::Scale(p2, m_scale) + m_position + offset;
+
+			Vec3 N = face->Normal;	// 平面の法線
+
+			// Rayの点座標
+			auto rp0 = rayOrigin;
+			auto rp1 = rayOrigin + rayDirection * rayDistance;
+
+			// Rayと平面の貫通
+			if (Vec3::dot(rp0 - p0, N) * Vec3::dot(rp1 - p0, N) > 0)
+				continue;
+
+			// 貫通点の座標を確定
+			auto d0 = abs(Vec3::dot(N, rp0 - p0));
+			auto d1 = abs(Vec3::dot(N, rp1 - p0));
+			auto dist = rayDistance * d0 / (d0 + d1);
+			auto point = rayOrigin + rayDirection * dist;
+			 
+			// 貫通点がポリゴン内部に含まれているか
+			auto in0 = Vec3::cross(point - p0, p1 - p0);
+			auto in1 = Vec3::cross(point - p1, p2 - p1);
+			auto in2 = Vec3::cross(point - p2, p0 - p2);
+			bool inside = Vec3::dot(in0, N) <= 0 && Vec3::dot(in1, N) <= 0 && Vec3::dot(in2, N) <= 0;
+
+			if (inside)
+			{
+				ray->hitColliders.push_back(this);
+				ray->hitNormals.push_back(N);
+				ray->hitDistances.push_back(dist);
+
+				res = true;
+			}
+		}
+	}
 
 	return res;
 }
 
 bool MeshCollider::SphereIntersectsMesh(
-	const Vec3& center, const float radius, 
-	const CollisionMesh& mesh, const uint32_t* indices,
-	Vec3& normal, float& distance)
+	const Vec3& center, const float radius,
+	const CollisionMesh& mesh, const CollisionFace& face,
+	Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints)
 {
-	int idx0 = indices[0];
-	int idx1 = indices[1];
-	int idx2 = indices[2];
+	int idx0 = face.Indices[0];
+	int idx1 = face.Indices[1];
+	int idx2 = face.Indices[2];
 
-	auto p0 = Vec3(mesh.Vertices[idx0].Position);
-	auto p1 = Vec3(mesh.Vertices[idx1].Position);
-	auto p2 = Vec3(mesh.Vertices[idx2].Position);
-	p0 = Vec3::Scale(p0, m_scale) + m_position + offset;
-	p1 = Vec3::Scale(p1, m_scale) + m_position + offset;
-	p2 = Vec3::Scale(p2, m_scale) + m_position + offset;
+	Vec3 p[3];
+	p[0] = Vec3(mesh.Vertices[idx0].Position);
+	p[1] = Vec3(mesh.Vertices[idx1].Position);
+	p[2] = Vec3(mesh.Vertices[idx2].Position);
+	p[0] = Vec3::Scale(p[0], m_scale) + m_position + offset;
+	p[1] = Vec3::Scale(p[1], m_scale) + m_position + offset;
+	p[2] = Vec3::Scale(p[2], m_scale) + m_position + offset;
 
-	auto n0 = Vec3(mesh.Vertices[idx0].Normal);
-	auto n1 = Vec3(mesh.Vertices[idx1].Normal);
-	auto n2 = Vec3(mesh.Vertices[idx2].Normal);
-
-	Vec3 N = (n0 + n1 + n2).normalized();	// 平面の法線
-	float dist = Vec3::dot(center - p0, N);	// 球と平面の距離
+	Vec3 N = face.Normal;	// 平面の法線
+	float dist = Vec3::dot(center - p[0], N);	// 球と平面の距離
 
 	if (dist < 0)	// 裏面なら
 		return false;
@@ -214,31 +281,49 @@ bool MeshCollider::SphereIntersectsMesh(
 	auto point0 = center - N * dist;	// 球の中心を平面に投影
 
 	// point0がポリゴン内部にあるか判定
-	auto c0 = Vec3::cross(point0 - p0, p1 - p0);
-	auto c1 = Vec3::cross(point0 - p1, p2 - p1);
-	auto c2 = Vec3::cross(point0 - p2, p0 - p2);
+	auto c0 = Vec3::cross(point0 - p[0], p[1] - p[0]);
+	auto c1 = Vec3::cross(point0 - p[1], p[2] - p[1]);
+	auto c2 = Vec3::cross(point0 - p[2], p[0] - p[2]);
 	bool inside = Vec3::dot(c0, N) <= 0 && Vec3::dot(c1, N) <= 0 && Vec3::dot(c2, N) <= 0;
 
 	// 各エッジと交差しているか判定
 	float radiussq = radius * radius;
 
+	std::vector<Vec3> points;
+	bool intersects = false;
+	for (const auto& edge : face.Edges)
+	{
+		auto point = ClosestPointOnLineSegment(p[edge.first], p[edge.second], center);
+
+		// すでに衝突しているエッジは無視
+		/*if (std::find(collidedPoints.begin(), collidedPoints.end(), point) != collidedPoints.end())
+		{
+			continue;
+		}*/
+
+		auto v = center - point;
+		float distsq = Vec3::dot(v, v);
+		intersects |= distsq < radiussq;
+
+		points.push_back(point);
+	}
 	// Edge 1
-	auto point1 = ClosestPointOnLineSegment(p0, p1, center);
-	auto v1 = center - point1;
-	float distsq1 = Vec3::dot(v1, v1);
-	bool intersects = distsq1 < radiussq;
+	//auto point1 = ClosestPointOnLineSegment(p0, p1, center);
+	//auto v1 = center - point1;
+	//float distsq1 = Vec3::dot(v1, v1);
+	//bool intersects = distsq1 < radiussq;
 
-	// Edge 2
-	auto point2 = ClosestPointOnLineSegment(p1, p2, center);
-	auto v2 = center - point2;
-	float distsq2 = Vec3::dot(v2, v2);
-	intersects |= distsq2 < radiussq;
+	//// Edge 2
+	//auto point2 = ClosestPointOnLineSegment(p1, p2, center);
+	//auto v2 = center - point2;
+	//float distsq2 = Vec3::dot(v2, v2);
+	//intersects |= distsq2 < radiussq;
 
-	// Edge 3
-	auto point3 = ClosestPointOnLineSegment(p2, p0, center);
-	auto v3 = center - point3;
-	float distsq3 = Vec3::dot(v3, v3);
-	intersects |= distsq3 < radiussq;
+	//// Edge 3
+	//auto point3 = ClosestPointOnLineSegment(p2, p0, center);
+	//auto v3 = center - point3;
+	//float distsq3 = Vec3::dot(v3, v3);
+	//intersects |= distsq3 < radiussq;
 
 	// 衝突
 	if (inside || intersects)
@@ -252,7 +337,22 @@ bool MeshCollider::SphereIntersectsMesh(
 		}
 		else
 		{
-			auto d = center - point1;
+			float bestDistsq = radiussq;
+			for (auto& point : points)
+			{
+				auto d = center - point;
+				float distsq = Vec3::dot(d, d);
+				if (distsq < bestDistsq)
+				{
+					bestDistsq = distsq;
+					bestPoint = point;
+					intersectionVec = d;
+				}
+			}
+
+			//collidedPoints.push_back(bestPoint);
+
+			/*auto d = center - point1;
 			float bestDistsq = Vec3::dot(d, d);
 			bestPoint = point1;
 			intersectionVec = d;
@@ -273,11 +373,11 @@ bool MeshCollider::SphereIntersectsMesh(
 				bestDistsq = distsq;
 				bestPoint = point3;
 				intersectionVec = d;
-			}
+			}*/
 		}
 
 		float len = intersectionVec.length();
-		normal = intersectionVec / len;
+		normal = intersectionVec.normalized();
 		distance = radius - len;
 
 		return true;

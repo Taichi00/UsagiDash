@@ -11,17 +11,27 @@ class ShadowMap;
 class Input;
 class Scene;
 
+
 class Game
 {
-public:
-	Game();
+private:
+	Game() = default;
+	~Game() = default;
 
-	void Run();
+public:
+	static Game* Get()
+	{
+		static Game instance;
+		return &instance;
+	}
+
+	void Run(Scene* scene);
 
 	void SetWindowSize(unsigned int width, unsigned int height);
 	void SetWindowTitle(std::wstring title);
 
 	Scene* LoadScene(Scene* scene);
+	Scene* GetCurrentScene();
 
 	DirectX::XMVECTOR GetSWindowSize();
 	

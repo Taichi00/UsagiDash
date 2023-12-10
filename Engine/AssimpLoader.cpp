@@ -18,6 +18,9 @@
 #include <filesystem>
 #include <d3d12.h>
 #include <stdio.h>
+#include <utility>
+#include <map>
+#include <set>
 #include <DirectXMath.h>
 
 namespace fs = std::filesystem;
@@ -214,6 +217,8 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
     {
         const auto pMesh = pScene->mMeshes[i];
 
+        std::map<std::set<uint32_t>, std::vector<CollisionFace*>> edgeMap;  // エッジから接続しているポリゴンを検索するマップ
+
         model.Meshes[i].Vertices.resize(pMesh->mNumVertices);
         for (auto j = 0; j < pMesh->mNumVertices; j++)
         {
@@ -221,24 +226,73 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
             auto normal = &(pMesh->mNormals[j]);
 
             CollisionVertex vertex = {};
-            vertex.Position = DirectX::XMFLOAT3(position->x, position->y, position->z);
-            vertex.Normal = DirectX::XMFLOAT3(normal->x, normal->y, normal->z);
+            vertex.Position = Vec3(position->x, position->y, position->z);
+            vertex.Normal = Vec3(normal->x, normal->y, normal->z);
 
             model.Meshes[i].Vertices[j] = vertex;
         }
 
-        model.Meshes[i].Indices.resize(pMesh->mNumFaces * 3);
+        model.Meshes[i].Faces.resize(pMesh->mNumFaces);
         for (auto j = 0; j < pMesh->mNumFaces; j++)
         {
-            const auto& face = pMesh->mFaces[j];
+            const auto& aiface = pMesh->mFaces[j];
 
-            int id0 = face.mIndices[0];
-            int id1 = face.mIndices[1];
-            int id2 = face.mIndices[2];
+            auto id0 = aiface.mIndices[0];
+            auto id1 = aiface.mIndices[1];
+            auto id2 = aiface.mIndices[2];
+            auto n0 = model.Meshes[i].Vertices[id0].Normal;
+            auto n1 = model.Meshes[i].Vertices[id1].Normal;
+            auto n2 = model.Meshes[i].Vertices[id2].Normal;
 
-            model.Meshes[i].Indices[j * 3 + 0] = id0;
-            model.Meshes[i].Indices[j * 3 + 1] = id1;
-            model.Meshes[i].Indices[j * 3 + 2] = id2;
+            CollisionFace face = {};
+            face.Indices[0] = id0;
+            face.Indices[1] = id1;
+            face.Indices[2] = id2;
+            face.Normal = (n0 + n1 + n2).normalized();
+            face.Edges.resize(3);
+            face.Edges[0] = { 0, 1 };
+            face.Edges[1] = { 1, 2 };
+            face.Edges[2] = { 2, 0 };
+
+            model.Meshes[i].Faces[j] = face;
+
+            // edgeMapにこのFaceを追加
+            edgeMap[{id0, id1}].push_back(&(model.Meshes[i].Faces[j]));
+            edgeMap[{id1, id2}].push_back(&(model.Meshes[i].Faces[j]));
+            edgeMap[{id2, id0}].push_back(&(model.Meshes[i].Faces[j]));
+        }
+
+        for (const auto& [edge, faces] : edgeMap)
+        {
+            // 共有していないエッジは無視しない
+            if (faces.size() != 2) continue;
+
+            // 法線が異なれば無視しない
+            if (faces[0]->Normal != faces[1]->Normal) continue;
+            
+            // 無視するエッジを削除
+            auto& edges0 = faces[0]->Edges;
+            auto& edges1 = faces[1]->Edges;
+            auto& indices0 = faces[0]->Indices;
+            auto& indices1 = faces[1]->Indices;
+
+            for (auto j = 0; j < edges0.size(); j++)
+            {
+                if (edge == std::set<uint32_t>{indices0[edges0[j].first], indices0[edges0[j].second]})
+                {
+                    edges0.erase(edges0.begin() + j);
+                    break;
+                }
+            }
+
+            for (auto j = 0; j < edges1.size(); j++)
+            {
+                if (edge == std::set<uint32_t>{indices1[edges1[j].first], indices1[edges1[j].second]})
+                {
+                    edges1.erase(edges1.begin() + j);
+                    break;
+                }
+            }
         }
     }
 

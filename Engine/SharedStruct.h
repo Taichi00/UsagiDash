@@ -6,6 +6,7 @@
 #include "BoneList.h"
 #include "Vec.h"
 #include <string>
+#include <utility>
 
 class Texture2D;
 class VertexBuffer;
@@ -94,14 +95,23 @@ struct Model
 
 struct CollisionVertex
 {
-	XMFLOAT3 Position;	// 位置座標
-	XMFLOAT3 Normal;	// 法線
+	Vec3 Position;	// 位置座標
+	Vec3 Normal;	// 法線
+};
+
+struct CollisionFace
+{
+	uint32_t Indices[3];
+	Vec3 Normal;
+	std::vector<std::pair<uint32_t, uint32_t>> Edges;
 };
 
 struct CollisionMesh
 {
 	std::vector<CollisionVertex> Vertices;
-	std::vector<uint32_t> Indices;
+	std::vector<CollisionFace> Faces;
+	//std::vector<uint32_t> Indices;
+	//std::vector<bool> edgeIgnoreFlags;	// エッジを無視するかどうか
 };
 
 struct CollisionModel

@@ -25,6 +25,7 @@ void Collider::Prepare()
     if (m_pRigidbody != nullptr)
     {
         m_position += m_pRigidbody->velocity;
+        //m_extension = m_pRigidbody->isGrounded ? Vec3(0, -0.1, 0) : Vec3::Zero();
     }
 
     m_scale = transform->scale;
@@ -38,6 +39,11 @@ void Collider::Prepare()
 Vec3 Collider::GetPosition()
 {
     return m_position;
+}
+
+Vec3 Collider::GetExtension()
+{
+    return m_extension;
 }
 
 Rigidbody* Collider::GetRigidbody()
@@ -63,7 +69,7 @@ bool Collider::Intersects(Collider* collider)
     {
         return Intersects((MeshCollider*)collider);
     }
-
+    
     return false;
 }
 
@@ -83,6 +89,11 @@ bool Collider::Intersects(FloorCollider* floor)
 }
 
 bool Collider::Intersects(MeshCollider* collider)
+{
+    return false;
+}
+
+bool Collider::Intersects(Ray* ray)
 {
     return false;
 }

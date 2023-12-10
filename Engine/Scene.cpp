@@ -59,6 +59,7 @@ bool Scene::Init()
 		RSTexture,			// Albedo
 		RSTexture,			// Depth
 		RSTexture,			// ShadowMap
+		RSTexture,			// Skybox
 	};
 	m_pRootSignature = new RootSignature(_countof(params), params);
 	if (!m_pRootSignature->IsValid())
@@ -209,6 +210,7 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(3, g_Engine->GetGBuffer()->pAlbedoSrvHandle->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(4, g_Engine->GetGBuffer()->pDepthSrvHandle->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(6, m_pSkyboxHandle->HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -477,8 +479,8 @@ void Scene::UpdateCB()
 	currentScene->CameraPosition = cameraPos;
 
 	auto targetPos = camera->GetFocusPosition();
-	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 20;
+	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 500;
 	currentScene->LightView = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
-	currentScene->LightProj = XMMatrixOrthographicRH(50, 50, 0.1f, 100.0f);
+	currentScene->LightProj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
 }
 

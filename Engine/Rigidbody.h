@@ -25,11 +25,13 @@ public:
 	void Resolve();
 
 public:
-	Vec3 velocity;
+	Vec3 velocity, prevVelocity;
 	float mass;
 	bool useGravity;
 	bool isStatic;
 	float friction;
 
 	Collider* collider;
+
+	bool isGrounded;
 };

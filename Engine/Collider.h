@@ -8,6 +8,7 @@ class SphereCollider;
 class CapsuleCollider;
 class FloorCollider;
 class MeshCollider;
+class Ray;
 
 class Collider : public Component
 {
@@ -16,6 +17,7 @@ public:
 
 	void Prepare();
 	Vec3 GetPosition();
+	Vec3 GetExtension();
 
 	Rigidbody* GetRigidbody();
 
@@ -24,6 +26,7 @@ public:
 	virtual bool Intersects(CapsuleCollider* sphere);
 	virtual bool Intersects(FloorCollider* floor);
 	virtual bool Intersects(MeshCollider* collider);
+	virtual bool Intersects(Ray* ray);
 
 	static Vec3 ClosestPointOnLineSegment(const Vec3& a, const Vec3& b, const Vec3& point);
 
@@ -38,4 +41,5 @@ protected:
 	Rigidbody* m_pRigidbody;
 	Vec3 m_position;
 	Vec3 m_scale;
+	Vec3 m_extension;	// 地面吸着用の延長ベクトル
 };

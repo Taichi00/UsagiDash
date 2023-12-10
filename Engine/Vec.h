@@ -77,6 +77,7 @@ public:
 	Vec3() {}
 	Vec3(float x, float y, float z) : x(x), y(y), z(z) {}
 	Vec3(DirectX::XMFLOAT3 v) : x(v.x), y(v.y), z(v.z) {}
+	Vec3(DirectX::XMVECTOR v) : x(v.m128_f32[0]), y(v.m128_f32[1]), z(v.m128_f32[2]) {}
 
 	const Vec3 operator +(const Vec3& v) const
 	{
@@ -193,6 +194,11 @@ public:
 	static float Angle(const Vec3& v1, const Vec3& v2)
 	{
 		return acos(dot(v1.normalized(), v2.normalized()));
+	}
+
+	static Vec3 lerp(const Vec3& v1, const Vec3& v2, const float& t)
+	{
+		return v1 * (1 - t) + v2 * t;
 	}
 
 	std::string getString() const

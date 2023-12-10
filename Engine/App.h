@@ -4,7 +4,5 @@
 class App : public Game
 {
 public:
-	App();
-
 	void Init();
 };

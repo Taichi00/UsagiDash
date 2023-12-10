@@ -89,3 +89,11 @@ void BoneList::Clear()
     m_bones.clear();
     m_boneMap.clear();
 }
+
+void BoneList::SaveBuffer()
+{
+    for (auto bone : m_bones)
+    {
+        bone->SaveBuffer();
+    }
+}

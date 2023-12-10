@@ -2,9 +2,12 @@
 
 #include "Collider.h"
 #include "SharedStruct.h"
+#include <set>
+#include <vector>
 
 class SphereCollider;
 class CapsuleCollider;
+class Ray;
 
 struct MeshColliderProperty
 {
@@ -21,12 +24,13 @@ public:
 
 	bool Intersects(SphereCollider* sphere);
 	bool Intersects(CapsuleCollider* capsule);
+	bool Intersects(Ray* ray);
 
 private:
 	bool SphereIntersectsMesh(
 		const Vec3& center, const float radius,
-		const CollisionMesh& mesh, const uint32_t* indices,
-		Vec3& normal, float& distance);
+		const CollisionMesh& mesh, const CollisionFace& face,
+		Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints);
 
 public:
 	CollisionModel model;

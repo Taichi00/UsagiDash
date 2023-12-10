@@ -2,15 +2,13 @@
 #include "MainScene.h"
 #include "CollisionTestScene.h"
 
-App::App()
+
+void App::Init()
 {
 	SetWindowSize(1280, 720);
 	//SetWindowSize(1920, 1080);
 	SetWindowTitle(L"DirectX12 Game");
-}
 
-void App::Init()
-{
 	Game::Init();
 
 	auto scene = LoadScene(new CollisionTestScene());

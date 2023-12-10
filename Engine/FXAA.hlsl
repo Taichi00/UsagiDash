@@ -105,8 +105,8 @@ float4 main(VSOutput input) : SV_TARGET
 {
     float2 uv = input.UV;
     
-    float4 color = FXAA(gTex, uv);
-    //float4 color = gTex.Sample(gSampler, uv);
+    //float4 color = FXAA(gTex, uv);
+    float4 color = gTex.Sample(gSampler, uv);
 
     //uint dx, dy;
     //gTex.GetDimensions(dx, dy);

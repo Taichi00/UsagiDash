@@ -31,5 +31,5 @@ private:
 	Vec3 m_angleVelocity;
 	Vec3 m_angle;
 	float m_distance = 20;
-
+	float m_currDistance;
 };

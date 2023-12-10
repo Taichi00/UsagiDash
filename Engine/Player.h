@@ -26,13 +26,15 @@ private:
 	void Animate();
 
 private:
-	Vec3 m_velocity;
+	Vec3 m_moveVelocity;
 	float m_speed;
 	float m_acceleration;
 	float m_angle;
 
 	bool m_isRunning, _m_isRunning;
-	int m_jumpFrame;
+	bool m_isGrounded, _m_isGrounded, m_groundBuffer[5];
+	int m_groundIndex = 0;
+	int m_jumpFrame, _m_jumpFrame;
 	int m_jumpFrameMax = 15;
 
 	Animator* m_pAnimator;

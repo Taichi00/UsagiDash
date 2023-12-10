@@ -98,6 +98,28 @@ std::vector<Bone*> Bone::GetChildren()
 	return m_pChildren;
 }
 
+void Bone::SaveBuffer()
+{
+	m_positionBuf = m_position;
+	m_rotationBuf = m_rotation;
+	m_scaleBuf = m_scale;
+}
+
+XMVECTOR Bone::GetPositionBuffer()
+{
+	return m_positionBuf;
+}
+
+XMVECTOR Bone::GetRotationBuffer()
+{
+	return m_rotationBuf;
+}
+
+XMVECTOR Bone::GetScaleBuffer()
+{
+	return m_scaleBuf;
+}
+
 void Bone::UpdateLocalMatrix()
 {
 	auto mtx = XMMatrixScalingFromVector(m_scale)

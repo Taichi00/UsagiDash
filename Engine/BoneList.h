@@ -29,6 +29,8 @@ public:
 	int Size();
 	void Clear();
 
+	void SaveBuffer();
+
 private:
 	std::vector<Bone*> m_bones;
 	std::map<std::string, int> m_boneMap;

@@ -681,7 +681,7 @@ bool Engine::CreateRenderTarget()
 	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	// SRGB‹óŠÔ‚É‚·‚é
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 	m_pRtvHeap = std::make_shared<DescriptorHeap>(desc);

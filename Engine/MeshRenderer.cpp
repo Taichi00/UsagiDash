@@ -17,7 +17,7 @@ MeshRenderer::MeshRenderer(MeshRendererProperty prop)
 {
 	SetProperties(prop);
 
-	m_outlineWidth = 0.004;
+	m_outlineWidth = 0.003;
 }
 
 MeshRenderer::~MeshRenderer()
@@ -598,12 +598,17 @@ void MeshRenderer::UpdateCB()
 	currentScene->CameraPosition = cameraPos;
 
 	auto targetPos = camera->GetFocusPosition();
-	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 20;
+	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 500;
 	currentScene->LightView = XMMatrixLookAtRH(lightPos, targetPos, {0, 1, 0});
-	currentScene->LightProj = XMMatrixOrthographicRH(50, 50, 0.1f, 100.0f);
+	currentScene->LightProj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
 }
 
 Bone* MeshRenderer::FindBone(std::string name)
 {
 	return m_model.Bones.Find(name);
+}
+
+BoneList* MeshRenderer::GetBones()
+{
+	return &(m_model.Bones);
 }
