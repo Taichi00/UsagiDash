@@ -29,6 +29,9 @@ public:
 
 	void DrawLighting();
 	void DrawSkybox();
+	void DrawSSAO();
+	void DrawBlurHorizontal();
+	void DrawBlurVertical();
 	void DrawPostProcess();
 	void DrawFXAA();
 
@@ -56,6 +59,9 @@ private:
 
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pLightingPSO;
+	PipelineState* m_pSSAOPSO;
+	PipelineState* m_pBlurHorizontal;
+	PipelineState* m_pBlurVertical;
 	PipelineState* m_pPostProcessPSO;
 	PipelineState* m_pFXAAPSO;
 

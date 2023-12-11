@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "Physics.h"
+#include "Player.h"
 
 GameCamera::GameCamera(GameCameraProperty prop)
 {

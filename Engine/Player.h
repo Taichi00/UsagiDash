@@ -21,12 +21,13 @@ public:
 	bool Init();
 	void Update();
 
+
 private:
 	void Move();
 	void Animate();
 
 private:
-	Vec3 m_moveVelocity;
+	Vec3 m_moveDirection;
 	float m_speed;
 	float m_acceleration;
 	float m_angle;

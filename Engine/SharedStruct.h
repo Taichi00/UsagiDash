@@ -43,6 +43,7 @@ struct alignas(256) TransformParameter
 	XMMATRIX World;		// ワールド行列
 	XMMATRIX View;		// ビュー行列
 	XMMATRIX Proj;		// 投影行列
+	float DitherLevel;	// ディザリングのレベル
 };
 
 struct alignas(256) SceneParameter

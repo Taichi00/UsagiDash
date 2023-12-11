@@ -55,7 +55,7 @@ bool CollisionTestScene::Init()
 
 	std::vector<Entity*> objects;
 	auto sphereModel = SphereMesh::Load(2, 0.1, 0.1, 0.1);
-	auto capsuleModel = CapsuleMesh::Load(2, 2, 0.8, 0.3, 0.3);
+	auto capsuleModel = CapsuleMesh::Load(2, 2, 0.8, 0.3, 0.2);
 
 	for (int i = 0; i < 4; i++)
 	{

@@ -13,6 +13,8 @@
 #include "Texture2D.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "GBuffer.h"
+#include "GBufferManager.h"
 
 Scene::Scene()
 {
@@ -53,6 +55,7 @@ bool Scene::Init()
 
 	// ルートシグネチャの生成
 	RootSignatureParameter params[] = {
+		RSConstantBuffer,	// TransformParameter
 		RSConstantBuffer,	// SceneParameter
 		RSTexture,			// Position
 		RSTexture,			// Normal
@@ -175,6 +178,16 @@ void Scene::Draw()
 	// Skybox描画（フォワードレンダリング）
 	DrawSkybox();
 
+	// SSAO
+	g_Engine->SSAOPath();
+	DrawSSAO();
+
+	// ぼかし
+	g_Engine->BlurHorizontalPath();
+	DrawBlurHorizontal();
+	g_Engine->BlurVerticalPath();
+	DrawBlurVertical();
+
 	// ポストプロセス
 	g_Engine->PostProcessPath();
 	DrawPostProcess();
@@ -195,6 +208,7 @@ void Scene::DrawLighting()
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 	auto commandList = g_Engine->CommandList();
 	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pSceneCB[currentIndex]->GetAddress());
@@ -205,12 +219,12 @@ void Scene::DrawLighting()
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(m_pLightingPSO->Get());	// パイプラインステートをセット
-	commandList->SetGraphicsRootDescriptorTable(1, g_Engine->GetGBuffer()->pPositionSrvHandle->HandleGPU());	// ディスクリプタテーブルをセット
-	commandList->SetGraphicsRootDescriptorTable(2, g_Engine->GetGBuffer()->pNormalSrvHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(3, g_Engine->GetGBuffer()->pAlbedoSrvHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(4, g_Engine->GetGBuffer()->pDepthSrvHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(6, m_pSkyboxHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("Position")->SrvHandle()->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(3, gbufferManager->Get("Normal")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(6, m_pShadowHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(7, m_pSkyboxHandle->HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -243,11 +257,37 @@ void Scene::DrawSkybox()
 	commandList->DrawIndexedInstanced(m_skyboxMesh.Indices.size(), 1, 0, 0, 0);
 }
 
-void Scene::DrawPostProcess()
+void Scene::DrawSSAO()
 {
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 	auto commandList = g_Engine->CommandList();
 	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
+
+	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
+	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	ID3D12DescriptorHeap* heaps[] = {
+		gbufferHeap,
+	};
+	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetPipelineState(m_pSSAOPSO->Get());		// パイプラインステートをセット
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("Position")->SrvHandle()->HandleGPU()); // ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(3, gbufferManager->Get("Normal")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
+
+	commandList->DrawInstanced(4, 1, 0, 0);
+}
+
+void Scene::DrawBlurHorizontal()
+{
+	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto commandList = g_Engine->CommandList();
+	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -256,11 +296,55 @@ void Scene::DrawPostProcess()
 		gbufferHeap,
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetPipelineState(m_pBlurHorizontal->Get());		// パイプラインステートをセット
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("SSAO")->SrvHandle()->HandleGPU()); // ディスクリプタテーブルをセット
+
+	commandList->DrawInstanced(4, 1, 0, 0);
+}
+
+void Scene::DrawBlurVertical()
+{
+	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto commandList = g_Engine->CommandList();
+	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
+
+	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	ID3D12DescriptorHeap* heaps[] = {
+		gbufferHeap,
+	};
+	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetPipelineState(m_pBlurVertical->Get());		// パイプラインステートをセット
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("BlurredSSAO1")->SrvHandle()->HandleGPU()); // ディスクリプタテーブルをセット
+
+	commandList->DrawInstanced(4, 1, 0, 0);
+}
+
+void Scene::DrawPostProcess()
+{
+	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto commandList = g_Engine->CommandList();
+	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
+
+	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
+	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	ID3D12DescriptorHeap* heaps[] = {
+		gbufferHeap,
+	};
+	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(m_pPostProcessPSO->Get());		// パイプラインステートをセット
-	commandList->SetGraphicsRootDescriptorTable(1, g_Engine->GetGBuffer()->pLightingSrvHandle->HandleGPU());	// ディスクリプタテーブルをセット
-	commandList->SetGraphicsRootDescriptorTable(2, g_Engine->GetGBuffer()->pNormalSrvHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(3, g_Engine->GetGBuffer()->pAlbedoSrvHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(4, g_Engine->GetGBuffer()->pDepthSrvHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("Lighting")->SrvHandle()->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(3, gbufferManager->Get("Normal")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Position")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(7, gbufferManager->Get("BlurredSSAO2")->SrvHandle()->HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -270,6 +354,7 @@ void Scene::DrawFXAA()
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 	auto commandList = g_Engine->CommandList();
 	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto gbufferManager = g_Engine->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -279,7 +364,7 @@ void Scene::DrawFXAA()
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(m_pFXAAPSO->Get());		// パイプラインステートをセット
-	commandList->SetGraphicsRootDescriptorTable(1, g_Engine->GetGBuffer()->pPostProcessSrvHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("PostProcess")->SrvHandle()->HandleGPU());	// ディスクリプタテーブルをセット
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -396,6 +481,57 @@ bool Scene::PreparePSO()
 		return false;
 	}
 
+	// SSAO用
+	m_pSSAOPSO = new PipelineState();
+	m_pSSAOPSO->SetInputLayout({ nullptr, 0 });
+	m_pSSAOPSO->SetRootSignature(m_pRootSignature->Get());
+	m_pSSAOPSO->SetVS(L"../x64/Debug/ScreenVS.cso");
+	m_pSSAOPSO->SetPS(L"../x64/Debug/SSAO.cso");
+	m_pSSAOPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
+
+	desc = m_pSSAOPSO->GetDesc();
+	desc->DepthStencilState.DepthEnable = FALSE;
+
+	m_pSSAOPSO->Create();
+	if (!m_pSSAOPSO->IsValid())
+	{
+		return false;
+	}
+
+	// BlurHorizontal用
+	m_pBlurHorizontal = new PipelineState();
+	m_pBlurHorizontal->SetInputLayout({ nullptr, 0 });
+	m_pBlurHorizontal->SetRootSignature(m_pRootSignature->Get());
+	m_pBlurHorizontal->SetVS(L"../x64/Debug/ScreenVS.cso");
+	m_pBlurHorizontal->SetPS(L"../x64/Debug/GaussianBlurHorizontal.cso");
+	m_pBlurHorizontal->SetCullMode(D3D12_CULL_MODE_FRONT);
+
+	desc = m_pBlurHorizontal->GetDesc();
+	desc->DepthStencilState.DepthEnable = FALSE;
+
+	m_pBlurHorizontal->Create();
+	if (!m_pBlurHorizontal->IsValid())
+	{
+		return false;
+	}
+
+	// BlurVertical用
+	m_pBlurVertical = new PipelineState();
+	m_pBlurVertical->SetInputLayout({ nullptr, 0 });
+	m_pBlurVertical->SetRootSignature(m_pRootSignature->Get());
+	m_pBlurVertical->SetVS(L"../x64/Debug/ScreenVS.cso");
+	m_pBlurVertical->SetPS(L"../x64/Debug/GaussianBlurVertical.cso");
+	m_pBlurVertical->SetCullMode(D3D12_CULL_MODE_FRONT);
+
+	desc = m_pBlurVertical->GetDesc();
+	desc->DepthStencilState.DepthEnable = FALSE;
+
+	m_pBlurVertical->Create();
+	if (!m_pBlurVertical->IsValid())
+	{
+		return false;
+	}
+
 	// PostProcess用
 	m_pPostProcessPSO = new PipelineState();
 	m_pPostProcessPSO->SetInputLayout({ nullptr, 0 });
@@ -463,7 +599,8 @@ void Scene::UpdateCB()
 	auto world = XMMatrixIdentity();
 
 	// view行列
-	auto view = XMMatrixRotationQuaternion(camera->transform->rotation);
+	//auto view = XMMatrixRotationQuaternion(camera->transform->rotation);
+	auto view = camera->GetViewMatrix();
 
 	// proj行列
 	auto proj = camera->GetProjMatrix();

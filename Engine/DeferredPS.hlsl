@@ -121,7 +121,11 @@ float PoissonShadow(float4 possm, int n, float size)
             sum += 1;
         }
     }
-    return sum / n;
+    
+    // 境界をぼかす
+    float border = 1 - inverseLerp(0, 0.1, possm.x) * inverseLerp(1, 0.9, possm.x) * inverseLerp(0, 0.1, possm.y) * inverseLerp(1, 0.9, possm.y);
+    
+    return sum / n + border;
 }
 
 float4 GetShadowMapPosition(float4 worldPos)
@@ -195,7 +199,7 @@ float4 main(VSOutput input) : SV_TARGET
     
     // シャドウマップ
     float4 possm = GetShadowMapPosition(worldPos);
-    if (possm.x >= 0 && possm.x < 1 && possm.y >= 0 && possm.y < 1)
+    if (possm.x > 0 && possm.x < 1 && possm.y > 0 && possm.y < 1)
     {
         //float z = possm.z / possm.w;
         //float4 sm = gShadowMap.Sample(gSampler, possm.xy);

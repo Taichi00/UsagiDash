@@ -352,12 +352,13 @@ void MeshRenderer::DrawDepth()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		if (alphaMode == 1)
 			continue;
 
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
@@ -503,6 +504,7 @@ bool MeshRenderer::PreparePSO()
 	m_pDepthPSO->SetInputLayout(Vertex::InputLayout);
 	m_pDepthPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pDepthPSO->SetVS(L"../x64/Debug/SimpleVS.cso");
+	m_pDepthPSO->SetPS(L"../x64/Debug/DepthPS.cso");
 	m_pDepthPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	auto desc = m_pDepthPSO->GetDesc();
@@ -530,7 +532,7 @@ bool MeshRenderer::PreparePSO()
 	desc->RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;		// Albedo
 	desc->RTVFormats[3] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Depth
 	desc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;	// デプスバッファには書き込まない
-	desc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	desc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
 
 	m_pGBufferPSO->Create();
 	if (!m_pGBufferPSO->IsValid())
@@ -577,9 +579,13 @@ void MeshRenderer::UpdateCB()
 	// proj行列
 	auto proj = camera->GetProjMatrix();
 
+	// DitherLevel
+	auto ditherLevel = (1.0 - ((transform->position - camera->transform->position).length() - 3) / 3.0) * 16;
+
 	currentTransform->World = world;
 	currentTransform->View = view;
 	currentTransform->Proj = proj;
+	currentTransform->DitherLevel = ditherLevel;
 
 	// Bone
 	auto currentBone = m_pBoneCB[currentIndex]->GetPtr<BoneParameter>();

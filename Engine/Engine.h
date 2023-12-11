@@ -13,30 +13,31 @@
 class Window;
 class DescriptorHeap;
 class DescriptorHandle;
+class GBufferManager;
 
-struct GBuffer
-{
-	ComPtr<ID3D12Resource> pPositionTex = nullptr;
-	ComPtr<ID3D12Resource> pNormalTex = nullptr;
-	ComPtr<ID3D12Resource> pAlbedoTex = nullptr;
-	ComPtr<ID3D12Resource> pDepthTex = nullptr;
-	ComPtr<ID3D12Resource> pLightingTex = nullptr;
-	ComPtr<ID3D12Resource> pPostProcessTex = nullptr;
-
-	std::shared_ptr<DescriptorHandle> pPositionSrvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pNormalSrvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pAlbedoSrvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pDepthSrvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pLightingSrvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pPostProcessSrvHandle = nullptr;
-
-	std::shared_ptr<DescriptorHandle> pPositionRtvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pNormalRtvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pAlbedoRtvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pDepthRtvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pLightingRtvHandle = nullptr;
-	std::shared_ptr<DescriptorHandle> pPostProcessRtvHandle = nullptr;
-};
+//struct GBuffer
+//{
+//	ComPtr<ID3D12Resource> pPositionTex = nullptr;
+//	ComPtr<ID3D12Resource> pNormalTex = nullptr;
+//	ComPtr<ID3D12Resource> pAlbedoTex = nullptr;
+//	ComPtr<ID3D12Resource> pDepthTex = nullptr;
+//	ComPtr<ID3D12Resource> pLightingTex = nullptr;
+//	ComPtr<ID3D12Resource> pPostProcessTex = nullptr;
+//
+//	std::shared_ptr<DescriptorHandle> pPositionSrvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pNormalSrvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pAlbedoSrvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pDepthSrvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pLightingSrvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pPostProcessSrvHandle = nullptr;
+//
+//	std::shared_ptr<DescriptorHandle> pPositionRtvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pNormalRtvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pAlbedoRtvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pDepthRtvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pLightingRtvHandle = nullptr;
+//	std::shared_ptr<DescriptorHandle> pPostProcessRtvHandle = nullptr;
+//};
 
 class Engine
 {
@@ -58,6 +59,9 @@ public:
 	void DepthPrePath();
 	void GBufferPath();
 	void LightingPath();
+	void SSAOPath();
+	void BlurHorizontalPath();
+	void BlurVerticalPath();
 	void PostProcessPath();
 	void FXAAPath();
 	void EndDeferredRender();
@@ -70,7 +74,7 @@ public: // 外からアクセスしたいのでGetterとして公開するもの
 	DescriptorHeap* RtvHeap();
 	DescriptorHeap* DsvHeap();
 	DescriptorHeap* GBufferHeap();
-	GBuffer* GetGBuffer();
+	GBufferManager* GetGBufferManager();
 	UINT CurrentBackBufferIndex();
 
 	float AspectRate();
@@ -136,7 +140,7 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	ComPtr<ID3D12Resource> m_pShadowTex = nullptr;
 	ComPtr<ID3D12Resource> m_pShadowDepth = nullptr;
 
-	GBuffer m_gbuffer;
+	GBufferManager* m_pGBufferManager;
 	std::shared_ptr<DescriptorHeap> m_pGBufferHeap = nullptr;
 
 private: // 描画ループで使用するもの

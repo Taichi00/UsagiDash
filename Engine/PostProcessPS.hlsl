@@ -4,7 +4,14 @@ struct VSOutput
     float2 UV : TEXCOORD0;
 };
 
-cbuffer Scene : register(b0)
+cbuffer Transform : register(b0)
+{
+    float4x4 World;
+    float4x4 View;
+    float4x4 Proj;
+}
+
+cbuffer Scene : register(b1)
 {
     float4x4 LightView;
     float4x4 LightProj;
@@ -17,13 +24,23 @@ Texture2D gTex : register(t0);
 Texture2D gNormal : register(t1);
 Texture2D gAlbedo : register(t2);
 Texture2D gDepth : register(t3);
+Texture2D gPosition : register(t4);
+Texture2D gSSAO : register(t5);
 
 SamplerState gSampler : register(s0); // ÉTÉìÉvÉâÅ[
+
+static const int SSAO_SAMPLENUM = 10;
 
 
 float inverseLerp(float a, float b, float value)
 {
     return saturate((value - a) / (b - a));
+}
+
+float rand(float2 pos, int seed)
+{
+    float dot_product = dot(seed, pos);
+    return frac(sin(dot_product) * 43758.5453);
 }
 
 float3 SobelSampleNormal(Texture2D t, SamplerState s, float2 uv, float3 offset)
@@ -144,12 +161,14 @@ float4 main(VSOutput input) : SV_TARGET
     float4 texNormal = gNormal.Sample(gSampler, uv);
     float4 texAlbedo = gAlbedo.Sample(gSampler, uv);
     float4 texDepth = gDepth.Sample(gSampler, uv);
+    float4 texPosition = gPosition.Sample(gSampler, uv);
     
     float3 normal = normalize(texNormal.xyz);
     float3 albedo = texAlbedo.xyz;
     float shininess = texNormal.w;
     float depth = texDepth.r;
     float outlineMask = texAlbedo.w;
+    float3 position = texPosition.xyz;
     
     float2 screenSize;
     gAlbedo.GetDimensions(screenSize.x, screenSize.y);
@@ -178,6 +197,12 @@ float4 main(VSOutput input) : SV_TARGET
     float outlinePower = lerp(0.1, 0.6, inverseLerp(30, 80, depth));
     color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
     //color.rgb = saturate(length(outlineNormal.x + outlineNormal.y + outlineNormal.z));
+    
+    // SSAO
+    float ssao = gSSAO.Sample(gSampler, uv).r;
+    ssao = pow(ssao, 1.5);
+    color.rgb *= lerp(float3(0, 0, 0.5), 1, ssao);
+    color.rgb *= ssao;
     
     return color;
 }

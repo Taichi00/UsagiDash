@@ -41,6 +41,7 @@ struct VSInput
 struct VSOutput
 {
     float4 svpos : SV_POSITION;
+    float4 viewPos : VIEW_POSITION;
     float3 normal : NORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
@@ -110,6 +111,7 @@ VSOutput main(VSInput input)
     output.svpos = projPos;
     output.svpos.xy += projNormal.xy * OutlineWidth * projPos.w;
     
+    output.viewPos = viewPos;
     output.normal = worldNormal;
     output.color = input.color;
     output.uv = input.uv;

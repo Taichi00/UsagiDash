@@ -11,6 +11,7 @@ Player::Player(PlayerProperty prop)
 {
 	m_speed = prop.Speed;
 	m_acceleration = prop.Acceleration;
+	
 }
 
 Player::~Player()
