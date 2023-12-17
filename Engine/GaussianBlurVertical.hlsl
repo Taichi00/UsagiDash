@@ -8,8 +8,8 @@ struct VSOutput
 #define E 2.71828182846
 
 static int SAMPLES = 8;
-static float BlurSize = 0.005;
-static float StandardDeviation = 0.01;
+static float BlurSize = 0.001;
+static float StandardDeviation = 0.5;
 
 Texture2D gTex : register(t0);
 

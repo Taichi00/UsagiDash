@@ -5,6 +5,8 @@
 
 class DescriptorHeap;
 class DescriptorHandle;
+class RootSignature;
+class PipelineState;
 
 class ShadowMap
 {
@@ -14,18 +16,29 @@ public:
 	void BeginRender();
 	void EndRender();
 
-
-
 	ID3D12Resource* Resource();
+	DescriptorHandle* SrvHandle();
 
 private:
 	bool CreateShadowBuffer();
+	bool PreparePSO();
+	bool PrepareRootSignature();
 
-	ComPtr<ID3D12Resource> m_pColor;
+	void BlurHorizontal();
+	void BlurVertical();
+
+private:
+	ComPtr<ID3D12Resource> m_pColor[2];
 	ComPtr<ID3D12Resource> m_pDepth;
 
-	DescriptorHandle* m_pRtvHandle;
+	DescriptorHandle* m_pRtvHandle[2];
 	DescriptorHandle* m_pDsvHandle;
+	DescriptorHandle* m_pSrvHandle[2];
+
+	RootSignature* m_pRootSignature;
+
+	PipelineState* m_pBlurHorizontalPSO;
+	PipelineState* m_pBlurVerticalPSO;
 
 	int m_width = 1024;
 	int m_height = 1024;

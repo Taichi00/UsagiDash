@@ -46,7 +46,7 @@ bool CollisionTestScene::Init()
 	collider = (Collider*)player->AddComponent(new CapsuleCollider({ 1, 1 }));
 	player->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
 	player->AddComponent(new Animator({ animations }));
-	player->AddComponent(new Player({ 0.22, 0.02 }));
+	player->AddComponent(new Player({ 0.27, 0.02 }));
 	CreateEntity(player);
 
 	player->GetComponent<Animator>()->Play("Idle", 2.0f);
@@ -54,8 +54,8 @@ bool CollisionTestScene::Init()
 
 
 	std::vector<Entity*> objects;
-	auto sphereModel = SphereMesh::Load(2, 0.1, 0.1, 0.1);
-	auto capsuleModel = CapsuleMesh::Load(2, 2, 0.8, 0.3, 0.2);
+	auto sphereModel = SphereMesh::Load(2, 0.72, 0, 0);
+	auto capsuleModel = CapsuleMesh::Load(2, 2, 0.72, 0, 0);
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -79,7 +79,21 @@ bool CollisionTestScene::Init()
 
 		object->transform->position = Vec3(4 * (i + 1), 0, 0);
 	}
-	enemy = objects[0];
+	//enemy = objects[0];
+
+
+	AssimpLoader::Load(L"Assets/PlatformerPack/Enemy.gltf", model, animations);
+	enemy = new Entity();
+	enemy->AddComponent(new MeshRenderer({ model }));
+	collider = (Collider*)enemy->AddComponent(new SphereCollider({ 1.5 }));
+	enemy->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
+	enemy->AddComponent(new Animator({ animations }));
+	CreateEntity(enemy);
+
+	enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
+	collider->offset = Vec3(0, 1.5, 0);
+	enemy->transform->position = Vec3(0, 0, 5);
+	enemy->transform->scale = Vec3(2, 2, 2);
 
 
 	AssimpLoader::Load(L"Assets/PlatformerPack/Star.gltf", model, animations);
@@ -87,6 +101,14 @@ bool CollisionTestScene::Init()
 	testSphere->AddComponent(new MeshRenderer({ model }));
 	CreateEntity(testSphere);
 	//testSphere->transform->scale = Vec3(0.3, 0.3, 0.3);
+
+
+	AssimpLoader::Load(L"Assets/DamagedHelmet.glb", model, animations);
+	auto pbrEntity = new Entity();
+	pbrEntity->AddComponent(new MeshRenderer({ model }));
+	CreateEntity(pbrEntity);
+	pbrEntity->transform->rotation = Quaternion::FromEuler(1.57, 0, 0);
+	pbrEntity->transform->scale = Vec3(4, 4, 4);
 
 
 	//AssimpLoader::Load(L"Assets/checker_plane.obj", model, animations);
@@ -112,8 +134,8 @@ bool CollisionTestScene::Init()
 	plane->transform->position = Vec3(0, -10, 0);
 	plane->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
 
-	/*
-	AssimpLoader::Load(L"Assets/mikuNT.glb", model, animations);
+	
+	/*AssimpLoader::Load(L"Assets/mikuNT.glb", model, animations);
 	auto miku = new Entity();
 	miku->AddComponent(new MeshRenderer({ model }));
 	collider = (Collider*)miku->AddComponent(new CapsuleCollider({ 2, 6 }));
@@ -132,7 +154,7 @@ bool CollisionTestScene::Init()
 	CreateEntity(camera);
 	SetMainCamera(camera);
 
-	SetSkybox(L"Assets/puresky.dds");
+	SetSkybox("Assets/puresky");
 
 	return true;
 }

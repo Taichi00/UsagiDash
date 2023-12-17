@@ -44,7 +44,7 @@ public:
 
 	CollisionManager* GetCollisionManager();
 
-	void SetSkybox(const wchar_t* path);
+	void SetSkybox(const std::string path);
 
 private:
 	bool PreparePSO();
@@ -60,19 +60,28 @@ private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pLightingPSO;
 	PipelineState* m_pSSAOPSO;
-	PipelineState* m_pBlurHorizontal;
-	PipelineState* m_pBlurVertical;
+	PipelineState* m_pBlurHorizontalPSO;
+	PipelineState* m_pBlurVerticalPSO;
 	PipelineState* m_pPostProcessPSO;
 	PipelineState* m_pFXAAPSO;
 
 	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];
 	ConstantBuffer* m_pSceneCB[Engine::FRAME_BUFFER_COUNT];
 
-	DescriptorHandle* m_pShadowHandle;
+	//DescriptorHandle* m_pShadowHandle;
 
 	Mesh m_skyboxMesh;
 	Texture2D* m_pSkyboxTex;
 	DescriptorHandle* m_pSkyboxHandle;
 	PipelineState* m_pSkyboxPSO;
 	RootSignature* m_pSkyboxRootSignature;
+
+	Texture2D* m_pDiffuseMapTex;
+	DescriptorHandle* m_pDiffuseMapHandle;
+
+	Texture2D* m_pSpecularMapTex;
+	DescriptorHandle* m_pSpecularMapHandle;
+
+	Texture2D* m_pBrdfTex;
+	DescriptorHandle* m_pBrdfHandle;
 };

@@ -9,7 +9,11 @@ TextureCube gSkybox : register(t0); // テクスチャ
 
 float4 main(VSOutput input) : SV_TARGET
 {
-    return gSkybox.Sample(gSampler, normalize(input.worldPos.xyz));
-    //float4 c = gSkybox.Sample(gSampler, normalize(input.worldPos.xyz));
-    //return float4(1, 0, 0, 1);
+    float3 envColor = gSkybox.SampleLevel(gSampler, normalize(input.worldPos.xyz), 0).rgb;
+    
+    // ガンマ補正
+    envColor = envColor / (envColor + 1.0);
+    envColor = pow(envColor, 1.0 / 2.2);
+    
+    return float4(envColor, 1.0);
 }

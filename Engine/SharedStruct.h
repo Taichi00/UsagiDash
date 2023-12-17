@@ -80,7 +80,9 @@ struct Mesh
 struct Material
 {
 	Texture2D* Texture;
+	Texture2D* PbrTexture;
 	DescriptorHandle* pHandle;
+	DescriptorHandle* pPbrHandle;
 	PipelineState* pPipelineState;
 	int AlphaMode;
 	XMVECTOR BaseColor;

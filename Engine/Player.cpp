@@ -101,7 +101,7 @@ void Player::Move()
 			if ((q * pv).y < 0)
 				pv = q * pv;
 
-			*velocity += Vec3(0, 0.016, 0) - hit.normal * 0.016;
+			*velocity += Vec3(0, 0.018, 0) - hit.normal * 0.018;
 		}
 	}
 
@@ -181,7 +181,7 @@ void Player::Animate()
 		}
 		if (m_isRunning)
 		{
-			auto speed = Vec3::Scale(m_pRigidbody->velocity, 1, 0, 1).length() * 6 + 1.0;
+			auto speed = Vec3::Scale(m_pRigidbody->velocity, 1, 0, 1).length() * 7 + 1.0;
 			m_pAnimator->SetSpeed(speed);
 		}
 	}

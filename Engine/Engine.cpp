@@ -251,6 +251,10 @@ void Engine::BeginDeferredRender()
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET),
 		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_pGBufferManager->Get("MetallicRoughness")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("Depth")->Resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET),
@@ -280,12 +284,14 @@ void Engine::BeginDeferredRender()
 	// レンダーターゲットをクリア
 	const float clearColor[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	const float zeroFloat[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	const float oneFloat[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	const float zeroAlbedo[] = { 0, 0, 0, 1 };	// Aはアウトラインマスクなので１で初期化
 	m_pCommandList->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Position")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
 	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Normal")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
 	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Albedo")->RtvHandle()->HandleCPU(), zeroAlbedo, 0, nullptr);
-	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Depth")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("MetallicRoughness")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Depth")->RtvHandle()->HandleCPU(), oneFloat, 0, nullptr);
 	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("Lighting")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
 	m_pCommandList->ClearRenderTargetView(m_pGBufferManager->Get("PostProcess")->RtvHandle()->HandleCPU(), zeroFloat, 0, nullptr);
 
@@ -312,6 +318,7 @@ void Engine::GBufferPath()
 		m_pGBufferManager->Get("Position")->RtvHandle()->HandleCPU(),
 		m_pGBufferManager->Get("Normal")->RtvHandle()->HandleCPU(),
 		m_pGBufferManager->Get("Albedo")->RtvHandle()->HandleCPU(),
+		m_pGBufferManager->Get("MetallicRoughness")->RtvHandle()->HandleCPU(),
 		m_pGBufferManager->Get("Depth")->RtvHandle()->HandleCPU()
 	};
 	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
@@ -333,6 +340,10 @@ void Engine::LightingPath()
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("Albedo")->Resource(),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			m_pGBufferManager->Get("MetallicRoughness")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
@@ -749,7 +760,7 @@ bool Engine::CreateRenderTarget()
 	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	// SRGB空間にする
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;	// SRGB空間にする
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 	m_pRtvHeap = std::make_shared<DescriptorHeap>(desc);
@@ -939,6 +950,7 @@ bool Engine::CreateGBuffer()
 	m_pGBufferManager->CreateGBuffer("Position", propFloat);
 	m_pGBufferManager->CreateGBuffer("Normal", propFloat);
 	m_pGBufferManager->CreateGBuffer("Albedo", propRGBA);
+	m_pGBufferManager->CreateGBuffer("MetallicRoughness", propRGBA);
 	m_pGBufferManager->CreateGBuffer("Depth", propFloat);
 	m_pGBufferManager->CreateGBuffer("Lighting", propRGBA);
 	m_pGBufferManager->CreateGBuffer("SSAO", propFloat);

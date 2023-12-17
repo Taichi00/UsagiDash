@@ -29,8 +29,6 @@ Texture2D gSSAO : register(t5);
 
 SamplerState gSampler : register(s0); // ÉTÉìÉvÉâÅ[
 
-static const int SSAO_SAMPLENUM = 10;
-
 
 float inverseLerp(float a, float b, float value)
 {
@@ -181,7 +179,7 @@ float4 main(VSOutput input) : SV_TARGET
     //sobelNormal = pow(sobelNormal, 2);
     sobelNormal = step(0.8, sobelNormal);
     //sobelNormal = inverseLerp(0.5, 1, sobelNormal);
-    float3 outlineColor = lerp(1, 0.4, sobelNormal * outlineMask);
+    float3 outlineColor = lerp(1, 0.5, sobelNormal * outlineMask);
     
     float outlineDepthWidth = 0.5;
     offset = float3(1.0 / screenSize.x, 1.0 / screenSize.y, 0) * outlineDepthWidth;
@@ -192,17 +190,17 @@ float4 main(VSOutput input) : SV_TARGET
     //sobelDepth = inverseLerp(0.5, 1, sobelDepth);
     outlineColor *= lerp(1, 0, sobelDepth * outlineMask);
     
-    outlineColor = lerp(float3(0.0, 0.0, 0.0), 1, outlineColor);
+    outlineColor = lerp(0, 1, outlineColor);
     
-    float outlinePower = lerp(0.1, 0.6, inverseLerp(30, 80, depth));
-    color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
-    //color.rgb = saturate(length(outlineNormal.x + outlineNormal.y + outlineNormal.z));
+    float outlinePower = lerp(0.3, 0.8, inverseLerp(30, 80, depth));
+    //color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
     
     // SSAO
-    float ssao = gSSAO.Sample(gSampler, uv).r;
-    ssao = pow(ssao, 1.5);
-    color.rgb *= lerp(float3(0, 0, 0.5), 1, ssao);
-    color.rgb *= ssao;
+    //float ssao = gSSAO.Sample(gSampler, uv).r;
+    //ssao = pow(ssao, 2);
+    //color.rgb *= lerp(float3(0, 0, 0.5), 1, ssao);
+    //color.rgb *= saturate(ssao);
+    
     
     return color;
 }

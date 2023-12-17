@@ -77,7 +77,7 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     {
         return false;
     }
-
+    
     directoryPath = GetDirectoryPath(filename);
 
     auto& meshes = model.Meshes;
@@ -369,17 +369,18 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
 void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiScene* scene)
 {
     aiString path;
-    src->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+    float white[] = { 1, 1, 1, 1 };
+    float pbr[] = { 1, 0.8, 0, 1 };
 
-    const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(path.C_Str());
-    if (embeddedTexture != nullptr)
-    {
-        LoadEmbeddedTexture(dst, embeddedTexture);
-    }
-    else
-    {
-        LoadTexture(path, dst, src);
-    }
+    // Albedoテクスチャの読み込み
+    Texture2D::SetDefaultColor(white);
+    src->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+    LoadTexture(path, dst.Texture, src, scene);
+
+    // Metallic, Roughness, Ambientテクスチャの読み込み
+    Texture2D::SetDefaultColor(pbr);
+    src->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
+    LoadTexture(path, dst.PbrTexture, src, scene);
 
     // アルファモードを取得
     aiString alphaMode = aiString("OPAQUE");
@@ -388,7 +389,6 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     if (alphaMode == aiString("BLEND"))
     {
         dst.AlphaMode = 1;
-
     }
     else
     {
@@ -411,7 +411,6 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     {
         dst.Shininess = 250;
     }
-    
 
     // プロパティ一覧の表示
     /*printf("%s\n", path.C_Str());
@@ -463,25 +462,34 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh)
     }
 }
 
-void AssimpLoader::LoadTexture(aiString path, Material& dst, const aiMaterial* src)
+void AssimpLoader::LoadTexture(aiString path, Texture2D*& dst, const aiMaterial* src, const aiScene* scene)
 {
-    // テクスチャパスは相対パスで入っているので、ファイルの場所とくっつける
-    auto file = std::string(path.C_Str());
-    auto texturePath = directoryPath + ToWideString(file);
-    
-    //dst.DiffuseMap = dir + ToWideString(file);
-    dst.Texture = Texture2D::Get(texturePath);
-}
-
-void AssimpLoader::LoadEmbeddedTexture(Material& dst, const aiTexture* texture)
-{
-    if (texture->mHeight == 0)
+    // 埋め込み画像かどうか
+    const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(path.C_Str());
+    if (embeddedTexture != nullptr)
     {
-        dst.Texture = Texture2D::Get(texture->pcData, texture->mWidth);
+        LoadEmbeddedTexture(dst, embeddedTexture);
     }
     else
     {
-        dst.Texture = Texture2D::Get(texture->pcData, texture->mWidth * texture->mHeight);
+        // テクスチャパスは相対パスで入っているので、ファイルの場所とくっつける
+        auto file = std::string(path.C_Str());
+        auto texturePath = directoryPath + ToWideString(file);
+
+        //dst.DiffuseMap = dir + ToWideString(file);
+        dst = Texture2D::Get(texturePath);
+    }
+}
+
+void AssimpLoader::LoadEmbeddedTexture(Texture2D*& dst, const aiTexture* texture)
+{
+    if (texture->mHeight == 0)
+    {
+        dst = Texture2D::Get(texture->pcData, texture->mWidth);
+    }
+    else
+    {
+        dst = Texture2D::Get(texture->pcData, static_cast<size_t>(texture->mWidth) * texture->mHeight);
     }
 }
 

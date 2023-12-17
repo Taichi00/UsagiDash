@@ -55,7 +55,7 @@ float4 main(VSOutput input) : SV_TARGET
     {
         float2 screenPos = input.svpos.xy / input.viewPos.w;
         float ditherLevel = inverseLerp(-5, -2, input.svpos.z) * 16;
-        DitherClip(screenPos, DitherLevel, 1);
+        DitherClip(screenPos, DitherLevel, 2);
     }
     
     return 1;

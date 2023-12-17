@@ -136,9 +136,12 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
         meshes[i].pIndexBuffer = pIB;
     }
 
+    float pbr[4] = { 1, 0.1, 0, 1 };
+
     auto material = Material{};
     material.BaseColor = { r, g, b, 1 };
     material.Texture = Texture2D::GetWhite();
+    material.PbrTexture = Texture2D::GetMono(pbr);
     material.Shininess = 10;
 
     std::vector<Material> materials;

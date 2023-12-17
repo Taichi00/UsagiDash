@@ -43,7 +43,7 @@ RootSignature::RootSignature(const int numParams, RootSignatureParameter params[
 	// スタティックサンプラーの設定
 	auto sampler = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 	//auto sampler = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_POINT);
-
+	
 	// ルートシグネチャの設定（設定したいルートパラメータとスタティックサンプラーを入れる）
 	D3D12_ROOT_SIGNATURE_DESC desc = {};
 	desc.NumParameters		= numParams;			// ルートパラメータの個数

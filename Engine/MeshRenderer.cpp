@@ -122,19 +122,29 @@ bool MeshRenderer::Init()
 	D3D12_DESCRIPTOR_HEAP_DESC desc{};
 	desc.NodeMask = 0;	// どのGPU向けのディスクリプタヒープかを指定（GPU１つの場合は０）
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = m_model.Materials.size() + 1;
+	desc.NumDescriptors = m_model.Materials.size() + 1; // Material数 + ShadowMap
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	m_pDescriptorHeap = new DescriptorHeap(desc);
 	for (size_t i = 0; i < m_model.Materials.size(); i++)
 	{
+		// Albedoテクスチャ
 		auto texture = m_model.Materials[i].Texture;
 		auto pHandle = m_pDescriptorHeap->Alloc();
 		auto resource = texture->Resource();
 		auto desc = texture->ViewDesc();
 		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());	// シェーダーリソースビュー作成
-
 		m_model.Materials[i].pHandle = pHandle;
+
+		// PBR用のテクスチャ
+		texture = m_model.Materials[i].PbrTexture;
+		pHandle = m_pDescriptorHeap->Alloc();
+		resource = texture->Resource();
+		desc = texture->ViewDesc();
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
+		m_model.Materials[i].pPbrHandle = pHandle;
+
+		// 不透明PipelineState
 		m_model.Materials[i].pPipelineState = m_pOpaquePSO;
 	}
 
@@ -167,7 +177,7 @@ bool MeshRenderer::Init()
 
 	if (!PreparePSO())
 	{
-		//printf("パイプラインステートの生成に失敗\n");
+		printf("パイプラインステートの生成に失敗\n");
 		return false;
 	}
 
@@ -197,15 +207,15 @@ void MeshRenderer::Draw()
 		m_pDescriptorHeap->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	//commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
 	for (Mesh mesh : m_model.Meshes)
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		ID3D12PipelineState* pso;
 		switch (alphaMode)
@@ -222,7 +232,8 @@ void MeshRenderer::Draw()
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -235,8 +246,8 @@ void MeshRenderer::Draw()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		if (alphaMode == 1)
 		{
@@ -248,7 +259,7 @@ void MeshRenderer::Draw()
 		commandList->SetPipelineState(m_pOutlinePSO->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -277,8 +288,8 @@ void MeshRenderer::DrawAlpha()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		ID3D12PipelineState* pso;
 		switch (alphaMode)
@@ -295,7 +306,7 @@ void MeshRenderer::DrawAlpha()
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -323,14 +334,14 @@ void MeshRenderer::DrawShadow()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
 
 		ID3D12PipelineState* pso = m_pShadowPSO->Get();
 
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -389,8 +400,8 @@ void MeshRenderer::DrawGBuffer()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		if (alphaMode == 1)
 			continue;
@@ -399,7 +410,8 @@ void MeshRenderer::DrawGBuffer()
 
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -431,8 +443,8 @@ void MeshRenderer::DrawOutline()
 	{
 		auto vbView = mesh.pVertexBuffer->View();
 		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat.AlphaMode;
+		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto alphaMode = mat->AlphaMode;
 
 		if (alphaMode == 1)
 			continue;
@@ -442,7 +454,7 @@ void MeshRenderer::DrawOutline()
 		commandList->SetPipelineState(m_pOutlinePSO->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat.pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -492,7 +504,7 @@ bool MeshRenderer::PreparePSO()
 	m_pShadowPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pShadowPSO->SetVS(L"../x64/Debug/ShadowVS.cso");
 	m_pShadowPSO->SetPS(L"../x64/Debug/ShadowPS.cso");
-	m_pShadowPSO->SetCullMode(D3D12_CULL_MODE_BACK);
+	m_pShadowPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 	m_pShadowPSO->Create();
 	if (!m_pShadowPSO->IsValid())
 	{
@@ -526,11 +538,12 @@ bool MeshRenderer::PreparePSO()
 	m_pGBufferPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = m_pGBufferPSO->GetDesc();
-	desc->NumRenderTargets = 4;
+	desc->NumRenderTargets = 5;
 	desc->RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Position
 	desc->RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Normal
 	desc->RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;		// Albedo
-	desc->RTVFormats[3] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Depth
+	desc->RTVFormats[3] = DXGI_FORMAT_R8G8B8A8_UNORM;		// MetallicRoughness
+	desc->RTVFormats[4] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Depth
 	desc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;	// デプスバッファには書き込まない
 	desc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
 

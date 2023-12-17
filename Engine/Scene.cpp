@@ -40,16 +40,6 @@ bool Scene::Init()
 	// シャドウマップの生成
 	m_pShadowMap = new ShadowMap();
 
-	// シャドウマップの登録
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-	m_pShadowHandle = g_Engine->GBufferHeap()->Alloc();
-	g_Engine->Device()->CreateShaderResourceView(m_pShadowMap->Resource(), &srvDesc, m_pShadowHandle->HandleCPU());
-
 	// CollisionManagerの生成
 	m_pCollisionManager = new CollisionManager();
 
@@ -60,9 +50,12 @@ bool Scene::Init()
 		RSTexture,			// Position
 		RSTexture,			// Normal
 		RSTexture,			// Albedo
+		RSTexture,			// MetallicRoughness
 		RSTexture,			// Depth
 		RSTexture,			// ShadowMap
 		RSTexture,			// Skybox
+		RSTexture,			
+		RSTexture,			
 	};
 	m_pRootSignature = new RootSignature(_countof(params), params);
 	if (!m_pRootSignature->IsValid())
@@ -179,21 +172,21 @@ void Scene::Draw()
 	DrawSkybox();
 
 	// SSAO
-	g_Engine->SSAOPath();
-	DrawSSAO();
+	//g_Engine->SSAOPath();
+	//DrawSSAO();
 
-	// ぼかし
-	g_Engine->BlurHorizontalPath();
-	DrawBlurHorizontal();
-	g_Engine->BlurVerticalPath();
-	DrawBlurVertical();
+	//// ぼかし
+	//g_Engine->BlurHorizontalPath();
+	//DrawBlurHorizontal();
+	//g_Engine->BlurVerticalPath();
+	//DrawBlurVertical();
 
 	// ポストプロセス
 	g_Engine->PostProcessPath();
 	DrawPostProcess();
 
 	// アウトライン描画（フォワードレンダリング）
-	for (auto entity : m_pEntities) entity->DrawOutline();
+	//for (auto entity : m_pEntities) entity->DrawOutline();
 
 	// FXAA
 	g_Engine->FXAAPath();
@@ -222,9 +215,12 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("Position")->SrvHandle()->HandleGPU());	// ディスクリプタテーブルをセット
 	commandList->SetGraphicsRootDescriptorTable(3, gbufferManager->Get("Normal")->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle()->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(6, m_pShadowHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(7, m_pSkyboxHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("MetallicRoughness")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(7, m_pShadowMap->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(8, m_pDiffuseMapHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(9, m_pSpecularMapHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(10, m_pBrdfHandle->HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -296,7 +292,7 @@ void Scene::DrawBlurHorizontal()
 		gbufferHeap,
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetPipelineState(m_pBlurHorizontal->Get());		// パイプラインステートをセット
+	commandList->SetPipelineState(m_pBlurHorizontalPSO->Get());		// パイプラインステートをセット
 	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("SSAO")->SrvHandle()->HandleGPU()); // ディスクリプタテーブルをセット
 
 	commandList->DrawInstanced(4, 1, 0, 0);
@@ -316,7 +312,7 @@ void Scene::DrawBlurVertical()
 		gbufferHeap,
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetPipelineState(m_pBlurVertical->Get());		// パイプラインステートをセット
+	commandList->SetPipelineState(m_pBlurVerticalPSO->Get());		// パイプラインステートをセット
 	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("BlurredSSAO1")->SrvHandle()->HandleGPU()); // ディスクリプタテーブルをセット
 
 	commandList->DrawInstanced(4, 1, 0, 0);
@@ -396,23 +392,64 @@ CollisionManager* Scene::GetCollisionManager()
 	return m_pCollisionManager;
 }
 
-void Scene::SetSkybox(const wchar_t* path)
+void Scene::SetSkybox(const std::string path)
 {
-	m_pSkyboxTex = Texture2D::Get(path);
+	auto device = g_Engine->Device();
+
+	m_pSkyboxTex = Texture2D::Get(path + "EnvHDR.dds");
 
 	// SRVを作成
-	D3D12_SHADER_RESOURCE_VIEW_DESC desc{};
-	desc.Format = m_pSkyboxTex->Format();
-	desc.TextureCube.MipLevels = 1;
-	desc.TextureCube.MostDetailedMip = 0;
-	desc.TextureCube.ResourceMinLODClamp = 0;
-	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	D3D12_SHADER_RESOURCE_VIEW_DESC skyboxDesc{};
+	skyboxDesc.Format = m_pSkyboxTex->Format();
+	skyboxDesc.TextureCube.MipLevels = m_pSkyboxTex->Metadata().mipLevels;
+	skyboxDesc.TextureCube.MostDetailedMip = 0;
+	skyboxDesc.TextureCube.ResourceMinLODClamp = 0;
+	skyboxDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	skyboxDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
 	m_pSkyboxHandle = g_Engine->GBufferHeap()->Alloc();	// GBufferHeapに追加
-	auto resource = m_pSkyboxTex->Resource();
+	device->CreateShaderResourceView(m_pSkyboxTex->Resource(), &skyboxDesc, m_pSkyboxHandle->HandleCPU());	// シェーダーリソースビュー作成
 
-	g_Engine->Device()->CreateShaderResourceView(resource, &desc, m_pSkyboxHandle->HandleCPU());	// シェーダーリソースビュー作成
+	// DiffuseMap
+	m_pDiffuseMapTex = Texture2D::Get(path + "DiffuseHDR.dds");
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC diffuseDesc{};
+	diffuseDesc.Format = m_pDiffuseMapTex->Format();
+	diffuseDesc.TextureCube.MipLevels = m_pDiffuseMapTex->Metadata().mipLevels;
+	diffuseDesc.TextureCube.MostDetailedMip = 0;
+	diffuseDesc.TextureCube.ResourceMinLODClamp = 0;
+	diffuseDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	diffuseDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+
+	m_pDiffuseMapHandle = g_Engine->GBufferHeap()->Alloc();
+	device->CreateShaderResourceView(m_pDiffuseMapTex->Resource(), &diffuseDesc, m_pDiffuseMapHandle->HandleCPU());
+
+	// SpecularMap
+	m_pSpecularMapTex = Texture2D::Get(path + "SpecularHDR.dds");
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC specularDesc{};
+	specularDesc.Format = m_pSpecularMapTex->Format();
+	specularDesc.TextureCube.MipLevels = m_pSpecularMapTex->Metadata().mipLevels;
+	specularDesc.TextureCube.MostDetailedMip = 0;
+	specularDesc.TextureCube.ResourceMinLODClamp = 0;
+	specularDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	specularDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+
+	m_pSpecularMapHandle = g_Engine->GBufferHeap()->Alloc();
+	device->CreateShaderResourceView(m_pSpecularMapTex->Resource(), &specularDesc, m_pSpecularMapHandle->HandleCPU());
+
+	// brdfLUT
+	m_pBrdfTex = Texture2D::Get(path + "Brdf.dds");
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC brdfDesc{};
+	brdfDesc.Format = m_pBrdfTex->Format();
+	brdfDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	brdfDesc.Texture2D.MipLevels = m_pBrdfTex->Metadata().mipLevels;
+	brdfDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+	m_pBrdfHandle = g_Engine->GBufferHeap()->Alloc();
+	device->CreateShaderResourceView(m_pBrdfTex->Resource(), &brdfDesc, m_pBrdfHandle->HandleCPU());
+
 
 	// Meshを作成
 	float size = 500;
@@ -469,7 +506,7 @@ bool Scene::PreparePSO()
 	m_pLightingPSO->SetInputLayout({nullptr, 0});
 	m_pLightingPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pLightingPSO->SetVS(L"../x64/Debug/ScreenVS.cso");
-	m_pLightingPSO->SetPS(L"../x64/Debug/DeferredPS.cso");
+	m_pLightingPSO->SetPS(L"../x64/Debug/PBR2.cso");
 	m_pLightingPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	auto desc = m_pLightingPSO->GetDesc();
@@ -499,35 +536,35 @@ bool Scene::PreparePSO()
 	}
 
 	// BlurHorizontal用
-	m_pBlurHorizontal = new PipelineState();
-	m_pBlurHorizontal->SetInputLayout({ nullptr, 0 });
-	m_pBlurHorizontal->SetRootSignature(m_pRootSignature->Get());
-	m_pBlurHorizontal->SetVS(L"../x64/Debug/ScreenVS.cso");
-	m_pBlurHorizontal->SetPS(L"../x64/Debug/GaussianBlurHorizontal.cso");
-	m_pBlurHorizontal->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pBlurHorizontalPSO = new PipelineState();
+	m_pBlurHorizontalPSO->SetInputLayout({ nullptr, 0 });
+	m_pBlurHorizontalPSO->SetRootSignature(m_pRootSignature->Get());
+	m_pBlurHorizontalPSO->SetVS(L"../x64/Debug/ScreenVS.cso");
+	m_pBlurHorizontalPSO->SetPS(L"../x64/Debug/GaussianBlurHorizontal.cso");
+	m_pBlurHorizontalPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
-	desc = m_pBlurHorizontal->GetDesc();
+	desc = m_pBlurHorizontalPSO->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
 
-	m_pBlurHorizontal->Create();
-	if (!m_pBlurHorizontal->IsValid())
+	m_pBlurHorizontalPSO->Create();
+	if (!m_pBlurHorizontalPSO->IsValid())
 	{
 		return false;
 	}
 
 	// BlurVertical用
-	m_pBlurVertical = new PipelineState();
-	m_pBlurVertical->SetInputLayout({ nullptr, 0 });
-	m_pBlurVertical->SetRootSignature(m_pRootSignature->Get());
-	m_pBlurVertical->SetVS(L"../x64/Debug/ScreenVS.cso");
-	m_pBlurVertical->SetPS(L"../x64/Debug/GaussianBlurVertical.cso");
-	m_pBlurVertical->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pBlurVerticalPSO = new PipelineState();
+	m_pBlurVerticalPSO->SetInputLayout({ nullptr, 0 });
+	m_pBlurVerticalPSO->SetRootSignature(m_pRootSignature->Get());
+	m_pBlurVerticalPSO->SetVS(L"../x64/Debug/ScreenVS.cso");
+	m_pBlurVerticalPSO->SetPS(L"../x64/Debug/GaussianBlurVertical.cso");
+	m_pBlurVerticalPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
-	desc = m_pBlurVertical->GetDesc();
+	desc = m_pBlurVerticalPSO->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
 
-	m_pBlurVertical->Create();
-	if (!m_pBlurVertical->IsValid())
+	m_pBlurVerticalPSO->Create();
+	if (!m_pBlurVerticalPSO->IsValid())
 	{
 		return false;
 	}
@@ -619,5 +656,6 @@ void Scene::UpdateCB()
 	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 500;
 	currentScene->LightView = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
 	currentScene->LightProj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
+	currentScene->LightColor = { 20, 20, 20 };
 }
 

@@ -69,12 +69,12 @@ float4 main(VSOutput input) : SV_TARGET
     // ディザリング
     float2 screenPos = input.svpos.xy / input.viewPos.w;
     float ditherLevel = inverseLerp(-5, -2, input.viewPos.z) * 16;
-    DitherClip(screenPos, DitherLevel, 1);
+    DitherClip(screenPos, DitherLevel, 2);
     
     // カラーリング
     float outlinePower = 1 - (dot(normalize(input.normal), LightDir) * 0.5 + 0.5);
-    outlinePower = lerp(0.1, 0.5, inverseLerp(0.6, 1, outlinePower));
-    float3 outlineColor = diffuse.rgb * outlinePower;
+    outlinePower = inverseLerp(0.6, 1, outlinePower);
+    float3 outlineColor = lerp(diffuse.rgb * 0.3, lerp(diffuse.rgb, 1.0, 0.5), outlinePower);
     
     float4 result = float4(outlineColor, 1.0f);
     

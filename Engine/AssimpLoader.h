@@ -13,6 +13,7 @@ struct CollisionModel;
 class Bone;
 class BoneList;
 class Animation;
+class Texture2D;
 
 struct aiMesh;
 struct aiMaterial;
@@ -39,8 +40,9 @@ private:
 	static void LoadMesh(Mesh& dst, const aiMesh* src);
 	static void LoadMaterial(Material& dst, const aiMaterial* src, const aiScene* scene);
 	static void LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh);
-	static void LoadTexture(aiString path, Material& dst, const aiMaterial* src);
-	static void LoadEmbeddedTexture(Material& dst, const aiTexture* texture);
+
+	static void LoadTexture(aiString path, Texture2D*& dst, const aiMaterial* src, const aiScene* scene);
+	static void LoadEmbeddedTexture(Texture2D*& dst, const aiTexture* texture);
 
 	static void BuildBoneHierarchy(BoneList& bones, aiNode* node, Bone* parentBone);
 

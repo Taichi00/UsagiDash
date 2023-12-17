@@ -1,5 +1,4 @@
 #include "Texture2D.h"
-#include <DirectXTex.h>
 #include "Engine.h"
 #include "stb_image.h"
 
@@ -7,10 +6,13 @@
 
 using namespace DirectX;
 
-// std::string(マルチバイト文字列)からstd::wstring(ワイド文字列)を得る。AssimpLoaderと同じものだけど、共用にするのがめんどくさかったので許してください
+
+float Texture2D::defaultColor[4] = { 1, 1, 1, 1 };
+
+// std::string(マルチバイト文字列)からstd::wstring(ワイド文字列)を得る
 std::wstring GetWideString(const std::string& str)
 {
-	auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
+	/*auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
 
 	std::wstring wstr;
 	wstr.resize(num1);
@@ -18,7 +20,27 @@ std::wstring GetWideString(const std::string& str)
 	auto num2 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num1);
 
 	assert(num1 == num2);
-	return wstr;
+	return wstr;*/
+
+	// SJIS → wstring
+	int iBufferSize = MultiByteToWideChar(CP_ACP, 0, str.c_str()
+		, -1, (wchar_t*)NULL, 0);
+
+	// バッファの取得
+	wchar_t* cpUCS2 = new wchar_t[iBufferSize];
+
+	// SJIS → wstring
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, cpUCS2
+		, iBufferSize);
+
+	// stringの生成
+	std::wstring oRet(cpUCS2, cpUCS2 + iBufferSize - 1);
+
+	// バッファの破棄
+	delete[] cpUCS2;
+
+	// 変換結果を返す
+	return oRet;
 }
 
 // 拡張子を返す
@@ -39,7 +61,7 @@ Texture2D* Texture2D::Get(std::wstring path)
 	auto tex = new Texture2D(path);
 	if (!tex->IsValid())
 	{
-		return GetWhite();	// 読み込みに失敗したときは白単色テクスチャを返す
+		return GetMono(defaultColor);	// 読み込みに失敗したときは単色テクスチャを返す
 	}
 	return tex;
 }
@@ -49,17 +71,25 @@ Texture2D* Texture2D::Get(const void* pSource, size_t size)
 	auto tex = new Texture2D(pSource, size);
 	if (!tex->IsValid())
 	{
-		return GetWhite();	// 読み込みに失敗したときは白単色テクスチャを返す
+		return GetMono(defaultColor);	// 読み込みに失敗したときは単色テクスチャを返す
 	}
 	return tex;
 }
 
-Texture2D* Texture2D::GetWhite()
+Texture2D* Texture2D::GetMono(const float color[4])
 {
 	ID3D12Resource* buff = GetDefaultResource(4, 4);
 
 	std::vector<unsigned char> data(4 * 4 * 4);
-	std::fill(data.begin(), data.end(), 0xff);
+
+	for (size_t i = 0; i < 4 * 4 * 4; i += 4)
+	{
+		data[i + 0] = color[0] * 255;
+		data[i + 1] = color[1] * 255;
+		data[i + 2] = color[2] * 255;
+		data[i + 3] = color[3] * 255;
+	}
+	//std::fill(data.begin(), data.end(), 0xff);
 
 	auto hr = buff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
 	if (FAILED(hr))
@@ -68,6 +98,20 @@ Texture2D* Texture2D::GetWhite()
 	}
 
 	return new Texture2D(buff);
+}
+
+Texture2D* Texture2D::GetWhite()
+{
+	float white[4] = {1, 1, 1, 1};
+	return GetMono(white);
+}
+
+void Texture2D::SetDefaultColor(const float color[4])
+{
+	defaultColor[0] = color[0];
+	defaultColor[1] = color[1];
+	defaultColor[2] = color[2];
+	defaultColor[3] = color[3];
 }
 
 bool Texture2D::IsValid()
@@ -93,6 +137,11 @@ D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDesc()
 DXGI_FORMAT Texture2D::Format()
 {
 	return m_pFormat;
+}
+
+DirectX::TexMetadata Texture2D::Metadata()
+{
+	return m_metadata;
 }
 
 Texture2D::Texture2D(std::wstring path)
@@ -135,6 +184,8 @@ bool Texture2D::Load(std::wstring& path)
 	{
 		return false;
 	}
+
+	m_metadata = meta;
 
 	auto img = image.GetImage(0, 0, 0);
 	auto desc = CD3DX12_RESOURCE_DESC::Tex2D(

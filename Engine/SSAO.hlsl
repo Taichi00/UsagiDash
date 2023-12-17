@@ -27,7 +27,7 @@ Texture2D gDepth : register(t3);
 
 SamplerState gSampler : register(s0); // ÉTÉìÉvÉâÅ[
 
-static const int SSAO_SAMPLENUM = 16;
+static const int SSAO_SAMPLENUM = 10;
 
 
 float inverseLerp(float a, float b, float value)
@@ -82,8 +82,8 @@ float4 main(VSOutput input) : SV_TARGET
     float3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
     float3 bitangent = cross(viewNormal, tangent);
     float3x3 TBN = float3x3(tangent, bitangent, viewNormal);
-    float radius = 0.15;
-    float bias = 0.001;
+    float radius = 0.5;
+    float bias = 0.05;
     float occlusion = 0;
     for (int i = 0; i < SSAO_SAMPLENUM; i++)
     {

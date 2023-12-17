@@ -43,7 +43,7 @@ void CollisionManager::Update()
 
 		if (rigidbody->useGravity)
 		{
-			rigidbody->velocity += Vec3(0, -0.016, 0);
+			rigidbody->velocity += Vec3(0, -0.018, 0);
 		}
 	}
 }

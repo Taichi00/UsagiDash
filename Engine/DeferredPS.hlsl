@@ -194,6 +194,12 @@ float4 main(VSOutput input) : SV_TARGET
     //p = (float) round(p);
     shade = inverseLerp(0.25, 0.4, shade);
     
+    // ”½ŽËŒõ
+    float refrection = dot(normal, -LightDir);
+    refrection = pow(refrection * 0.5 + 0.5, 2);
+    refrection = inverseLerp(0.0, 0.15, refrection);
+    float3 refrectionColor = lerp(float3(0.02, 0.02, 0.02), 0, refrection);
+    
     // ƒXƒyƒLƒ…ƒ‰
     float3 specularLightColor = CalcPhongSpecular(-LightDir, 0.2, viewDir, normal, shininess);
     
@@ -217,7 +223,7 @@ float4 main(VSOutput input) : SV_TARGET
     float fog = inverseLerp(30, 120, depth);
     float3 fogColor = float3(0.5, 0.5, 0.5);
     
-    float4 color = float4(albedo * shadeColor * rimShadeColor + rimLightColor + specularLightColor, 1);
+    float4 color = float4(albedo * shadeColor * rimShadeColor + rimLightColor + specularLightColor + refrectionColor, 1);
     color.rgb = lerp(color.rgb, fogColor, fog);
     
     return color;

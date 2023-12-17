@@ -39,8 +39,8 @@ VSOutput main(VSInput input)
     
     float4 localPos = float4(input.pos, 1);
     float4 worldPos = mul(World, localPos);
-    float4 viewPos = mul(View, worldPos);
-    float4 projPos = mul(Proj, viewPos);
+    float3 viewPos = mul((float3x3) View, worldPos.xyz); // 回転のみ（カメラ座標に固定するため）
+    float4 projPos = mul(Proj, float4(viewPos, 1));
     
     output.svpos = projPos;
     output.worldPos = worldPos;
