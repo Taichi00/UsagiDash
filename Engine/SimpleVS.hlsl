@@ -38,6 +38,8 @@ struct VSOutput
     float4 viewPos : VIEW_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
@@ -111,11 +113,22 @@ VSOutput main(VSInput input)
     float3 worldNormal = mul((float3x3) World, localNormal);
     worldNormal = normalize(worldNormal);
     
+    float3 localTangent = TransformNormal(input.tangent, input);
+    float3 worldTangent = mul((float3x3) World, localTangent);
+    worldTangent = normalize(worldTangent);
+    
+    float3 binormal = cross(input.normal, input.tangent);
+    float3 localBinormal = TransformNormal(binormal, input);
+    float3 worldBinormal = mul((float3x3) World, localBinormal);
+    worldBinormal = normalize(worldBinormal);
+    
     output.svpos = projPos;
     output.worldPos = worldPos;
     output.viewPos = viewPos;
     output.posSM = GetShadowMapPosition(worldPos, input);
     output.normal = worldNormal;
+    output.tangent = worldTangent;
+    output.binormal = worldBinormal;
     output.color = input.color;
     output.uv = input.uv;
     return output;

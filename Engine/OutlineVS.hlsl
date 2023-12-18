@@ -43,6 +43,8 @@ struct VSOutput
     float4 svpos : SV_POSITION;
     float4 viewPos : VIEW_POSITION;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };

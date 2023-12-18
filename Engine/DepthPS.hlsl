@@ -5,6 +5,8 @@ struct VSOutput
     float4 viewPos : VIEW_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
@@ -46,10 +48,16 @@ void DitherClip(float2 screenPos, float ditherLevel, float size)
     clip(dither - ditherLevel);
 }
 
+SamplerState gSampler : register(s0); // サンプラー
+Texture2D gAlbedo : register(t0); // albedoテクスチャ
+
 
 float4 main(VSOutput input) : SV_TARGET
 {
-    //float2 screenSize = float2(1280, 720);
+    float4 albedo = gAlbedo.Sample(gSampler, input.uv);
+    
+    if (albedo.a < 0.5)
+        discard;
     
     if (OutlineWidth > 0)
     {

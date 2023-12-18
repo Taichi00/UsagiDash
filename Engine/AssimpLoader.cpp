@@ -91,6 +91,8 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     flag |= aiProcess_Triangulate;
     flag |= aiProcess_LimitBoneWeights;
     flag |= aiProcess_FlipUVs;
+    flag |= aiProcess_GenUVCoords;
+    flag |= aiProcess_CalcTangentSpace;
 
     auto pScene = importer.ReadFile(path, flag);
     
@@ -326,6 +328,7 @@ void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
 {
     aiVector3D zero3D(0.0f, 0.0f, 0.0f);
+    aiVector3D zeroTangent(1.0f, 0.0f, 0.0f);
     aiColor4D zeroColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     dst.Vertices.resize(src->mNumVertices);
@@ -335,7 +338,7 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
         auto position = &(src->mVertices[i]);
         auto normal = &(src->mNormals[i]);
         auto uv = (src->HasTextureCoords(0)) ? &(src->mTextureCoords[0][i]) : &zero3D;
-        auto tangent = (src->HasTangentsAndBitangents()) ? &(src->mTangents[i]) : &zero3D;
+        auto tangent = (src->HasTangentsAndBitangents()) ? &(src->mTangents[i]) : &zeroTangent;
         auto color = (src->HasVertexColors(0)) ? &(src->mColors[0][i]) : &zeroColor;
         
         Vertex vertex = {};
@@ -369,18 +372,43 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
 void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiScene* scene)
 {
     aiString path;
+
     float white[] = { 1, 1, 1, 1 };
     float pbr[] = { 1, 0.8, 0, 1 };
+    float normal[] = { 0.5, 0.5, 1, 1 };
 
     // Albedoテクスチャの読み込み
     Texture2D::SetDefaultColor(white);
-    src->GetTexture(aiTextureType_DIFFUSE, 0, &path);
-    LoadTexture(path, dst.Texture, src, scene);
+    if (src->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
+    {
+        LoadTexture(path, dst.Texture, src, scene);
+    }
+    else
+    {
+        dst.Texture = Texture2D::GetWhite();
+    }
 
     // Metallic, Roughness, Ambientテクスチャの読み込み
     Texture2D::SetDefaultColor(pbr);
-    src->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
-    LoadTexture(path, dst.PbrTexture, src, scene);
+    if (src->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path) == aiReturn_SUCCESS)
+    {
+        LoadTexture(path, dst.PbrTexture, src, scene);
+    }
+    else
+    {
+        dst.PbrTexture = Texture2D::GetMono(pbr);
+    }
+
+    // Normalテクスチャの読み込み
+    Texture2D::SetDefaultColor(normal);
+    if (src->GetTexture(aiTextureType_NORMALS, 0, &path) == aiReturn_SUCCESS)
+    {
+        LoadTexture(path, dst.NormalTexture, src, scene);
+    }
+    else
+    {
+        dst.NormalTexture = Texture2D::GetMono(normal);
+    }
 
     // アルファモードを取得
     aiString alphaMode = aiString("OPAQUE");

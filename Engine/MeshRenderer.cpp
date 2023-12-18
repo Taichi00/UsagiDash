@@ -144,6 +144,14 @@ bool MeshRenderer::Init()
 		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
 		m_model.Materials[i].pPbrHandle = pHandle;
 
+		// Normalテクスチャ
+		texture = m_model.Materials[i].NormalTexture;
+		pHandle = m_pDescriptorHeap->Alloc();
+		resource = texture->Resource();
+		desc = texture->ViewDesc();
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
+		m_model.Materials[i].pNormalHandle = pHandle;
+
 		// 不透明PipelineState
 		m_model.Materials[i].pPipelineState = m_pOpaquePSO;
 	}
@@ -165,6 +173,7 @@ bool MeshRenderer::Init()
 		RSConstantBuffer,
 		RSConstantBuffer,
 		RSConstantBuffer,
+		RSTexture,
 		RSTexture,
 		RSTexture,
 	};
@@ -316,7 +325,7 @@ void MeshRenderer::DrawShadow()
 {
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 	auto commandList = g_Engine->CommandList();
-
+	auto a = m_pTransformCB[currentIndex]->GetPtr<TransformParameter>();
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, m_pSceneCB[currentIndex]->GetAddress());
@@ -357,6 +366,10 @@ void MeshRenderer::DrawDepth()
 	commandList->SetGraphicsRootConstantBufferView(2, m_pBoneCB[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	commandList->SetPipelineState(m_pDepthPSO->Get());								// パイプラインステートをセット
+	ID3D12DescriptorHeap* heaps[] = {
+		m_pDescriptorHeap->GetHeap(),
+	};
+	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 
 	// メッシュの描画
 	for (Mesh mesh : m_model.Meshes)
@@ -372,6 +385,8 @@ void MeshRenderer::DrawDepth()
 		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
 }
@@ -412,6 +427,7 @@ void MeshRenderer::DrawGBuffer()
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
 		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
 		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(6, mat->pNormalHandle->HandleGPU());
 
 		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
 	}
@@ -620,6 +636,7 @@ void MeshRenderer::UpdateCB()
 	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).normalized() * 500;
 	currentScene->LightView = XMMatrixLookAtRH(lightPos, targetPos, {0, 1, 0});
 	currentScene->LightProj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
+	currentScene->LightWorld = world;
 }
 
 Bone* MeshRenderer::FindBone(std::string name)

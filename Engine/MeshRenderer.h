@@ -19,6 +19,7 @@ struct MeshRendererProperty
 class MeshRenderer : public Component
 {
 public:
+	MeshRenderer() {};
 	MeshRenderer(MeshRendererProperty prop);
 	~MeshRenderer();
 
@@ -45,7 +46,7 @@ public:
 	Bone* FindBone(std::string name);
 	BoneList* GetBones();
 
-private:
+protected:
 	Model m_model;
 
 	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];

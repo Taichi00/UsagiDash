@@ -18,6 +18,8 @@
 #include "CapsuleCollider.h"
 #include "Physics.h"
 #include "Quaternion.h"
+#include "BillboardRenderer.h"
+#include "Texture2D.h"
 
 Entity* enemy, *testSphere;
 float angle = 0;
@@ -41,7 +43,7 @@ bool CollisionTestScene::Init()
 	CreateEntity(player);*/
 
 	AssimpLoader::Load(L"Assets/PlatformerPack/Character.gltf", model, animations);
-	auto player = new Entity();
+	auto player = new Entity("Player");
 	player->AddComponent(new MeshRenderer({ model }));
 	collider = (Collider*)player->AddComponent(new CapsuleCollider({ 1, 1 }));
 	player->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
@@ -59,7 +61,7 @@ bool CollisionTestScene::Init()
 
 	for (int i = 0; i < 4; i++)
 	{
-		auto object = new Entity();
+		auto object = new Entity("Object " + std::to_string(i + 1));
 		
 		if (i % 2 == 0)
 		{
@@ -83,7 +85,7 @@ bool CollisionTestScene::Init()
 
 
 	AssimpLoader::Load(L"Assets/PlatformerPack/Enemy.gltf", model, animations);
-	enemy = new Entity();
+	enemy = new Entity("Enemy");
 	enemy->AddComponent(new MeshRenderer({ model }));
 	collider = (Collider*)enemy->AddComponent(new SphereCollider({ 1.5 }));
 	enemy->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
@@ -97,18 +99,28 @@ bool CollisionTestScene::Init()
 
 
 	AssimpLoader::Load(L"Assets/PlatformerPack/Star.gltf", model, animations);
-	testSphere = new Entity();
+	testSphere = new Entity("Star");
 	testSphere->AddComponent(new MeshRenderer({ model }));
 	CreateEntity(testSphere);
 	//testSphere->transform->scale = Vec3(0.3, 0.3, 0.3);
 
 
 	AssimpLoader::Load(L"Assets/DamagedHelmet.glb", model, animations);
-	auto pbrEntity = new Entity();
+	auto pbrEntity = new Entity("PBR Entity");
 	pbrEntity->AddComponent(new MeshRenderer({ model }));
 	CreateEntity(pbrEntity);
+	pbrEntity->transform->position = Vec3(0, -3, -13);
 	pbrEntity->transform->rotation = Quaternion::FromEuler(1.57, 0, 0);
 	pbrEntity->transform->scale = Vec3(4, 4, 4);
+
+	auto albedo = Texture2D::Get("Assets/smoke2_albedo.png");
+	auto normal = Texture2D::Get("Assets/smoke2_normal.png");
+	auto billboard = new Entity("Billboard");
+	billboard->AddComponent(new BillboardRenderer(albedo, normal));
+	CreateEntity(billboard);
+
+	billboard->transform->position = Vec3(0, -4, 0);
+	billboard->transform->scale = Vec3(0.6, 0.6, 0.6);
 
 
 	//AssimpLoader::Load(L"Assets/checker_plane.obj", model, animations);
@@ -124,7 +136,7 @@ bool CollisionTestScene::Init()
 
 	AssimpLoader::Load(L"Assets/Map/CollisionTest.obj", model, animations);
 	AssimpLoader::LoadCollision(L"Assets/Map/CollisionTest.obj", collisionModel);
-	auto plane = new Entity();
+	auto plane = new Entity("Map");
 	plane->AddComponent(new MeshRenderer({ model }));
 	collider = (Collider*)plane->AddComponent(new MeshCollider({ collisionModel }));
 	plane->AddComponent(new Rigidbody({ collider, 1, false, true, 0.5 }));
@@ -148,7 +160,7 @@ bool CollisionTestScene::Init()
 	miku->GetComponent<MeshRenderer>()->SetOutlineWidth(0);*/
 
 
-	auto camera = new Entity();
+	auto camera = new Entity("Camera");
 	camera->AddComponent(new Camera());
 	camera->AddComponent(new GameCamera({ player }));
 	CreateEntity(camera);

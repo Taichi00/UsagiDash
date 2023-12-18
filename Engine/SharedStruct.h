@@ -54,6 +54,7 @@ struct alignas(256) SceneParameter
 	XMVECTOR LightColor;
 	XMVECTOR LightDirection;
 	XMVECTOR CameraPosition;
+	XMMATRIX LightWorld;
 };
 
 struct alignas(256) BoneParameter
@@ -81,8 +82,10 @@ struct Material
 {
 	Texture2D* Texture;
 	Texture2D* PbrTexture;
+	Texture2D* NormalTexture;
 	DescriptorHandle* pHandle;
 	DescriptorHandle* pPbrHandle;
+	DescriptorHandle* pNormalHandle;
 	PipelineState* pPipelineState;
 	int AlphaMode;
 	XMVECTOR BaseColor;

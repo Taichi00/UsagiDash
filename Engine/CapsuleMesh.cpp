@@ -21,6 +21,7 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
     auto v0 = Vertex{};
     v0.Position = Vec3(0, 1, 0) * radius + Vec3(0, height2, 0);
     v0.Normal = XMFLOAT3(0, 1, 0);
+    v0.Tangent = XMFLOAT3(1, 0, 0);
     v0.SmoothNormal = v0.Normal;
     vertices.push_back(v0);
 
@@ -37,6 +38,7 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
             auto v = Vertex{};
             v.Position = Vec3(x, y, z) * radius + Vec3(0, height2, 0);
             v.Normal = Vec3(x, y, z).normalized();
+            v.Tangent = XMFLOAT3(1, 0, 0);
             v.SmoothNormal = v.Normal;
             vertices.push_back(v);
         }
@@ -55,6 +57,7 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
             auto v = Vertex{};
             v.Position = Vec3(x, y, z) * radius - Vec3(0, height2, 0);
             v.Normal = Vec3(x, y, z).normalized();
+            v.Tangent = XMFLOAT3(1, 0, 0);
             v.SmoothNormal = v.Normal;
             vertices.push_back(v);
         }
@@ -63,6 +66,7 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
     auto v1 = Vertex{};
     v1.Position = Vec3(0, -1, 0) * radius - Vec3(0, height2, 0);
     v1.Normal = XMFLOAT3(0, -1, 0);
+    v1.Tangent = XMFLOAT3(1, 0, 0);
     v1.SmoothNormal = v1.Normal;
     vertices.push_back(v1);
 
@@ -137,11 +141,13 @@ Model CapsuleMesh::Load(float radius, float height, float r, float g, float b)
     }
 
     float pbr[4] = { 1, 0.1, 0, 1 };
+    float normal[] = { 0.5, 0.5, 1, 1 };
 
     auto material = Material{};
     material.BaseColor = { r, g, b, 1 };
     material.Texture = Texture2D::GetWhite();
     material.PbrTexture = Texture2D::GetMono(pbr);
+    material.NormalTexture = Texture2D::GetMono(normal);
     material.Shininess = 10;
 
     std::vector<Material> materials;

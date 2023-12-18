@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <typeinfo>
+#include <string>
 
 class Scene;
 class Transform;
@@ -14,6 +15,7 @@ class Entity
 {
 public:
 	Entity();
+	Entity(std::string name);
 	~Entity();
 	
 	Component* AddComponent(Component* component);
@@ -46,4 +48,6 @@ protected:
 	
 	std::vector<Component*> m_components;
 	std::map<std::string, Component*> m_componentMap;
+
+	std::string m_name;
 };

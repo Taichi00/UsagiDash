@@ -221,6 +221,7 @@ float4 main(VSOutput input) : SV_TARGET
     float3 albedo = pow(texAlbedo.xyz, 2.2);
     float metallic = texMetallicRoughness.b;
     float roughness = texMetallicRoughness.g;
+    //float ao = texMetallicRoughness.r;
     float shininess = texNormal.w;
     float depth = texDepth.r;
     
@@ -305,7 +306,9 @@ float4 main(VSOutput input) : SV_TARGET
     // フォグ
     float fog = inverseLerp(30, 300, depth);
     float3 fogColor = float3(1, 1, 1);
-    color.rgb = lerp(color, fogColor, fog);
+    color = lerp(color, fogColor, fog);
+    //color = ao;
+    //color = normal;
     
     // ガンマ補正
     color = color / (color + 1.0);

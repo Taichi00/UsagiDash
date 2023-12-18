@@ -2,12 +2,21 @@
 #include <stdio.h>
 #include <typeinfo>
 
-Entity::Entity()
+Entity::Entity() : Entity("No Name")
 {
+	
+}
+
+Entity::Entity(std::string name)
+{
+	m_name = name;
+
 	transform = new Transform();
 	AddComponent(transform);
 
 	m_pScene = nullptr;
+
+	printf("New Entity [%s]\n", name.c_str());
 }
 
 Entity::~Entity()

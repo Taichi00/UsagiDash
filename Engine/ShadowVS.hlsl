@@ -12,6 +12,7 @@ cbuffer Scene : register(b1)
     float4 LightColor;
     float3 LightDir;
     float3 CameraPos;
+    float4x4 LightWorld;
 }
 
 cbuffer BoneParameter : register(b2)
@@ -36,6 +37,8 @@ struct VSOutput
     float4 svpos : SV_POSITION;
     float4 posSM : POSITION_SM;
     float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
 };
@@ -69,13 +72,14 @@ VSOutput main(VSInput input)
     
     localPos = TransformPosition(localPos, input);
     
-    float4 worldPos = mul(World, localPos);
+    float4 worldPos = mul(LightWorld, localPos);
     float4 viewPos = mul(LightView, worldPos);
     float4 projPos = mul(LightProj, viewPos);
     
     output.svpos = projPos;
     output.posSM = projPos;
     output.normal = input.normal;
+    output.tangent = input.tangent;
     output.color = input.color;
     output.uv = input.uv;
     return output;

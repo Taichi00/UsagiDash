@@ -132,6 +132,7 @@
     <ClCompile Include="Animator.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="AssimpLoader.cpp" />
+    <ClCompile Include="BillboardRenderer.cpp" />
     <ClCompile Include="Bone.cpp" />
     <ClCompile Include="BoneList.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="Animator.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="AssimpLoader.h" />
+    <ClInclude Include="BillboardRenderer.h" />
     <ClInclude Include="Bone.h" />
     <ClInclude Include="BoneList.h" />
     <ClInclude Include="Camera.h" />
@@ -234,6 +236,7 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="DeferredPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
