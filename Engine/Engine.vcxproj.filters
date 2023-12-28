@@ -42,362 +42,380 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Engine.cpp">
+    <ClCompile Include="Sources\Engine\Engine.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="ConstantBuffer.cpp">
+    <ClCompile Include="Sources\Engine\ConstantBuffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="DescriptorHeap.cpp">
+    <ClCompile Include="Sources\Engine\DescriptorHeap.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="IndexBuffer.cpp">
+    <ClCompile Include="Sources\Engine\IndexBuffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineState.cpp">
+    <ClCompile Include="Sources\Engine\PipelineState.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="RootSignature.cpp">
+    <ClCompile Include="Sources\Engine\RootSignature.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="SharedStruct.cpp">
+    <ClCompile Include="Sources\Engine\SharedStruct.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="VertexBuffer.cpp">
+    <ClCompile Include="Sources\Engine\VertexBuffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Texture2D.cpp">
+    <ClCompile Include="Sources\Engine\Texture2D.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="ShadowMap.cpp">
+    <ClCompile Include="Sources\Game\ShadowMap.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
+    <ClCompile Include="Sources\Game\Game.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="AssimpLoader.cpp">
+    <ClCompile Include="Sources\Game\AssimpLoader.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
+    <ClCompile Include="Sources\Game\Component\Camera.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
+    <ClCompile Include="Sources\Game\Entity.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
+    <ClCompile Include="Sources\Engine\Window.cpp">
       <Filter>ソース ファイル\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Input.cpp">
+    <ClCompile Include="Sources\Game\Input.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Bone.cpp">
+    <ClCompile Include="Sources\Game\Bone.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Animation.cpp">
+    <ClCompile Include="Sources\Game\Animation.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Animator.cpp">
+    <ClCompile Include="Sources\Game\Component\Animator.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="BoneList.cpp">
+    <ClCompile Include="Sources\Game\BoneList.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Component.cpp">
+    <ClCompile Include="Sources\Game\Component\Component.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="App.cpp">
+    <ClCompile Include="Sources\App\App.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="MeshRenderer.cpp">
+    <ClCompile Include="Sources\Game\Component\MeshRenderer.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
+    <ClCompile Include="Sources\App\Player.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Transform.cpp">
+    <ClCompile Include="Sources\Game\Component\Transform.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="GameCamera.cpp">
+    <ClCompile Include="Sources\App\GameCamera.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Sources\App\main.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="SphereMesh.cpp">
+    <ClCompile Include="Sources\Game\Component\SphereMesh.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="MainScene.cpp">
+    <ClCompile Include="Sources\App\MainScene.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
+    <ClCompile Include="Sources\Game\Scene.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionTestScene.cpp">
+    <ClCompile Include="Sources\App\CollisionTestScene.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="FloatingPlayer.cpp">
+    <ClCompile Include="Sources\App\FloatingPlayer.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Collider.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\Collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
+    <ClCompile Include="Sources\Game\CollisionManager.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="FloorCollider.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\FloorCollider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="MeshCollider.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\MeshCollider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Rigidbody.cpp">
+    <ClCompile Include="Sources\Game\Component\Rigidbody.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="SphereCollider.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\SphereCollider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="CapsuleMesh.cpp">
+    <ClCompile Include="Sources\Game\Component\CapsuleMesh.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="CapsuleCollider.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\CapsuleCollider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Physics.cpp">
+    <ClCompile Include="Sources\Game\Physics.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Ray.cpp">
+    <ClCompile Include="Sources\Game\Component\Collider\Ray.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="GBuffer.cpp">
+    <ClCompile Include="Sources\Engine\GBuffer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="GBufferManager.cpp">
+    <ClCompile Include="Sources\Engine\GBufferManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="BillboardRenderer.cpp">
+    <ClCompile Include="Sources\Game\Component\BillboardRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Game\Component\ParticleEmitter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Sources\Game\Particle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AssimpLoader.h">
+    <ClInclude Include="Sources\Game\AssimpLoader.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="Sources\Game\Component\Camera.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="ComPtr.h">
+    <ClInclude Include="Sources\Engine\ComPtr.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBuffer.h">
+    <ClInclude Include="Sources\Engine\ConstantBuffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="DescriptorHeap.h">
+    <ClInclude Include="Sources\Engine\DescriptorHeap.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine.h">
+    <ClInclude Include="Sources\Engine\Engine.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.h">
+    <ClInclude Include="Sources\Game\Entity.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="IndexBuffer.h">
+    <ClInclude Include="Sources\Engine\IndexBuffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineState.h">
+    <ClInclude Include="Sources\Engine\PipelineState.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="RootSignature.h">
+    <ClInclude Include="Sources\Engine\RootSignature.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="ShadowMap.h">
+    <ClInclude Include="Sources\Game\ShadowMap.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="SharedStruct.h">
+    <ClInclude Include="Sources\Engine\SharedStruct.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="streamreader.h">
+    <ClInclude Include="Sources\Engine\streamreader.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Texture2D.h">
+    <ClInclude Include="Sources\Engine\Texture2D.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="VertexBuffer.h">
+    <ClInclude Include="Sources\Engine\VertexBuffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Game.h">
+    <ClInclude Include="Sources\Game\Game.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="VertexShader.h">
+    <ClInclude Include="Sources\Engine\VertexShader.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
+    <ClInclude Include="Sources\Engine\Window.h">
       <Filter>ヘッダー ファイル\Window</Filter>
     </ClInclude>
-    <ClInclude Include="Input.h">
+    <ClInclude Include="Sources\Game\Input.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Bone.h">
+    <ClInclude Include="Sources\Game\Bone.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="BoneList.h">
+    <ClInclude Include="Sources\Game\BoneList.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Vec.h">
+    <ClInclude Include="Sources\Game\Math\Vec.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Quaternion.h">
+    <ClInclude Include="Sources\Game\Math\Quaternion.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.h">
+    <ClInclude Include="Sources\Game\Animation.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Animator.h">
+    <ClInclude Include="Sources\Game\Component\Animator.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="App.h">
+    <ClInclude Include="Sources\App\App.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Component.h">
+    <ClInclude Include="Sources\Game\Component\Component.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Easing.h">
+    <ClInclude Include="Sources\Game\Math\Easing.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="GameCamera.h">
+    <ClInclude Include="Sources\App\GameCamera.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="MeshRenderer.h">
+    <ClInclude Include="Sources\Game\Component\MeshRenderer.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
+    <ClInclude Include="Sources\App\Player.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Transform.h">
+    <ClInclude Include="Sources\Game\Component\Transform.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="MainScene.h">
+    <ClInclude Include="Sources\App\MainScene.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="Sources\Game\Scene.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="SphereMesh.h">
+    <ClInclude Include="Sources\Game\Component\SphereMesh.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionTestScene.h">
+    <ClInclude Include="Sources\App\CollisionTestScene.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="FloatingPlayer.h">
+    <ClInclude Include="Sources\App\FloatingPlayer.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Collider.h">
+    <ClInclude Include="Sources\Game\Component\Collider\Collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="CollisionManager.h">
+    <ClInclude Include="Sources\Game\CollisionManager.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="FloorCollider.h">
+    <ClInclude Include="Sources\Game\Component\Collider\FloorCollider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="MeshCollider.h">
+    <ClInclude Include="Sources\Game\Component\Collider\MeshCollider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Rigidbody.h">
+    <ClInclude Include="Sources\Game\Component\Rigidbody.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="SphereCollider.h">
+    <ClInclude Include="Sources\Game\Component\Collider\SphereCollider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="CapsuleMesh.h">
+    <ClInclude Include="Sources\Game\Component\CapsuleMesh.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="CapsuleCollider.h">
+    <ClInclude Include="Sources\Game\Component\Collider\CapsuleCollider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Physics.h">
+    <ClInclude Include="Sources\Game\Physics.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Ray.h">
+    <ClInclude Include="Sources\Game\Component\Collider\Ray.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="GBuffer.h">
+    <ClInclude Include="Sources\Engine\GBuffer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="GBufferManager.h">
+    <ClInclude Include="Sources\Engine\GBufferManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="BillboardRenderer.h">
+    <ClInclude Include="Sources\Game\Component\BillboardRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Game\ParticleEmitter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Sources\Game\Particle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="FXAA3.cginc">
+    <None Include="Shaders\FXAA3.cginc">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="SimpleVS.hlsl">
+    <FxCompile Include="Shaders\SimpleVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="SimplePS.hlsl">
+    <FxCompile Include="Shaders\SimplePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="OutlineVS.hlsl">
+    <FxCompile Include="Shaders\OutlineVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="OutlinePS.hlsl">
+    <FxCompile Include="Shaders\OutlinePS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="AlphaPS.hlsl">
+    <FxCompile Include="Shaders\AlphaPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="ShadowVS.hlsl">
+    <FxCompile Include="Shaders\ShadowVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="ShadowPS.hlsl">
+    <FxCompile Include="Shaders\ShadowPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="SoftPS.hlsl">
+    <FxCompile Include="Shaders\SoftPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="GBufferPS.hlsl">
+    <FxCompile Include="Shaders\GBufferPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="DeferredPS.hlsl">
+    <FxCompile Include="Shaders\DeferredPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="ScreenVS.hlsl">
+    <FxCompile Include="Shaders\ScreenVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="FXAA.hlsl">
+    <FxCompile Include="Shaders\FXAA.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="SkyboxVS.hlsl">
+    <FxCompile Include="Shaders\SkyboxVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="SkyboxPS.hlsl">
+    <FxCompile Include="Shaders\SkyboxPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="PostProcessPS.hlsl">
+    <FxCompile Include="Shaders\PostProcessPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="PBR.hlsl">
+    <FxCompile Include="Shaders\PBR.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="DepthPS.hlsl">
+    <FxCompile Include="Shaders\DepthPS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="SSAO.hlsl">
+    <FxCompile Include="Shaders\SSAO.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="GaussianBlurHorizontal.hlsl">
+    <FxCompile Include="Shaders\GaussianBlurHorizontal.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="GaussianBlurVertical.hlsl">
+    <FxCompile Include="Shaders\GaussianBlurVertical.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="PBR2.hlsl">
+    <FxCompile Include="Shaders\PBR2.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticleVS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\ParticleShadowVS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
