@@ -3,6 +3,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Texture2D.h"
+#include "Model.h"
 #include <DirectXMath.h>
 #include <vector>
 
@@ -10,7 +11,7 @@
 
 using namespace DirectX;
 
-Model SphereMesh::Load(float radius, float r, float g, float b)
+std::unique_ptr<Model> SphereMesh::Load(float radius, float r, float g, float b)
 {
     int sliceNum = 40;
     int stackNum = 20;
@@ -87,9 +88,9 @@ Model SphereMesh::Load(float radius, float r, float g, float b)
     }
 
     auto mesh = Mesh{};
-    mesh.Vertices = vertices;
-    mesh.Indices = indices;
-    mesh.MaterialIndex = 0;
+    mesh.vertices = vertices;
+    mesh.indices = indices;
+    mesh.materialIndex = 0;
 
     std::vector<Mesh> meshes;
     meshes.push_back(mesh);
@@ -97,45 +98,44 @@ Model SphereMesh::Load(float radius, float r, float g, float b)
     for (int i = 0; i < meshes.size(); i++)
     {
         // 頂点バッファの生成
-        auto vSize = sizeof(Vertex) * meshes[i].Vertices.size();
+        auto vSize = sizeof(Vertex) * meshes[i].vertices.size();
         auto stride = sizeof(Vertex);
-        auto vertices = meshes[i].Vertices.data();
-        auto pVB = new VertexBuffer(vSize, stride, vertices);
+        auto vertices = meshes[i].vertices.data();
+        auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices);
         if (!pVB->IsValid())
         {
             printf("頂点バッファの生成に失敗\n");
             break;
         }
-        meshes[i].pVertexBuffer = pVB;
+        meshes[i].vertexBuffer = std::move(pVB);
 
         // インデックスバッファの生成
-        auto iSize = sizeof(uint32_t) * meshes[i].Indices.size();
-        auto indices = meshes[i].Indices.data();
-        auto pIB = new IndexBuffer(iSize, indices);
+        auto iSize = sizeof(uint32_t) * meshes[i].indices.size();
+        auto indices = meshes[i].indices.data();
+        auto pIB = std::make_unique<IndexBuffer>(iSize, indices);
         if (!pIB->IsValid())
         {
             printf("インデックスバッファの生成に失敗\n");
             break;
         }
-        meshes[i].pIndexBuffer = pIB;
+        meshes[i].indexBuffer = std::move(pIB);
     }
 
     float pbr[4] = { 0, 0.8, 0, 1 };
     float normal[] = { 0.5, 0.5, 1, 1 };
 
     auto material = Material{};
-    material.BaseColor = { r, g, b, 1 };
-    material.Texture = Texture2D::GetWhite();
-    material.PbrTexture = Texture2D::GetMono(pbr);
-    material.NormalTexture = Texture2D::GetMono(normal);
-    material.Shininess = 10;
+    material.baseColor = { r, g, b, 1 };
+    material.albedoTexture = Texture2D::GetWhite();
+    material.pbrTexture = Texture2D::GetMono(pbr);
+    material.normalTexture = Texture2D::GetMono(normal);
 
     std::vector<Material> materials;
     materials.push_back(material);
 
-    auto model = Model{};
-    model.Meshes = meshes;
-    model.Materials = materials;
+    auto model = std::make_unique<Model>();
+    model->meshes = meshes;
+    model->materials = materials;
 
-    return model;
+    return std::move(model);
 }

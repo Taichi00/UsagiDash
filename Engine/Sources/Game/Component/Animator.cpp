@@ -16,16 +16,11 @@ Animator::Animator()
 	m_speed = 1.0f;
 }
 
-Animator::Animator(AnimatorProperty prop)
-{
-	Animator();
-
-	RegisterAnimations(prop.Animations);
-}
-
 bool Animator::Init()
 {
 	m_pMeshRenderer = GetEntity()->GetComponent<MeshRenderer>();
+
+	RegisterAnimations(m_pMeshRenderer->GetModel().animations);
 
 	return true;
 }
@@ -81,13 +76,13 @@ void Animator::Update()
 	m_currentTime += 1.0 / 100.0 * m_speed;
 }
 
-void Animator::RegisterAnimation(Animation* animation)
+void Animator::RegisterAnimation(const std::shared_ptr<Animation>& animation)
 {
 	m_animations.push_back(animation);
 	m_animationMap[animation->GetName()] = animation;
 }
 
-void Animator::RegisterAnimations(std::vector<Animation*> animations)
+void Animator::RegisterAnimations(const std::vector<std::shared_ptr<Animation>>& animations)
 {
 	for (int i = 0; i < animations.size(); i++)
 	{

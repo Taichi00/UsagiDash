@@ -8,11 +8,15 @@
 #include "GBufferManager.h"
 #include "GBuffer.h"
 
-Engine* g_Engine;
+std::unique_ptr<Engine> g_Engine;
+
+Engine::Engine()
+{
+}
 
 Engine::~Engine()
 {
-	delete m_pGBufferManager;
+	
 }
 
 bool Engine::Init(Window* window)
@@ -34,6 +38,11 @@ bool Engine::Init(Window* window)
 		return false;
 	}
 
+	if (!CreateD3D11Device())
+	{
+		printf("D3D11のデバイス生成に失敗\n");
+	}
+
 	if (!CreateSwapChain())
 	{
 		printf("スワップチェインの生成に失敗\n");
@@ -50,6 +59,16 @@ bool Engine::Init(Window* window)
 	{
 		printf("フェンスの生成に失敗\n");
 		return false;
+	}
+
+	if (!CreateD2DDeviceContext())
+	{
+		printf("D2DDeviceContextの生成に失敗\n");
+	}
+
+	if (!CreateDWriteFactory())
+	{
+		printf("DWriteFactoryの生成に失敗\n");
 	}
 
 	// ビューポートとシザー矩形を生成
@@ -77,6 +96,14 @@ bool Engine::Init(Window* window)
 		printf("G-Bufferの生成に失敗\n");
 	}
 
+	if (!CreateD2DRenderTarget())
+	{
+		printf("D2dRenderTargetの生成に失敗\n");
+	}
+
+	RegisterTextFormat("normal", L"Source Han Sans VF", 24);
+	RegisterSolidColorBrush("white", D2D1::ColorF::White);
+
 	printf("描画エンジンの初期化に成功\n");
 	return true;
 }
@@ -88,10 +115,10 @@ void Engine::BeginRender()
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex].HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -136,8 +163,8 @@ void Engine::BeginRenderMSAA()
 	m_pCommandList->ResourceBarrier(1, &barrier);
 
 	// レンダーターゲットを設定
-	auto rtvHandle = m_pMSAARtvHandle->HandleCPU();
-	auto dsvHandle = m_pMSAADsvHandle->HandleCPU();
+	auto rtvHandle = m_pMSAARtvHandle.HandleCPU();
+	auto dsvHandle = m_pMSAADsvHandle.HandleCPU();
 	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	// レンダーターゲットをクリア
@@ -220,6 +247,39 @@ void Engine::EndRenderMSAA()
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
+void Engine::EndRenderD3D()
+{
+	// コマンドの記録を終了
+	m_pCommandList->Close();
+
+	// コマンドを実行
+	ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
+	m_pQueue->ExecuteCommandLists(1, ppCmdLists);
+
+	// 描画完了を待つ
+	WaitRender();
+}
+
+void Engine::BeginRenderD2D()
+{
+	const auto& wrappedBackBuffer = m_pWrappedBackBuffers[m_CurrentBackBufferIndex];
+	const auto& backBufferForD2D = m_pD2dRenderTargets[m_CurrentBackBufferIndex];
+
+	m_pD3d11On12Device->AcquireWrappedResources(wrappedBackBuffer.GetAddressOf(), 1);
+	m_pD2dDeviceContext->SetTarget(backBufferForD2D.Get());
+	m_pD2dDeviceContext->BeginDraw();
+	m_pD2dDeviceContext->SetTransform(D2D1::Matrix3x2F::Identity());
+}
+
+void Engine::EndRenderD2D()
+{
+	const auto& wrappedBackBuffer = m_pWrappedBackBuffers[m_CurrentBackBufferIndex];
+	
+	m_pD2dDeviceContext->EndDraw();
+	m_pD3d11On12Device->ReleaseWrappedResources(wrappedBackBuffer.GetAddressOf(), 1);
+	m_pD3d11DeviceContext->Flush();
+}
+
 void Engine::BeginDeferredRender()
 {
 	// ビューポートとシザー矩形を設定
@@ -227,10 +287,10 @@ void Engine::BeginDeferredRender()
 	m_pCommandList->RSSetScissorRects(1, &m_Scissor);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex].HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	D3D12_RESOURCE_BARRIER barriers[] = {
@@ -302,10 +362,10 @@ void Engine::BeginDeferredRender()
 void Engine::DepthPrePath()
 {
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex].HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -321,7 +381,7 @@ void Engine::GBufferPath()
 		m_pGBufferManager->Get("MetallicRoughness")->RtvHandle()->HandleCPU(),
 		m_pGBufferManager->Get("Depth")->RtvHandle()->HandleCPU()
 	};
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	m_pCommandList->OMSetRenderTargets(_countof(handleRtvs), handleRtvs, FALSE, &currentDsvHandle);
 }
@@ -357,7 +417,7 @@ void Engine::LightingPath()
 	auto currentRtvHandle = m_pGBufferManager->Get("Lighting")->RtvHandle()->HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -369,7 +429,7 @@ void Engine::SSAOPath()
 	auto currentRtvHandle = m_pGBufferManager->Get("SSAO")->RtvHandle()->HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -388,7 +448,7 @@ void Engine::BlurHorizontalPath()
 	auto currentRtvHandle = m_pGBufferManager->Get("BlurredSSAO1")->RtvHandle()->HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -407,7 +467,7 @@ void Engine::BlurVerticalPath()
 	auto currentRtvHandle = m_pGBufferManager->Get("BlurredSSAO2")->RtvHandle()->HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -431,7 +491,7 @@ void Engine::PostProcessPath()
 	auto currentRtvHandle = m_pGBufferManager->Get("PostProcess")->RtvHandle()->HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -448,10 +508,10 @@ void Engine::FXAAPath()
 	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex]->HandleCPU();
+	auto currentRtvHandle = m_pRtvHandles[m_CurrentBackBufferIndex].HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
-	auto currentDsvHandle = m_pDsvHandle->HandleCPU();
+	auto currentDsvHandle = m_pDsvHandle.HandleCPU();
 
 	// レンダーターゲットを設定
 	m_pCommandList->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
@@ -460,18 +520,18 @@ void Engine::FXAAPath()
 void Engine::EndDeferredRender()
 {
 	// レンダーターゲットに書き込み終わるまで待つ
-	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		m_currentRenderTarget,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
-		D3D12_RESOURCE_STATE_PRESENT);
-	m_pCommandList->ResourceBarrier(1, &barrier);
+	//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+	//	m_currentRenderTarget,
+	//	D3D12_RESOURCE_STATE_RENDER_TARGET,
+	//	D3D12_RESOURCE_STATE_PRESENT);
+	//m_pCommandList->ResourceBarrier(1, &barrier);
 
-	// コマンドの記録を終了
-	m_pCommandList->Close();
+	//// コマンドの記録を終了
+	//m_pCommandList->Close();
 
-	// コマンドを実行
-	ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
-	m_pQueue->ExecuteCommandLists(1, ppCmdLists);
+	//// コマンドを実行
+	//ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
+	//m_pQueue->ExecuteCommandLists(1, ppCmdLists);
 
 	// スワップチェーンを切り替え
 	m_pSwapChain->Present(1, 0);
@@ -481,6 +541,20 @@ void Engine::EndDeferredRender()
 
 	// バックバッファ番号更新
 	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+}
+
+void Engine::drawText(const std::string& textFormatKey, const std::string& solidColorBrushKey, const std::wstring& text, const D2D1_RECT_F& rect) const noexcept
+{
+	const auto& textFormat = m_textFormatMap.at(textFormatKey);
+	const auto& solidColorBrush = m_solidColorBrushMap.at(solidColorBrushKey);
+
+	m_pD2dDeviceContext->DrawTextW(
+		text.c_str(),
+		static_cast<UINT32>(text.length()),
+		textFormat.Get(),
+		&rect,
+		solidColorBrush.Get()
+	);
 }
 
 ID3D12Device6* Engine::Device()
@@ -750,6 +824,96 @@ void Engine::CreateScissorRect()
 	m_Scissor.bottom = m_FrameBufferHeight;
 }
 
+bool Engine::CreateD2DDeviceContext()
+{
+	ComPtr<ID2D1Factory3> d2dfactory = nullptr;
+	constexpr D2D1_FACTORY_OPTIONS factoryOptions{};
+
+	auto hr = D2D1CreateFactory(
+		D2D1_FACTORY_TYPE_SINGLE_THREADED,
+		__uuidof(ID2D1Factory3),
+		&factoryOptions,
+		&d2dfactory
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	ComPtr<IDXGIDevice> dxgiDevice = nullptr;
+	hr = m_pD3d11On12Device.As(&dxgiDevice);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	ComPtr<ID2D1Device> d2dDevice = nullptr;
+	hr = d2dfactory->CreateDevice(
+		dxgiDevice.Get(),
+		d2dDevice.ReleaseAndGetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	hr = d2dDevice->CreateDeviceContext(
+		D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
+		m_pD2dDeviceContext.ReleaseAndGetAddressOf()
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Engine::CreateDWriteFactory()
+{
+	// テキストフォーマットを生成するためのファクトリであるIDWriteFactoryを生成
+	auto hr = DWriteCreateFactory(
+		DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(IDWriteFactory), &m_pDirectWriteFactory
+	);
+
+	return SUCCEEDED(hr);
+}
+
+bool Engine::CreateD3D11Device()
+{
+	ComPtr<ID3D11Device> d3d11Device;
+	UINT d3d11DeviceFlags = 0U;
+
+#ifdef _DEBUG
+	d3d11DeviceFlags = D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#else
+	d3d11DeviceFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#endif
+
+	auto hr = D3D11On12CreateDevice(
+		m_pDevice.Get(),
+		d3d11DeviceFlags,
+		nullptr,
+		0U,
+		reinterpret_cast<IUnknown**>(m_pQueue.GetAddressOf()),
+		1U,
+		0U,
+		&d3d11Device,
+		&m_pD3d11DeviceContext,
+		nullptr
+	);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	d3d11Device.As(&m_pD3d11On12Device);
+	m_pD3d11Device = d3d11Device;
+	
+	return true;
+}
+
 bool Engine::CreateRenderTarget()
 {
 	// RTV用のディスクリプタヒープを作成する
@@ -762,7 +926,7 @@ bool Engine::CreateRenderTarget()
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;	// SRGB空間にする
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-	m_pRtvHeap = std::make_shared<DescriptorHeap>(desc);
+	m_pRtvHeap = std::make_unique<DescriptorHeap>(desc);
 	if (!m_pRtvHeap->IsValid())
 	{
 		return false;
@@ -770,9 +934,9 @@ bool Engine::CreateRenderTarget()
 
 	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
-		m_pRtvHandles[i] = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
+		m_pRtvHandles[i] = m_pRtvHeap->Alloc();
 		m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pRenderTargets[i].ReleaseAndGetAddressOf()));
-		m_pDevice->CreateRenderTargetView(m_pRenderTargets[i].Get(), &rtvDesc, m_pRtvHandles[i]->HandleCPU());
+		m_pDevice->CreateRenderTargetView(m_pRenderTargets[i].Get(), &rtvDesc, m_pRtvHandles[i].HandleCPU());
 	}
 
 	return true;
@@ -786,7 +950,7 @@ bool Engine::CreateDepthStencil()
 	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	
-	m_pDsvHeap = std::make_shared<DescriptorHeap>(desc);
+	m_pDsvHeap = std::make_unique<DescriptorHeap>(desc);
 	if (!m_pDsvHeap->IsValid())
 	{
 		return false;
@@ -826,8 +990,8 @@ bool Engine::CreateDepthStencil()
 	}
 
 	// ディスクリプタを作成
-	m_pDsvHandle = std::make_shared<DescriptorHandle>(m_pDsvHeap->Alloc());
-	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), nullptr, m_pDsvHandle->HandleCPU());
+	m_pDsvHandle = m_pDsvHeap->Alloc();
+	m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), nullptr, m_pDsvHandle.HandleCPU());
 
 	return true;
 }
@@ -908,11 +1072,11 @@ bool Engine::CreateMSAA()
 	msaaDsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	msaaDsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 
-	m_pMSAARtvHandle = std::make_shared<DescriptorHandle>(m_pRtvHeap->Alloc());
-	m_pMSAADsvHandle = std::make_shared<DescriptorHandle>(m_pDsvHeap->Alloc());
+	m_pMSAARtvHandle = m_pRtvHeap->Alloc();
+	m_pMSAADsvHandle = m_pDsvHeap->Alloc();
 
-	m_pDevice->CreateRenderTargetView(m_pMSAAColorTarget.Get(), &msaaRtvDesc, m_pMSAARtvHandle->HandleCPU());
-	m_pDevice->CreateDepthStencilView(m_pMSAADepthTarget.Get(), &msaaDsvDesc, m_pMSAADsvHandle->HandleCPU());
+	m_pDevice->CreateRenderTargetView(m_pMSAAColorTarget.Get(), &msaaRtvDesc, m_pMSAARtvHandle.HandleCPU());
+	m_pDevice->CreateDepthStencilView(m_pMSAADepthTarget.Get(), &msaaDsvDesc, m_pMSAADsvHandle.HandleCPU());
 
 	return true;
 }
@@ -926,12 +1090,12 @@ bool Engine::CreateGBuffer()
 	srvHeapDesc.NumDescriptors = 32; //6 + 1 + 1;	// GBuffer * 6 + ShadowMap + Skybox
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	m_pGBufferHeap = std::make_shared<DescriptorHeap>(srvHeapDesc);
+	m_pGBufferHeap = std::make_unique<DescriptorHeap>(srvHeapDesc);
 	if (!m_pGBufferHeap->IsValid())
 		return false;
  
 	// GBufferManagerの生成
-	m_pGBufferManager = new GBufferManager();
+	m_pGBufferManager = std::make_unique<GBufferManager>();
 
 	GBufferProperty propRGBA{
 		DXGI_FORMAT_R16G16B16A16_UNORM,
@@ -956,6 +1120,97 @@ bool Engine::CreateGBuffer()
 	m_pGBufferManager->CreateGBuffer("BlurredSSAO1", propFloat);
 	m_pGBufferManager->CreateGBuffer("BlurredSSAO2", propFloat);
 	m_pGBufferManager->CreateGBuffer("PostProcess", propRGBA);
+}
+
+bool Engine::CreateD2DRenderTarget()
+{
+	D3D11_RESOURCE_FLAGS flags = { D3D11_BIND_RENDER_TARGET };
+
+	float dpi = GetDpiForWindow(m_hWnd);
+	D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
+		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
+		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
+		static_cast<float>(dpi),
+		static_cast<float>(dpi)
+	);
+
+	for (UINT i = 0U; i < g_Engine->FRAME_BUFFER_COUNT; ++i)
+	{
+		ComPtr<ID3D11Resource> wrappedBackBuffer = nullptr;
+		
+		auto hr = m_pD3d11On12Device->CreateWrappedResource(
+			m_pRenderTargets[i].Get(),
+			&flags,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT,
+			IID_PPV_ARGS(wrappedBackBuffer.ReleaseAndGetAddressOf())
+		);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		ComPtr<IDXGISurface> dxgiSurface = nullptr;
+		hr = wrappedBackBuffer.As(&dxgiSurface);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		ComPtr<ID2D1Bitmap1> d2dRenderTarget = nullptr;
+		hr = m_pD2dDeviceContext->CreateBitmapFromDxgiSurface(
+			dxgiSurface.Get(),
+			&bitmapProperties,
+			&d2dRenderTarget
+		);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		m_pWrappedBackBuffers[i] = wrappedBackBuffer;
+		m_pD2dRenderTargets[i] = d2dRenderTarget;
+	}
+
+	return true;
+}
+
+void Engine::RegisterSolidColorBrush(const std::string& key, const D2D1::ColorF color) noexcept
+{
+	if (m_solidColorBrushMap.contains(key))
+	{
+		return;
+	}
+
+	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
+	m_pD2dDeviceContext->CreateSolidColorBrush(
+		D2D1::ColorF(color),
+		brush.GetAddressOf()
+	);
+
+	m_solidColorBrushMap[key] = brush;
+}
+
+void Engine::RegisterTextFormat(const std::string& key, const std::wstring& fontName, const FLOAT fontSize) noexcept
+{
+	if (m_textFormatMap.contains(key))
+	{
+		return;
+	}
+
+	ComPtr<IDWriteTextFormat> textFormat = nullptr;
+	m_pDirectWriteFactory->CreateTextFormat(
+		fontName.c_str(),
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		fontSize,
+		L"ja-jp",
+		textFormat.GetAddressOf()
+	);
+
+	m_textFormatMap[key] = textFormat;
 }
 
 void Engine::WaitRender()
@@ -985,7 +1240,7 @@ void Engine::WaitRender()
 
 GBufferManager* Engine::GetGBufferManager()
 {
-	return m_pGBufferManager;
+	return m_pGBufferManager.get();
 }
 
 

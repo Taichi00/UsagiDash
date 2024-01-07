@@ -6,7 +6,17 @@
 #include "ShadowMap.h"
 #include "Input.h"
 #include "Scene.h"
+#include "ResourceManager.h"
+#include "Resource.h"
 
+
+Game::Game()
+{
+}
+
+Game::~Game()
+{
+}
 
 void Game::Run(Scene* scene)
 {
@@ -51,14 +61,15 @@ void Game::SetWindowTitle(std::wstring title)
 
 Scene* Game::LoadScene(Scene* scene)
 {
-	m_pCurrentScene = scene;
+	m_pCurrentScene.reset(scene);
+	g_Engine->WaitRender();
 	scene->Init();
 	return scene;
 }
 
 Scene* Game::GetCurrentScene()
 {
-	return m_pCurrentScene;
+	return m_pCurrentScene.get();
 }
 
 DirectX::XMVECTOR Game::GetSWindowSize()
@@ -69,17 +80,20 @@ DirectX::XMVECTOR Game::GetSWindowSize()
 void Game::Init()
 {
 	// ウィンドウの生成
-	m_pWindow = new Window(m_windowTitle.c_str(), m_windowWidth, m_windowHeight);
+	m_pWindow = std::make_unique<Window>(m_windowTitle.c_str(), m_windowWidth, m_windowHeight);
 
 	// 描画エンジンの初期化を行う
-	g_Engine = new Engine();
-	if (!g_Engine->Init(m_pWindow))
+	g_Engine = std::make_unique<Engine>();
+	if (!g_Engine->Init(m_pWindow.get()))
 	{
 		return;
 	}
 
 	// キー入力
-	Input::Create(m_pWindow);
+	Input::Create(m_pWindow.get());
+
+	// ResourceManagerの生成
+	m_pResourceManager = std::make_unique<ResourceManager>();
 }
 
 void Game::Update()
@@ -88,8 +102,5 @@ void Game::Update()
 
 void Game::End()
 {
-	delete m_pCurrentScene;
 	Input::Destroy();
-	delete g_Engine;
-	delete m_pWindow;
 }

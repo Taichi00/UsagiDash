@@ -173,6 +173,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="Sources\App\MainScene.cpp" />
     <ClCompile Include="Sources\Game\Component\Collider\MeshCollider.cpp" />
     <ClCompile Include="Sources\Game\Component\MeshRenderer.cpp" />
+    <ClCompile Include="Sources\Game\Model.cpp" />
     <ClCompile Include="Sources\Game\Particle.cpp" />
     <ClCompile Include="Sources\Game\Component\ParticleEmitter.cpp" />
     <ClCompile Include="Sources\Game\Physics.cpp" />
@@ -181,6 +182,8 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="Sources\Game\Component\Collider\Ray.cpp" />
     <ClCompile Include="Sources\Game\Component\Rigidbody.cpp" />
     <ClCompile Include="Sources\Engine\RootSignature.cpp" />
+    <ClCompile Include="Sources\Game\Resource.cpp" />
+    <ClCompile Include="Sources\Game\ResourceManager.cpp" />
     <ClCompile Include="Sources\Game\Scene.cpp" />
     <ClCompile Include="Sources\Game\ShadowMap.cpp" />
     <ClCompile Include="Sources\Engine\SharedStruct.cpp" />
@@ -192,6 +195,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="Sources\Engine\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Sources\Game\Model.h" />
     <ClInclude Include="Sources\Game\Animation.h" />
     <ClInclude Include="Sources\Game\Component\Animator.h" />
     <ClInclude Include="Sources\App\App.h" />
@@ -232,6 +236,8 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="Sources\Game\Component\Collider\Ray.h" />
     <ClInclude Include="Sources\Game\Component\Rigidbody.h" />
     <ClInclude Include="Sources\Engine\RootSignature.h" />
+    <ClInclude Include="Sources\Game\Resource.h" />
+    <ClInclude Include="Sources\Game\ResourceManager.h" />
     <ClInclude Include="Sources\Game\Scene.h" />
     <ClInclude Include="Sources\Game\ShadowMap.h" />
     <ClInclude Include="Sources\Engine\SharedStruct.h" />

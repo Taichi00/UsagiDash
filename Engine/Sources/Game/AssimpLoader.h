@@ -4,8 +4,8 @@
 #include <DirectXMath.h>
 #include <string>
 #include <vector>
+#include <memory>
 
-struct Model;
 struct Mesh;
 struct Material;
 struct Vertex;
@@ -14,6 +14,7 @@ class Bone;
 class BoneList;
 class Animation;
 class Texture2D;
+class Model;
 
 struct aiMesh;
 struct aiMaterial;
@@ -31,7 +32,8 @@ class AssimpLoader
 public:
 	AssimpLoader();
 
-	static bool Load(const wchar_t* filename, Model& model, std::vector<Animation*>& animations);	// モデルをロードする
+	static std::unique_ptr<Model> Load(const std::string& filename);
+	static std::unique_ptr<Model> Load(const wchar_t* filename);	// モデルをロードする
 	static bool LoadCollision(const wchar_t* filename, CollisionModel& model);	// コリジョンをロード
 
 private:
@@ -41,15 +43,14 @@ private:
 	static void LoadMaterial(Material& dst, const aiMaterial* src, const aiScene* scene);
 	static void LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, aiNode* node);
 
-	static void LoadTexture(aiString path, Texture2D*& dst, const aiMaterial* src, const aiScene* scene);
-	static void LoadEmbeddedTexture(Texture2D*& dst, const aiTexture* texture);
+	static std::unique_ptr<Texture2D> LoadTexture(aiString path, const aiMaterial* src, const aiScene* scene);
+	static std::unique_ptr<Texture2D> LoadEmbeddedTexture(const aiTexture* texture);
 
 	static void BuildBoneHierarchy(BoneList& bones, aiNode* node, Bone* parentBone);
 
 	static void LoadAnimation(Animation* animation, aiAnimation* pAnimation, BoneList* bones);
 
 	static void GenSmoothNormal(Mesh& dst);
-	static void GenSmoothNormals(Model& model, aiNode* node, const aiScene* scene);
 
 private:
 	

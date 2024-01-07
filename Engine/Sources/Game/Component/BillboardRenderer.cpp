@@ -11,7 +11,7 @@
 #include "ConstantBuffer.h"
 #include <vector>
 
-BillboardRenderer::BillboardRenderer(Texture2D* albedoTexture, Texture2D* normalTexture)
+BillboardRenderer::BillboardRenderer(std::shared_ptr<Texture2D> albedoTexture, std::shared_ptr<Texture2D> normalTexture)
 {
 	m_pTexture = albedoTexture;
 	m_pNormalTexture = normalTexture;
@@ -25,14 +25,15 @@ BillboardRenderer::BillboardRenderer(Texture2D* albedoTexture, Texture2D* normal
 
 	float pbrColor[] = { 0, 1, 0, 1 };
 	float normalColor[] = { 0.5, 0.5, 1, 1 };
-	auto pbrTexture = Texture2D::GetMono(pbrColor);
+	std::shared_ptr pbrTexture = Texture2D::GetMono(pbrColor);
 	//auto normalTexture = Texture2D::GetMono(normalColor);
 
 	// モデルの作成
+	auto model = std::make_shared<Model>();
 	std::vector<Vertex> vertices(4);
 	std::vector<uint32_t> indices(6);
-	std::vector<Mesh> meshes;
-	std::vector<Material> materials;
+	auto& meshes = model->meshes;
+	auto& materials = model->materials;
 
 	vertices[0].Position = Vec3(-1 * width2,  1 * height2, 0);
 	vertices[1].Position = Vec3( 1 * width2,  1 * height2, 0);
@@ -60,49 +61,45 @@ BillboardRenderer::BillboardRenderer(Texture2D* albedoTexture, Texture2D* normal
 	};
 
 	Mesh mesh{};
-	mesh.Vertices = vertices;
-	mesh.Indices = indices;
-	mesh.MaterialIndex = 0;
+	mesh.vertices = vertices;
+	mesh.indices = indices;
+	mesh.materialIndex = 0;
 	meshes.push_back(mesh);
 
 	Material material{};
-	material.Texture = albedoTexture;
-	material.PbrTexture = pbrTexture;
-	material.NormalTexture = normalTexture;
-	material.BaseColor = { 0.72, 0.72, 0.72, 1 };
+	material.albedoTexture = albedoTexture;
+	material.pbrTexture = pbrTexture;
+	material.normalTexture = normalTexture;
+	material.baseColor = { 0.72, 0.72, 0.72, 1 };
 	materials.push_back(material);
 
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		// 頂点バッファの生成
-		auto vSize = sizeof(Vertex) * meshes[i].Vertices.size();
+		auto vSize = sizeof(Vertex) * meshes[i].vertices.size();
 		auto stride = sizeof(Vertex);
-		auto vertices = meshes[i].Vertices.data();
-		auto pVB = new VertexBuffer(vSize, stride, vertices);
+		auto vertices = meshes[i].vertices.data();
+		auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices);
 		if (!pVB->IsValid())
 		{
 			printf("頂点バッファの生成に失敗\n");
 			break;
 		}
-		meshes[i].pVertexBuffer = pVB;
+		meshes[i].vertexBuffer = std::move(pVB);
 
 		// インデックスバッファの生成
-		auto iSize = sizeof(uint32_t) * meshes[i].Indices.size();
-		auto indices = meshes[i].Indices.data();
-		auto pIB = new IndexBuffer(iSize, indices);
+		auto iSize = sizeof(uint32_t) * meshes[i].indices.size();
+		auto indices = meshes[i].indices.data();
+		auto pIB = std::make_unique<IndexBuffer>(iSize, indices);
 		if (!pIB->IsValid())
 		{
 			printf("インデックスバッファの生成に失敗\n");
 			break;
 		}
-		meshes[i].pIndexBuffer = pIB;
+		meshes[i].indexBuffer = std::move(pIB);
 	}
 
-	Model model{};
-	model.Meshes = meshes;
-	model.Materials = materials;
-
-	MeshRenderer::SetProperties({ model });
+	m_pModel = model;
 }
 
 BillboardRenderer::~BillboardRenderer()

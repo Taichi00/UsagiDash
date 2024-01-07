@@ -3,18 +3,28 @@
 #include <string>
 #include "d3dx12.h"
 #include <DirectXTex.h>
+#include <memory>
+#include "Resource.h"
 
 class DescriptorHeap;
 class DescriptorHandle;
 
-class Texture2D
+class Texture2D : public Resource
 {
 public:
-	static Texture2D* Get(std::string path);	// stringで受け取ったパスからテクスチャを読み込む
-	static Texture2D* Get(std::wstring path);	// wstringで受け取ったパスからテクスチャを読み込む
-	static Texture2D* Get(const void* pSource, size_t size);	// バイナリデータから読み込む
-	static Texture2D* GetMono(const float color[4]);	// 単色テクスチャを生成する
-	static Texture2D* GetWhite();
+	Texture2D();
+	~Texture2D();
+
+	Texture2D(std::wstring path);
+	Texture2D(const void* pSource, size_t size);
+	Texture2D(ID3D12Resource* buffer);
+
+	static std::unique_ptr<Texture2D> Load(std::string path);	// stringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(std::wstring path);	// wstringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(const void* pSource, size_t size);	// バイナリデータから読み込む
+
+	static std::unique_ptr<Texture2D> GetMono(const float color[4]);	// 単色テクスチャを生成する
+	static std::unique_ptr<Texture2D> GetWhite();
 
 	static void SetDefaultColor(const float color[4]); // 読み込み失敗時のテクスチャ色を設定する
 
@@ -28,20 +38,16 @@ public:
 private:
 	bool m_IsValid;	// 正常に読み込まれているか
 
-	Texture2D(std::wstring path);
-	Texture2D(const void* pSource, size_t size);
-	Texture2D(ID3D12Resource* buffer);
-
 	ComPtr<ID3D12Resource> m_pResource;	// リソース
 	DXGI_FORMAT m_pFormat;
 
-	bool Load(std::wstring& path);
-	bool Load(const void* pSource, size_t size);
+	bool LoadTexture(std::wstring& path);
+	bool LoadTexture(const void* pSource, size_t size);
 
 	bool CreateResource(const CD3DX12_RESOURCE_DESC& desc, const void* src, UINT rowPitch, UINT slicePitch);
 	bool CreateResource(const DirectX::ScratchImage* image, const DirectX::TexMetadata& metadata);
 
-	static ID3D12Resource* GetDefaultResource(size_t width, size_t height);
+	static ComPtr<ID3D12Resource> GetDefaultResource(size_t width, size_t height);
 
 	Texture2D(const Texture2D&) = delete;
 	void operator = (const Texture2D&) = delete;

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <memory>
 #include "Component.h"
 #include "Vec.h"
 #include "Particle.h"
@@ -18,6 +19,8 @@ class Texture2D;
 class ConstantBuffer;
 class PipelineState;
 class DescriptorHeap;
+class Model;
+class RootSignature;
 
 
 struct alignas(256) ParticleData
@@ -108,9 +111,9 @@ struct ParticleEmitterScalePropertyEasing
 
 struct ParticleEmitterSpriteProperty
 {
-	Texture2D* albedoTexture;		// Albedo
-	Texture2D* normalTexture;		// Normal
-	Texture2D* pbrTexture;			// MetallicRoughness
+	std::shared_ptr<Texture2D> albedoTexture;		// Albedo
+	std::shared_ptr<Texture2D> normalTexture;		// Normal
+	std::shared_ptr<Texture2D> pbrTexture;			// MetallicRoughness
 };
 
 struct ParticleEmitterSpawningPoint
@@ -222,7 +225,7 @@ private:
 
 	ParticleEmitterProperty m_prop;
 
-	Model m_particleModel;			// モデルデータ
+	std::shared_ptr<Model> m_particleModel;			// モデルデータ
 	float m_spawnTimer;				// タイマー
 	unsigned int m_spawnCounter;	// 生成したパーティクルの数
 	bool m_isActive = true;		// アクティブかどうか

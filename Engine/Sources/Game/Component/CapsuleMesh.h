@@ -1,9 +1,11 @@
 #pragma once
 
-struct Model;
+#include <memory>
+
+class Model;
 
 class CapsuleMesh
 {
 public:
-	static Model Load(float radius, float height, float r, float g, float b);
+	static std::unique_ptr<Model> Load(float radius, float height, float r, float g, float b);
 };

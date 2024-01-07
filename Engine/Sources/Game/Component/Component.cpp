@@ -8,6 +8,7 @@ Component::Component()
 
 Component::~Component()
 {
+	printf("Delete Component\n");
 }
 
 bool Component::Init()

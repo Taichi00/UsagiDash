@@ -1,13 +1,14 @@
 #pragma once
 
 #include "MeshRenderer.h"
+#include <memory>
 
 class Texture2D;
 
 class BillboardRenderer : public MeshRenderer
 {
 public:
-	BillboardRenderer(Texture2D* albedoTexture, Texture2D* normalTexture);
+	BillboardRenderer(std::shared_ptr<Texture2D> albedoTexture, std::shared_ptr<Texture2D> normalTexture);
 	~BillboardRenderer();
 
 	void Update() override;
@@ -18,8 +19,8 @@ private:
 	void UpdateCB();
 
 private:
-	Texture2D* m_pTexture;
-	Texture2D* m_pNormalTexture;
+	std::shared_ptr<Texture2D> m_pTexture;
+	std::shared_ptr<Texture2D> m_pNormalTexture;
 
 	float m_width, m_height;
 };

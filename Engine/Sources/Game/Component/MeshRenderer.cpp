@@ -13,18 +13,18 @@
 #include "Bone.h"
 
 
-MeshRenderer::MeshRenderer(MeshRendererProperty prop)
+MeshRenderer::MeshRenderer(std::shared_ptr<Model> model)
 {
-	SetProperties(prop);
-
+	m_pModel = model;
+	m_bones = BoneList::Copy(m_pModel->bones);
 	m_outlineWidth = 0.003;
 }
 
 MeshRenderer::~MeshRenderer()
 {
-	delete[] m_pTransformCB;
+	/*delete[] m_pTransformCB;
 	delete[] m_pSceneCB;
-	delete[] m_pBoneCB;
+	delete[] m_pBoneCB;*/
 	delete m_pRootSignature;
 	delete m_pOpaquePSO;
 	delete m_pAlphaPSO;
@@ -33,20 +33,22 @@ MeshRenderer::~MeshRenderer()
 	delete m_pGBufferPSO;
 	delete m_pDepthPSO;
 	delete m_pDescriptorHeap;
-	delete m_pShadowHandle;
-}
 
-void MeshRenderer::SetProperties(MeshRendererProperty prop)
-{
-	m_model = prop.Model;
-	m_model.Bones = BoneList::Copy(m_model.Bones);
+	/*for (size_t i = 0; i < m_model.Materials.size(); i++)
+	{
+		auto& mat = m_model.Materials[i];
+		delete mat.Texture;
+		delete mat.PbrTexture;
+		delete mat.NormalTexture;
+	}*/
+	printf("Delete MeshRenderer\n");
 }
 
 void MeshRenderer::SetOutlineWidth(float width)
 {
 	m_outlineWidth = width;
 
-	for (size_t i = 0; i < m_model.Materials.size(); i++)
+	for (size_t i = 0; i < m_pModel->materials.size(); i++)
 	{
 		auto ptr = m_pMaterialCBs[i]->GetPtr<MaterialParameter>();
 		ptr->OutlineWidth = m_outlineWidth;
@@ -85,7 +87,7 @@ bool MeshRenderer::Init()
 		}
 	}
 
-	for (size_t i = 0; i < m_model.Materials.size(); i++)
+	for (size_t i = 0; i < m_pModel->materials.size(); i++)
 	{
 		ConstantBuffer* cb = new ConstantBuffer(sizeof(MaterialParameter));
 		if (!cb->IsValid())
@@ -94,10 +96,9 @@ bool MeshRenderer::Init()
 			return false;
 		}
 
-		auto mat = &m_model.Materials[i];
+		auto mat = &m_pModel->materials[i];
 		auto ptr = cb->GetPtr<MaterialParameter>();
-		ptr->BaseColor = mat->BaseColor;
-		ptr->Shininess = mat->Shininess;
+		ptr->BaseColor = mat->baseColor;
 		ptr->OutlineWidth = m_outlineWidth;
 
 		m_pMaterialCBs.push_back(cb);
@@ -107,38 +108,35 @@ bool MeshRenderer::Init()
 	D3D12_DESCRIPTOR_HEAP_DESC desc{};
 	desc.NodeMask = 0;	// どのGPU向けのディスクリプタヒープかを指定（GPU１つの場合は０）
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = m_model.Materials.size() + 1; // Material数 + ShadowMap
+	desc.NumDescriptors = m_pModel->materials.size() + 1; // Material数 + ShadowMap
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	m_pDescriptorHeap = new DescriptorHeap(desc);
-	for (size_t i = 0; i < m_model.Materials.size(); i++)
+	for (size_t i = 0; i < m_pModel->materials.size(); i++)
 	{
 		// Albedoテクスチャ
-		auto texture = m_model.Materials[i].Texture;
+		auto texture = m_pModel->materials[i].albedoTexture.get();
 		auto pHandle = m_pDescriptorHeap->Alloc();
 		auto resource = texture->Resource();
 		auto desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_model.Materials[i].pHandle = pHandle;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_pModel->materials[i].albedoHandle = pHandle;
 
 		// PBR用のテクスチャ
-		texture = m_model.Materials[i].PbrTexture;
+		texture = m_pModel->materials[i].pbrTexture.get();
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_model.Materials[i].pPbrHandle = pHandle;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_pModel->materials[i].pbrHandle = pHandle;
 
 		// Normalテクスチャ
-		texture = m_model.Materials[i].NormalTexture;
+		texture = m_pModel->materials[i].normalTexture.get();
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_model.Materials[i].pNormalHandle = pHandle;
-
-		// 不透明PipelineState
-		m_model.Materials[i].pPipelineState = m_pOpaquePSO;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_pModel->materials[i].normalHandle = pHandle;
 	}
 
 	// シャドウマップの登録
@@ -204,12 +202,12 @@ void MeshRenderer::Draw()
 	//commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		ID3D12PipelineState* pso;
 		switch (alphaMode)
@@ -221,41 +219,41 @@ void MeshRenderer::Draw()
 			break;
 		}
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
-		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(5, mat->pbrHandle.HandleGPU());
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 
 	// アウトラインの描画
 	if (m_outlineWidth <= 0)
 		return;
 
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		if (alphaMode == 1)
 		{
 			continue;
 		}
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 
 		commandList->SetPipelineState(m_pOutlinePSO->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -275,15 +273,15 @@ void MeshRenderer::DrawAlpha()
 		m_pDescriptorHeap->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		ID3D12PipelineState* pso;
 		switch (alphaMode)
@@ -295,14 +293,14 @@ void MeshRenderer::DrawAlpha()
 			continue;
 		}
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -324,20 +322,20 @@ void MeshRenderer::DrawShadow()
 	//commandList->SetGraphicsRootDescriptorTable(3, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
 
 		ID3D12PipelineState* pso = m_pShadowPSO->Get();
 
 		commandList->SetPipelineState(pso);								// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -357,22 +355,22 @@ void MeshRenderer::DrawDepth()
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 
 	// メッシュの描画
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		if (alphaMode == 1)
 			continue;
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -396,25 +394,25 @@ void MeshRenderer::DrawGBuffer()
 	commandList->SetPipelineState(m_pGBufferPSO->Get());								// パイプラインステートをセット
 
 	// メッシュの描画
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		if (alphaMode == 1)
 			continue;
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
-		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
-		commandList->SetGraphicsRootDescriptorTable(6, mat->pNormalHandle->HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(5, mat->pbrHandle.HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(6, mat->normalHandle.HandleGPU());
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -439,24 +437,24 @@ void MeshRenderer::DrawOutline()
 	if (m_outlineWidth <= 0)
 		return;
 
-	for (Mesh mesh : m_model.Meshes)
+	for (const auto& mesh : m_pModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_model.Materials[mesh.MaterialIndex];
-		auto alphaMode = mat->AlphaMode;
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_pModel->materials[mesh.materialIndex];
+		auto alphaMode = mat->alphaMode;
 
 		if (alphaMode == 1)
 			continue;
 
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
 
 		commandList->SetPipelineState(m_pOutlinePSO->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), 1, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
 }
 
@@ -557,7 +555,7 @@ bool MeshRenderer::PreparePSO()
 void MeshRenderer::UpdateBone()
 {
 	// 行列の更新
-	for (auto b : m_model.Bones)
+	for (auto b : m_bones)
 	{
 		if (b->GetParent())
 		{
@@ -588,9 +586,9 @@ void MeshRenderer::UpdateCB()
 	// Bone
 	auto currentBone = m_pBoneCB[currentIndex]->GetPtr<BoneParameter>();
 
-	for (size_t i = 0; i < m_model.Bones.Size(); i++)
+	for (size_t i = 0; i < m_bones.Size(); i++)
 	{
-		auto bone = m_model.Bones[i];
+		auto bone = m_bones[i];
 		auto mtx = bone->GetWorldMatrix() * bone->GetInvBindMatrix();
 		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
 		XMStoreFloat4x4(&(currentBone->boneNormal[i]), XMMatrixInverse(nullptr, mtx));	// 法線は逆行列の転置で変換
@@ -618,12 +616,17 @@ void MeshRenderer::UpdateCB()
 	currentScene->LightWorld = lightWorld;
 }
 
+const Model& MeshRenderer::GetModel() const
+{
+	return *m_pModel;
+}
+
 Bone* MeshRenderer::FindBone(std::string name)
 {
-	return m_model.Bones.Find(name);
+	return m_bones.Find(name);
 }
 
 BoneList* MeshRenderer::GetBones()
 {
-	return &(m_model.Bones);
+	return &(m_bones);
 }

@@ -3,27 +3,21 @@
 #include "Component.h"
 #include "Engine.h"
 #include "BoneList.h"
-#include "SharedStruct.h"
+#include "Model.h"
+#include "DescriptorHeap.h"
+#include <memory>
 
 class ConstantBuffer;
 class RootSignature;
 class PipelineState;
 
-
-struct MeshRendererProperty
-{
-	Model Model;
-};
-
-
 class MeshRenderer : public Component
 {
 public:
 	MeshRenderer() {};
-	MeshRenderer(MeshRendererProperty prop);
+	MeshRenderer(std::shared_ptr<Model> model);
 	~MeshRenderer();
 
-	void SetProperties(MeshRendererProperty prop);
 	void SetOutlineWidth(float width);
 
 	bool Init() override;
@@ -43,6 +37,8 @@ private:
 	void UpdateCB();
 
 public:
+	const Model& GetModel() const;
+
 	Bone* FindBone(std::string name);
 	BoneList* GetBones();
 
@@ -50,7 +46,8 @@ public:
 	bool isShadowFromAbove = false;	// 上から影を落とすかどうか
 
 protected:
-	Model m_model;
+	std::shared_ptr<Model> m_pModel;	// モデルデータへのポインタ
+	BoneList m_bones;	// モデルのボーン
 
 	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];
 	ConstantBuffer* m_pSceneCB[Engine::FRAME_BUFFER_COUNT];
@@ -67,7 +64,7 @@ protected:
 
 	DescriptorHeap* m_pDescriptorHeap;
 
-	DescriptorHandle* m_pShadowHandle;
+	DescriptorHandle m_pShadowHandle;
 
 	float m_outlineWidth;
 };

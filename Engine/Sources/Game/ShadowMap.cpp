@@ -45,14 +45,14 @@ void ShadowMap::BeginRender()
 	commandList->ResourceBarrier(_countof(barriers), barriers);
 
 	// レンダーターゲットを設定
-	auto rtvHandle = m_pRtvHandle[0]->HandleCPU();
-	auto dsvHandle = m_pDsvHandle->HandleCPU();
+	auto rtvHandle = m_pRtvHandle[0].HandleCPU();
+	auto dsvHandle = m_pDsvHandle.HandleCPU();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	// レンダーターゲットをクリア
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	commandList->ClearRenderTargetView(m_pRtvHandle[0]->HandleCPU(), clearColor, 0, nullptr);
-	commandList->ClearRenderTargetView(m_pRtvHandle[1]->HandleCPU(), clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(m_pRtvHandle[0].HandleCPU(), clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(m_pRtvHandle[1].HandleCPU(), clearColor, 0, nullptr);
 
 	// 深度ステンシルビューをクリア
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -100,7 +100,7 @@ ID3D12Resource* ShadowMap::Resource()
 
 DescriptorHandle* ShadowMap::SrvHandle()
 {
-	return m_pSrvHandle[0];
+	return &m_pSrvHandle[0];
 }
 
 bool ShadowMap::CreateShadowBuffer()
@@ -186,21 +186,21 @@ bool ShadowMap::CreateShadowBuffer()
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
 	rtvDesc.Format = colorDesc.Format;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	device->CreateRenderTargetView(m_pColor[0].Get(), &rtvDesc, m_pRtvHandle[0]->HandleCPU());
-	device->CreateRenderTargetView(m_pColor[1].Get(), &rtvDesc, m_pRtvHandle[1]->HandleCPU());
+	device->CreateRenderTargetView(m_pColor[0].Get(), &rtvDesc, m_pRtvHandle[0].HandleCPU());
+	device->CreateRenderTargetView(m_pColor[1].Get(), &rtvDesc, m_pRtvHandle[1].HandleCPU());
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Format = depthDesc.Format;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	device->CreateDepthStencilView(m_pDepth.Get(), &dsvDesc, m_pDsvHandle->HandleCPU());
+	device->CreateDepthStencilView(m_pDepth.Get(), &dsvDesc, m_pDsvHandle.HandleCPU());
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = colorDesc.Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	device->CreateShaderResourceView(m_pColor[0].Get(), &srvDesc, m_pSrvHandle[0]->HandleCPU());
-	device->CreateShaderResourceView(m_pColor[1].Get(), &srvDesc, m_pSrvHandle[1]->HandleCPU());
+	device->CreateShaderResourceView(m_pColor[0].Get(), &srvDesc, m_pSrvHandle[0].HandleCPU());
+	device->CreateShaderResourceView(m_pColor[1].Get(), &srvDesc, m_pSrvHandle[1].HandleCPU());
 
 	return true;
 }
@@ -274,8 +274,8 @@ void ShadowMap::BlurHorizontal()
 	commandList->ResourceBarrier(_countof(barriers), barriers);
 
 	// レンダーターゲットを設定
-	auto rtvHandle = m_pRtvHandle[1]->HandleCPU();
-	auto dsvHandle = m_pDsvHandle->HandleCPU();
+	auto rtvHandle = m_pRtvHandle[1].HandleCPU();
+	auto dsvHandle = m_pDsvHandle.HandleCPU();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	// ルートシグネチャをセット
@@ -288,7 +288,7 @@ void ShadowMap::BlurHorizontal()
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(m_pBlurHorizontalPSO->Get());		// パイプラインステートをセット
-	commandList->SetGraphicsRootDescriptorTable(0, m_pSrvHandle[0]->HandleGPU()); // ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(0, m_pSrvHandle[0].HandleGPU()); // ディスクリプタテーブルをセット
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -313,12 +313,12 @@ void ShadowMap::BlurVertical()
 	commandList->ResourceBarrier(_countof(barriers), barriers);
 
 	// レンダーターゲットを設定
-	auto rtvHandle = m_pRtvHandle[0]->HandleCPU();
-	auto dsvHandle = m_pDsvHandle->HandleCPU();
+	auto rtvHandle = m_pRtvHandle[0].HandleCPU();
+	auto dsvHandle = m_pDsvHandle.HandleCPU();
 	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
 	commandList->SetPipelineState(m_pBlurVerticalPSO->Get());		// パイプラインステートをセット
-	commandList->SetGraphicsRootDescriptorTable(0, m_pSrvHandle[1]->HandleGPU()); // ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(0, m_pSrvHandle[1].HandleGPU()); // ディスクリプタテーブルをセット
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }

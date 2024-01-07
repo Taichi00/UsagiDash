@@ -34,6 +34,8 @@ public:
 	Collider* collider;
 
 	bool isGrounded;
+
+	Rigidbody* floorRigidbody;
 	Vec3 floorNormal;
 	Vec3 floorVelocity;
 };

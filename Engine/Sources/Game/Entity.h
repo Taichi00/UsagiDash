@@ -7,6 +7,7 @@
 #include <map>
 #include <typeinfo>
 #include <string>
+#include <memory>
 
 class Scene;
 class Transform;
@@ -54,7 +55,7 @@ protected:
 	std::vector<Entity*> m_pChildren;				// 子Entity
 	std::map<std::string, Entity*> m_pChildrenMap;	// 子Entityの名前マップ
 	
-	std::vector<Component*> m_components;
+	std::vector<std::unique_ptr<Component>> m_components;
 	std::map<std::string, Component*> m_componentMap;
 
 	std::string m_name;

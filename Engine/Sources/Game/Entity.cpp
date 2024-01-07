@@ -21,7 +21,7 @@ Entity::Entity(std::string name)
 
 Entity::~Entity()
 {
-	
+	printf("Delete Entity [%s]\n", m_name.c_str());
 }
 
 Component* Entity::AddComponent(Component* component)
@@ -32,7 +32,10 @@ Component* Entity::AddComponent(Component* component)
 	if (m_componentMap.find(key) != m_componentMap.end())
 		return nullptr;
 
-	m_components.push_back(component);
+	std::unique_ptr<Component> ucomponent;
+	ucomponent.reset(component);
+	m_components.push_back(std::move(ucomponent));
+
 	m_componentMap[typeid(*component).name()] = component;
 
 	component->RegisterEntity(this);
@@ -53,7 +56,7 @@ Scene* Entity::GetScene()
 
 bool Entity::Init()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->Init();
 	}
@@ -62,7 +65,7 @@ bool Entity::Init()
 
 void Entity::BeforeCameraUpdate()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->BeforeCameraUpdate();
 	}
@@ -70,7 +73,7 @@ void Entity::BeforeCameraUpdate()
 
 void Entity::CameraUpdate()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->CameraUpdate();
 	}
@@ -78,7 +81,7 @@ void Entity::CameraUpdate()
 
 void Entity::Update()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->Update();
 	}
@@ -86,7 +89,7 @@ void Entity::Update()
 
 void Entity::PhysicsUpdate()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->PhysicsUpdate();
 	}
@@ -94,7 +97,7 @@ void Entity::PhysicsUpdate()
 
 void Entity::DrawDepth()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->DrawDepth();
 	}
@@ -102,7 +105,7 @@ void Entity::DrawDepth()
 
 void Entity::DrawGBuffer()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->DrawGBuffer();
 	}
@@ -110,7 +113,7 @@ void Entity::DrawGBuffer()
 
 void Entity::DrawOutline()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->DrawOutline();
 	}
@@ -135,7 +138,7 @@ Entity* Entity::GetChild(std::string name)
 
 void Entity::Draw()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->Draw();
 	}
@@ -143,7 +146,7 @@ void Entity::Draw()
 
 void Entity::DrawAlpha()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->DrawAlpha();
 	}
@@ -151,7 +154,7 @@ void Entity::DrawAlpha()
 
 void Entity::DrawShadow()
 {
-	for (auto component : m_components)
+	for (auto& component : m_components)
 	{
 		component->DrawShadow();
 	}

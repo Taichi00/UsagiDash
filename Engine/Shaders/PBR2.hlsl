@@ -281,7 +281,7 @@ float4 main(VSOutput input) : SV_TARGET
         //shadow = Shadow(possm);
     }
     float3 shadowColor = inverseLerp(0, 1, shadow);
-    shadowColor += inverseLerp(0, 0.5, shadow) * float3(0.2, 0.05, 0.05);
+    //shadowColor += inverseLerp(0, 0.5, shadow) * float3(0.2, 0.05, 0.05);
     shadowColor = saturate(shadowColor);
     
     // Image-Based Lighting

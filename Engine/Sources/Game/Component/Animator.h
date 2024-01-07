@@ -1,16 +1,18 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include "BoneList.h"
-#include "Vec.h"
-#include "Quaternion.h"
 #include "Component.h"
+#include "Quaternion.h"
+#include "Vec.h"
+#include <map>
+#include <memory>
 #include <queue>
+#include <string>
+#include <vector>
 
 class Animation;
 struct VectorKey;
 struct QuatKey;
+class Bone;
 class MeshRenderer;
 
 struct AnimationArgs
@@ -20,22 +22,16 @@ struct AnimationArgs
 	bool loop;
 };
 
-struct AnimatorProperty
-{
-	std::vector<Animation*> Animations;
-};
-
 class Animator : public Component
 {
 public:
 	Animator();
-	Animator(AnimatorProperty prop);
 
 	bool Init();
 	void Update();
 
-	void RegisterAnimation(Animation* animation);
-	void RegisterAnimations(std::vector<Animation*> animations);
+	void RegisterAnimation(const std::shared_ptr<Animation>& animation);
+	void RegisterAnimations(const std::vector<std::shared_ptr<Animation>>& animations);
 	void Play(std::string name, float speed = 1.0f, bool loop = true);
 	void Push(std::string name, float speed = 1.0f, bool loop = true);
 	void Stop();
@@ -49,10 +45,10 @@ private:
 	Vec3 CalcCurrentScale(std::vector<VectorKey>* keys, float currentTime, Bone* bone);
 
 private:
-	std::vector<Animation*> m_animations;
-	std::map<std::string, Animation*> m_animationMap;
+	std::vector<std::shared_ptr<Animation>> m_animations;
+	std::map<std::string, std::shared_ptr<Animation>> m_animationMap;
 
-	Animation* m_currentAnimation;
+	std::shared_ptr<Animation> m_currentAnimation;
 	std::queue<AnimationArgs> m_animationQueue;
 	float m_currentTime;
 	float m_speed;

@@ -2,9 +2,8 @@
 #include <d3d12.h>
 #include "d3dx12.h"
 #include "ComPtr.h"
+#include "DescriptorHeap.h"
 
-class DescriptorHeap;
-class DescriptorHandle;
 class RootSignature;
 class PipelineState;
 
@@ -31,9 +30,9 @@ private:
 	ComPtr<ID3D12Resource> m_pColor[2];
 	ComPtr<ID3D12Resource> m_pDepth;
 
-	DescriptorHandle* m_pRtvHandle[2];
-	DescriptorHandle* m_pDsvHandle;
-	DescriptorHandle* m_pSrvHandle[2];
+	DescriptorHandle m_pRtvHandle[2];
+	DescriptorHandle m_pDsvHandle;
+	DescriptorHandle m_pSrvHandle[2];
 
 	RootSignature* m_pRootSignature;
 

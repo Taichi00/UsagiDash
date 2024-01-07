@@ -15,6 +15,9 @@
 #include "IndexBuffer.h"
 #include "GBuffer.h"
 #include "GBufferManager.h"
+#include "Model.h"
+#include "Game.h"
+#include "ResourceManager.h"
 
 Scene::Scene()
 {
@@ -22,14 +25,7 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-	delete m_pLightingPSO;
-	delete m_pCollisionManager;
-	delete m_pShadowMap;
-
-	for (auto entity : m_pEntities)
-	{
-		delete entity;
-	}
+	
 }
 
 bool Scene::Init()
@@ -38,10 +34,10 @@ bool Scene::Init()
 	m_pEntities.clear();
 
 	// シャドウマップの生成
-	m_pShadowMap = new ShadowMap();
+	m_pShadowMap = std::make_unique<ShadowMap>();
 
 	// CollisionManagerの生成
-	m_pCollisionManager = new CollisionManager();
+	m_pCollisionManager = std::make_unique<CollisionManager>();
 
 	// ルートシグネチャの生成
 	RootSignatureParameter params[] = {
@@ -57,7 +53,7 @@ bool Scene::Init()
 		RSTexture,			
 		RSTexture,			
 	};
-	m_pRootSignature = new RootSignature(_countof(params), params);
+	m_pRootSignature = std::make_unique<RootSignature>(_countof(params), params);
 	if (!m_pRootSignature->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
@@ -69,7 +65,7 @@ bool Scene::Init()
 		RSConstantBuffer,	// SceneParameter
 		RSTexture,			// Skybox
 	};
-	m_pSkyboxRootSignature = new RootSignature(_countof(skyboxParams), skyboxParams);
+	m_pSkyboxRootSignature = std::make_unique<RootSignature>(_countof(skyboxParams), skyboxParams);
 	if (!m_pSkyboxRootSignature->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
@@ -85,7 +81,7 @@ bool Scene::Init()
 	// 定数バッファの生成
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pTransformCB[i] = new ConstantBuffer(sizeof(TransformParameter));
+		m_pTransformCB[i] = std::make_unique<ConstantBuffer>(sizeof(TransformParameter));
 		if (!m_pTransformCB[i]->IsValid())
 		{
 			printf("変換行列用定数バッファの生成に失敗\n");
@@ -100,7 +96,7 @@ bool Scene::Init()
 
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pSceneCB[i] = new ConstantBuffer(sizeof(SceneParameter));
+		m_pSceneCB[i] = std::make_unique<ConstantBuffer>(sizeof(SceneParameter));
 		if (!m_pSceneCB[i]->IsValid())
 		{
 			printf("ライト用定数バッファの生成に失敗\n");
@@ -120,14 +116,14 @@ bool Scene::Init()
 void Scene::Update()
 {
 	// Cameraの更新
-	for (auto entity : m_pEntities) entity->BeforeCameraUpdate();
-	for (auto entity : m_pEntities) entity->CameraUpdate();
+	for (auto& entity : m_pEntities) entity->BeforeCameraUpdate();
+	for (auto& entity : m_pEntities) entity->CameraUpdate();
 
 	// エンティティの更新
-	for (auto entity : m_pEntities) entity->Update();
+	for (auto& entity : m_pEntities) entity->Update();
 
 	// 物理の更新
-	for (auto entity : m_pEntities) entity->PhysicsUpdate();
+	for (auto& entity : m_pEntities) entity->PhysicsUpdate();
 
 	// 衝突判定
 	m_pCollisionManager->Update();
@@ -135,7 +131,7 @@ void Scene::Update()
 	// 定数バッファの更新
 	UpdateCB();
 }
-
+float ang = 0;
 void Scene::Draw()
 {
 	// レンダリングの準備
@@ -143,7 +139,7 @@ void Scene::Draw()
 
 	// シャドウマップの描画
 	m_pShadowMap->BeginRender();
-	for (auto entity : m_pEntities) entity->DrawShadow();
+	for (auto& entity : m_pEntities) entity->DrawShadow();
 	m_pShadowMap->EndRender();
 
 	/*g_Engine->BeginRenderMSAA();
@@ -158,11 +154,11 @@ void Scene::Draw()
 
 	// デプスプリパス
 	g_Engine->DepthPrePath();
-	for (auto entity : m_pEntities) entity->DrawDepth();
+	for (auto& entity : m_pEntities) entity->DrawDepth();
 
 	// G-Bufferへの書き込み
 	g_Engine->GBufferPath();
-	for (auto entity : m_pEntities)	entity->DrawGBuffer();
+	for (auto& entity : m_pEntities)	entity->DrawGBuffer();
 
 	// ライティングパス
 	g_Engine->LightingPath();
@@ -192,6 +188,20 @@ void Scene::Draw()
 	g_Engine->FXAAPath();
 	DrawFXAA();
 
+	g_Engine->EndRenderD3D();
+
+	g_Engine->BeginRenderD2D();
+
+	float x = cos(ang) * 100 + 1280 / 2.0;
+	float y = sin(ang) * 100 + 720 / 2.0;
+	D2D1_RECT_F rect = {
+		x - 400, y - 100, x + 400, y + 100
+	};
+	ang += 0.04;
+	g_Engine->drawText("normal", "white", L"DirectWriteで文字表示\nHello, Direct2D & DirectWrite", rect);
+
+	g_Engine->EndRenderD2D();
+
 	// レンダリングの終了
 	g_Engine->EndDeferredRender();
 }
@@ -218,15 +228,18 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("MetallicRoughness")->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(7, m_pShadowMap->SrvHandle()->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(8, m_pDiffuseMapHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(9, m_pSpecularMapHandle->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(10, m_pBrdfHandle->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(8, m_pDiffuseMapHandle.HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(9, m_pSpecularMapHandle.HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(10, m_pBrdfHandle.HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
 void Scene::DrawSkybox()
 {
+	if (m_pSkyboxTex == nullptr)
+		return;
+
 	auto currentIndex = g_Engine->CurrentBackBufferIndex();
 	auto commandList = g_Engine->CommandList();
 	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
@@ -240,17 +253,17 @@ void Scene::DrawSkybox()
 		gbufferHeap,
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(2, m_pSkyboxHandle->HandleGPU());	// ディスクリプタテーブルをセット
+	commandList->SetGraphicsRootDescriptorTable(2, m_pSkyboxHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
-	auto vbView = m_skyboxMesh.pVertexBuffer->View();
-	auto ibView = m_skyboxMesh.pIndexBuffer->View();
+	auto vbView = m_skyboxMesh.vertexBuffer->View();
+	auto ibView = m_skyboxMesh.indexBuffer->View();
 
 	commandList->SetPipelineState(m_pSkyboxPSO->Get());				// パイプラインステートをセット
 	commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 	commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
 
-	commandList->DrawIndexedInstanced(m_skyboxMesh.Indices.size(), 1, 0, 0, 0);
+	commandList->DrawIndexedInstanced(m_skyboxMesh.indices.size(), 1, 0, 0, 0);
 }
 
 void Scene::DrawSSAO()
@@ -367,7 +380,10 @@ void Scene::DrawFXAA()
 
 void Scene::CreateEntity(Entity* entity)
 {
-	m_pEntities.push_back(entity);
+	std::unique_ptr<Entity> uentity;
+	uentity.reset(entity);
+	m_pEntities.push_back(std::move(uentity));
+
 	entity->RegisterScene(this);
 	entity->Init();
 }
@@ -384,19 +400,19 @@ Camera* Scene::GetMainCamera()
 
 ShadowMap* Scene::GetShadowMap()
 {
-	return m_pShadowMap;
+	return m_pShadowMap.get();
 }
 
 CollisionManager* Scene::GetCollisionManager()
 {
-	return m_pCollisionManager;
+	return m_pCollisionManager.get();
 }
 
 void Scene::SetSkybox(const std::string path)
 {
 	auto device = g_Engine->Device();
 
-	m_pSkyboxTex = Texture2D::Get(path + "EnvHDR.dds");
+	m_pSkyboxTex = Texture2D::Load(path + "EnvHDR.dds");
 
 	// SRVを作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC skyboxDesc{};
@@ -408,10 +424,10 @@ void Scene::SetSkybox(const std::string path)
 	skyboxDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
 	m_pSkyboxHandle = g_Engine->GBufferHeap()->Alloc();	// GBufferHeapに追加
-	device->CreateShaderResourceView(m_pSkyboxTex->Resource(), &skyboxDesc, m_pSkyboxHandle->HandleCPU());	// シェーダーリソースビュー作成
+	device->CreateShaderResourceView(m_pSkyboxTex->Resource(), &skyboxDesc, m_pSkyboxHandle.HandleCPU());	// シェーダーリソースビュー作成
 
 	// DiffuseMap
-	m_pDiffuseMapTex = Texture2D::Get(path + "DiffuseHDR.dds");
+	m_pDiffuseMapTex = Texture2D::Load(path + "DiffuseHDR.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC diffuseDesc{};
 	diffuseDesc.Format = m_pDiffuseMapTex->Format();
@@ -422,10 +438,10 @@ void Scene::SetSkybox(const std::string path)
 	diffuseDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
 	m_pDiffuseMapHandle = g_Engine->GBufferHeap()->Alloc();
-	device->CreateShaderResourceView(m_pDiffuseMapTex->Resource(), &diffuseDesc, m_pDiffuseMapHandle->HandleCPU());
+	device->CreateShaderResourceView(m_pDiffuseMapTex->Resource(), &diffuseDesc, m_pDiffuseMapHandle.HandleCPU());
 
 	// SpecularMap
-	m_pSpecularMapTex = Texture2D::Get(path + "SpecularHDR.dds");
+	m_pSpecularMapTex = Texture2D::Load(path + "SpecularHDR.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC specularDesc{};
 	specularDesc.Format = m_pSpecularMapTex->Format();
@@ -436,10 +452,10 @@ void Scene::SetSkybox(const std::string path)
 	specularDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
 	m_pSpecularMapHandle = g_Engine->GBufferHeap()->Alloc();
-	device->CreateShaderResourceView(m_pSpecularMapTex->Resource(), &specularDesc, m_pSpecularMapHandle->HandleCPU());
+	device->CreateShaderResourceView(m_pSpecularMapTex->Resource(), &specularDesc, m_pSpecularMapHandle.HandleCPU());
 
 	// brdfLUT
-	m_pBrdfTex = Texture2D::Get(path + "Brdf.dds");
+	m_pBrdfTex = Texture2D::Load(path + "Brdf.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC brdfDesc{};
 	brdfDesc.Format = m_pBrdfTex->Format();
@@ -448,7 +464,7 @@ void Scene::SetSkybox(const std::string path)
 	brdfDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	m_pBrdfHandle = g_Engine->GBufferHeap()->Alloc();
-	device->CreateShaderResourceView(m_pBrdfTex->Resource(), &brdfDesc, m_pBrdfHandle->HandleCPU());
+	device->CreateShaderResourceView(m_pBrdfTex->Resource(), &brdfDesc, m_pBrdfHandle.HandleCPU());
 
 
 	// Meshを作成
@@ -474,35 +490,35 @@ void Scene::SetSkybox(const std::string path)
 	};
 
 	m_skyboxMesh = Mesh{};
-	m_skyboxMesh.Vertices = vertices;
-	m_skyboxMesh.Indices = indices;
+	m_skyboxMesh.vertices = vertices;
+	m_skyboxMesh.indices = indices;
 
 	// 頂点バッファの生成
-	auto vSize = sizeof(Vertex) * m_skyboxMesh.Vertices.size();
+	auto vSize = sizeof(Vertex) * m_skyboxMesh.vertices.size();
 	auto stride = sizeof(Vertex);
-	auto pVB = new VertexBuffer(vSize, stride, vertices.data());
+	auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices.data());
 	if (!pVB->IsValid())
 	{
 		printf("頂点バッファの生成に失敗\n");
 		return;
 	}
-	m_skyboxMesh.pVertexBuffer = pVB;
+	m_skyboxMesh.vertexBuffer = std::move(pVB);
 
 	// インデックスバッファの生成
-	auto iSize = sizeof(uint32_t) * m_skyboxMesh.Indices.size();
-	auto pIB = new IndexBuffer(iSize, indices.data());
+	auto iSize = sizeof(uint32_t) * m_skyboxMesh.indices.size();
+	auto pIB = std::make_unique<IndexBuffer>(iSize, indices.data());
 	if (!pIB->IsValid())
 	{
 		printf("インデックスバッファの生成に失敗\n");
 		return;
 	}
-	m_skyboxMesh.pIndexBuffer = pIB;
+	m_skyboxMesh.indexBuffer = std::move(pIB);
 }
 
 bool Scene::PreparePSO()
 {
 	// ライティング用
-	m_pLightingPSO = new PipelineState();
+	m_pLightingPSO = std::make_unique<PipelineState>();
 	m_pLightingPSO->SetInputLayout({nullptr, 0});
 	m_pLightingPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pLightingPSO->SetVS(L"ScreenVS.cso");
@@ -511,7 +527,7 @@ bool Scene::PreparePSO()
 
 	auto desc = m_pLightingPSO->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
-
+	
 	m_pLightingPSO->Create();
 	if (!m_pLightingPSO->IsValid())
 	{
@@ -519,7 +535,7 @@ bool Scene::PreparePSO()
 	}
 
 	// SSAO用
-	m_pSSAOPSO = new PipelineState();
+	m_pSSAOPSO = std::make_unique<PipelineState>();
 	m_pSSAOPSO->SetInputLayout({ nullptr, 0 });
 	m_pSSAOPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pSSAOPSO->SetVS(L"ScreenVS.cso");
@@ -536,7 +552,7 @@ bool Scene::PreparePSO()
 	}
 
 	// BlurHorizontal用
-	m_pBlurHorizontalPSO = new PipelineState();
+	m_pBlurHorizontalPSO = std::make_unique<PipelineState>();
 	m_pBlurHorizontalPSO->SetInputLayout({ nullptr, 0 });
 	m_pBlurHorizontalPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pBlurHorizontalPSO->SetVS(L"ScreenVS.cso");
@@ -553,7 +569,7 @@ bool Scene::PreparePSO()
 	}
 
 	// BlurVertical用
-	m_pBlurVerticalPSO = new PipelineState();
+	m_pBlurVerticalPSO = std::make_unique<PipelineState>();
 	m_pBlurVerticalPSO->SetInputLayout({ nullptr, 0 });
 	m_pBlurVerticalPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pBlurVerticalPSO->SetVS(L"ScreenVS.cso");
@@ -570,7 +586,7 @@ bool Scene::PreparePSO()
 	}
 
 	// PostProcess用
-	m_pPostProcessPSO = new PipelineState();
+	m_pPostProcessPSO = std::make_unique<PipelineState>();
 	m_pPostProcessPSO->SetInputLayout({ nullptr, 0 });
 	m_pPostProcessPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pPostProcessPSO->SetVS(L"ScreenVS.cso");
@@ -587,7 +603,7 @@ bool Scene::PreparePSO()
 	}
 
 	// FXAA用
-	m_pFXAAPSO = new PipelineState();
+	m_pFXAAPSO = std::make_unique<PipelineState>();
 	m_pFXAAPSO->SetInputLayout({ nullptr, 0 });
 	m_pFXAAPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pFXAAPSO->SetVS(L"ScreenVS.cso");
@@ -604,7 +620,7 @@ bool Scene::PreparePSO()
 	}
 
 	// Skybox用
-	m_pSkyboxPSO = new PipelineState();
+	m_pSkyboxPSO = std::make_unique<PipelineState>();
 	m_pSkyboxPSO->SetInputLayout(Vertex::InputLayout);
 	m_pSkyboxPSO->SetRootSignature(m_pSkyboxRootSignature->Get());
 	m_pSkyboxPSO->SetVS(L"SkyboxVS.cso");

@@ -21,8 +21,13 @@
 #include "BillboardRenderer.h"
 #include "Texture2D.h"
 #include "ParticleEmitter.h"
+#include "Input.h"
+#include "Game.h"
+#include "MainScene.h"
+#include "ResourceManager.h"
+#include <memory>
 
-Entity* enemy, *testSphere;
+Entity* enemy, *testSphere, *movingObj;
 float angle = 0;
 Vec3 direction = Vec3(1, 0, 0);
 
@@ -30,19 +35,17 @@ bool CollisionTestScene::Init()
 {
 	Scene::Init();
 
-	Model model;
+	std::shared_ptr<Model> model;
 	CollisionModel collisionModel;
 	std::vector<Animation*> animations;
 	Collider* collider;
 
-	Model playerModel;
-	std::vector<Animation*> playerAnimations;
-	AssimpLoader::Load(L"Assets/PlatformerPack/Character.gltf", playerModel, playerAnimations);
+	auto playerModel = LoadResource<Model>("Assets/PlatformerPack/Character.gltf");
 
 	float pbrColor[4] = { 0, 1, 0, 1 };
-	auto smokeAlbedo = Texture2D::Get("Assets/smoke2_albedo.png");
-	auto smokeNormal = Texture2D::Get("Assets/smoke2_normal.png");
-	auto smokePbr = Texture2D::GetMono(pbrColor);
+	std::shared_ptr smokeAlbedo = Texture2D::Load("Assets/smoke2_albedo.png");
+	std::shared_ptr smokeNormal = Texture2D::Load("Assets/smoke2_normal.png");
+	std::shared_ptr smokePbr = Texture2D::GetMono(pbrColor);
 
 	auto runSmokeProp = ParticleEmitterProperty{};
 	runSmokeProp.timeToLive = 50;
@@ -116,11 +119,12 @@ bool CollisionTestScene::Init()
 	circleSmokeProp.sprite.normalTexture = smokeNormal;
 	circleSmokeProp.sprite.pbrTexture = smokePbr;
 
+
 	auto player = new Entity("Player");
-	player->AddComponent(new MeshRenderer({ playerModel }));
+	player->AddComponent(new MeshRenderer(playerModel));
 	collider = (Collider*)player->AddComponent(new CapsuleCollider({ 1, 1 }));
 	player->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
-	player->AddComponent(new Animator({ playerAnimations }));
+	player->AddComponent(new Animator());
 	player->AddComponent(new Player({ 0.27, 0.02 }));
 	CreateEntity(player);
 
@@ -145,8 +149,8 @@ bool CollisionTestScene::Init()
 
 
 	std::vector<Entity*> objects;
-	auto sphereModel = SphereMesh::Load(2, 0.72, 0, 0);
-	auto capsuleModel = CapsuleMesh::Load(2, 2, 0.72, 0, 0);
+	std::shared_ptr sphereModel = SphereMesh::Load(2, 0.72, 0, 0);
+	std::shared_ptr capsuleModel = CapsuleMesh::Load(2, 2, 0.72, 0, 0);
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -163,7 +167,7 @@ bool CollisionTestScene::Init()
 			model = sphereModel;
 		}
 		
-		object->AddComponent(new MeshRenderer({ model }));
+		object->AddComponent(new MeshRenderer(model));
 		object->AddComponent(new Rigidbody({ collider, 1, true, false, 0.5 }));
 		CreateEntity(object);
 		objects.push_back(object);
@@ -171,13 +175,22 @@ bool CollisionTestScene::Init()
 		object->transform->position = Vec3(4 * (i + 1), 0, 0);
 	}
 
+	//sphereModel = SphereMesh::Load(10, 0.72, 0, 0);
+	AssimpLoader::LoadCollision(L"Assets/rift.obj", collisionModel);
+	movingObj = new Entity("Rift");
+	movingObj->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/rift.obj")));
+	collider = (Collider*)movingObj->AddComponent(new MeshCollider({ collisionModel }));
+	movingObj->AddComponent(new Rigidbody({ collider, 1000, false, true, 0.5 }));
+	CreateEntity(movingObj);
+	movingObj->transform->position = Vec3(0, -10, -60);
+	movingObj->transform->scale = Vec3(10, 10, 10);
 
-	AssimpLoader::Load(L"Assets/PlatformerPack/Enemy.gltf", model, animations);
+
 	enemy = new Entity("Enemy");
-	enemy->AddComponent(new MeshRenderer({ model }));
+	enemy->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Enemy.gltf")));
 	collider = (Collider*)enemy->AddComponent(new SphereCollider({ 1.5 }));
 	enemy->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
-	enemy->AddComponent(new Animator({ animations }));
+	enemy->AddComponent(new Animator());
 	CreateEntity(enemy);
 
 	enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
@@ -186,16 +199,14 @@ bool CollisionTestScene::Init()
 	enemy->transform->scale = Vec3(2, 2, 2);
 
 
-	AssimpLoader::Load(L"Assets/PlatformerPack/Star.gltf", model, animations);
 	testSphere = new Entity("Star");
-	testSphere->AddComponent(new MeshRenderer({ model }));
+	testSphere->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Star.gltf")));
 	CreateEntity(testSphere);
 	//testSphere->transform->scale = Vec3(0.3, 0.3, 0.3);
 
 
-	AssimpLoader::Load(L"Assets/dog.glb", model, animations);
 	auto pbrEntity = new Entity("PBR Entity");
-	pbrEntity->AddComponent(new MeshRenderer({ model }));
+	pbrEntity->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/dog.glb")));
 	CreateEntity(pbrEntity);
 	pbrEntity->transform->position = Vec3(0, -3, -13);
 	//pbrEntity->transform->rotation = Quaternion::FromEuler(1.57, 0, 0);
@@ -235,10 +246,9 @@ bool CollisionTestScene::Init()
 	//plane->transform->position = Vec3(0, -2, 0);
 	//plane->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
 
-	AssimpLoader::Load(L"Assets/Map/CollisionTest.obj", model, animations);
 	AssimpLoader::LoadCollision(L"Assets/Map/CollisionTest.obj", collisionModel);
 	auto plane = new Entity("Map");
-	plane->AddComponent(new MeshRenderer({ model }));
+	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/Map/CollisionTest.obj")));
 	collider = (Collider*)plane->AddComponent(new MeshCollider({ collisionModel }));
 	plane->AddComponent(new Rigidbody({ collider, 1, false, true, 0.5 }));
 	CreateEntity(plane);
@@ -291,6 +301,12 @@ void CollisionTestScene::Update()
 
 	rigidbody->velocity += direction * 0.01;*/
 
+	auto rigidbody = movingObj->GetComponent<Rigidbody>();
+	
+	rigidbody->velocity.x = (sin(angle) - sin(angle - 0.02)) * 20;
+	rigidbody->velocity.y += (-10 - movingObj->transform->position.y) * 0.03;
+	rigidbody->velocity.z += (-60 - movingObj->transform->position.z) * 0.03;
+
 	auto origin = Vec3(-10, -6, 10);
 	auto direction = Quaternion::FromEuler(0, angle, 0) * Vec3(1, 0, 0);
 	float distance = 10;
@@ -305,4 +321,9 @@ void CollisionTestScene::Update()
 	testSphere->transform->rotation = Quaternion::FromEuler(0, angle * 5, 0);
 
 	angle += 0.02;
+
+	if (Input::GetKeyDown(DIK_END))
+	{
+		Game::Get()->LoadScene(new MainScene());
+	}
 }

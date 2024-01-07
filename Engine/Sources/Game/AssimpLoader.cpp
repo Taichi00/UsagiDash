@@ -9,6 +9,7 @@
 #include "Animation.h"
 #include "Vec.h"
 #include "Quaternion.h"
+#include "Model.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -71,18 +72,26 @@ AssimpLoader::AssimpLoader()
 
 }
 
-bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Animation*>& animations)
+std::unique_ptr<Model> AssimpLoader::Load(const std::string& filename)
+{
+    return Load(ToWideString(filename).c_str());
+}
+
+std::unique_ptr<Model> AssimpLoader::Load(const wchar_t* filename)
 {
     if (filename == nullptr)
     {
-        return false;
+        return nullptr;
     }
     
     directoryPath = GetDirectoryPath(filename);
 
-    auto& meshes = model.Meshes;
-    auto& materials = model.Materials;
-    auto& bones = model.Bones;
+    auto model = std::make_unique<Model>();
+
+    auto& meshes = model->meshes;
+    auto& materials = model->materials;
+    auto& bones = model->bones;
+    auto& animations = model->animations;
 
     auto path = ToUTF8(filename);
 
@@ -101,7 +110,7 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
         // もし読み込みエラーが出たら表示する
         printf(importer.GetErrorString());
         printf("\n");
-        return false;
+        return nullptr;
     }
     
     meshes.clear();
@@ -112,7 +121,7 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     BuildBoneHierarchy(bones, pScene->mRootNode, nullptr);
     
     // Mesh, Boneの読み込み
-    ProcessNode(model, pScene->mRootNode, pScene);
+    ProcessNode(*model, pScene->mRootNode, pScene);
 
     // Materialの読み込み
     materials.clear();
@@ -128,8 +137,8 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     animations.resize(pScene->mNumAnimations);
     for (size_t i = 0; i < animations.size(); i++)
     {
-        animations[i] = new Animation();
-        LoadAnimation(animations[i], pScene->mAnimations[i], &bones);
+        animations[i] = std::make_unique<Animation>();
+        LoadAnimation(animations[i].get(), pScene->mAnimations[i], &bones);
     }
 
     // SmoothNormalの生成
@@ -141,9 +150,9 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     {
         auto mesh = &(meshes[i]);
         auto aimesh = pScene->mMeshes[i];
-        for (size_t j = 0; j < meshes[i].Vertices.size(); ++j)
+        for (size_t j = 0; j < meshes[i].vertices.size(); ++j)
         {
-            auto vertex = &(meshes[i].Vertices[j]);
+            auto vertex = &(meshes[i].vertices[j]);
             auto normal = &(aimesh->mNormals[j]);
             vertex->SmoothNormal = DirectX::XMFLOAT3(normal->x, normal->y, normal->z);
         }
@@ -153,27 +162,27 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     for (size_t i = 0; i < meshes.size(); i++)
     {
         // 頂点バッファの生成
-        auto vSize = sizeof(Vertex) * meshes[i].Vertices.size();
+        auto vSize = sizeof(Vertex) * meshes[i].vertices.size();
         auto stride = sizeof(Vertex);
-        auto vertices = meshes[i].Vertices.data();
-        auto pVB = new VertexBuffer(vSize, stride, vertices);
+        auto vertices = meshes[i].vertices.data();
+        auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices);
         if (!pVB->IsValid())
         {
             printf("頂点バッファの生成に失敗\n");
             break;
         }
-        meshes[i].pVertexBuffer = pVB;
+        meshes[i].vertexBuffer = std::move(pVB);
 
         // インデックスバッファの生成
-        auto iSize = sizeof(uint32_t) * meshes[i].Indices.size();
-        auto indices = meshes[i].Indices.data();
-        auto pIB = new IndexBuffer(iSize, indices);
+        auto iSize = sizeof(uint32_t) * meshes[i].indices.size();
+        auto indices = meshes[i].indices.data();
+        auto pIB = std::make_unique<IndexBuffer>(iSize, indices);
         if (!pIB->IsValid())
         {
             printf("インデックスバッファの生成に失敗\n");
             break;
         }
-        meshes[i].pIndexBuffer = pIB;
+        meshes[i].indexBuffer = std::move(pIB);
     }
 
     // ボーン情報の表示
@@ -183,7 +192,7 @@ bool AssimpLoader::Load(const wchar_t* filename, Model& model, std::vector<Anima
     }*/
 
     pScene = nullptr;
-    return true;
+    return model;
 }
 
 bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
@@ -305,8 +314,8 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
 
 void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 {
-    auto& meshes = model.Meshes;
-    auto& bones = model.Bones;
+    auto& meshes = model.meshes;
+    auto& bones = model.bones;
 
     for (UINT i = 0; i < node->mNumMeshes; i++)
     {
@@ -332,7 +341,7 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
     aiVector3D zeroTangent(1.0f, 0.0f, 0.0f);
     aiColor4D zeroColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    dst.Vertices.resize(src->mNumVertices);
+    dst.vertices.resize(src->mNumVertices);
 
     for (auto i = 0u; i < src->mNumVertices; ++i)
     {
@@ -349,10 +358,10 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
         vertex.Tangent = DirectX::XMFLOAT3(tangent->x, tangent->y, tangent->z);
         vertex.Color = DirectX::XMFLOAT4(color->r, color->g, color->b, color->a);
 
-        dst.Vertices[i] = vertex;
+        dst.vertices[i] = vertex;
     }
 
-    dst.Indices.resize(src->mNumFaces * 3);
+    dst.indices.resize(src->mNumFaces * 3);
     
     for (auto i = 0u; i < src->mNumFaces; ++i)
     {
@@ -362,12 +371,12 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
         int id1 = face.mIndices[1];
         int id2 = face.mIndices[2];
 
-        dst.Indices[i * 3 + 0] = id0;
-        dst.Indices[i * 3 + 1] = id1;
-        dst.Indices[i * 3 + 2] = id2;
+        dst.indices[i * 3 + 0] = id0;
+        dst.indices[i * 3 + 1] = id1;
+        dst.indices[i * 3 + 2] = id2;
     }
 
-    dst.MaterialIndex = src->mMaterialIndex;
+    dst.materialIndex = src->mMaterialIndex;
 }
 
 void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiScene* scene)
@@ -378,38 +387,43 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     float pbr[] = { 0, 0.8, 0, 1 };
     float normal[] = { 0.5, 0.5, 1, 1 };
 
+    std::unique_ptr<Texture2D> tex;
+
     // Albedoテクスチャの読み込み
     Texture2D::SetDefaultColor(white);
     if (src->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
     {
-        LoadTexture(path, dst.Texture, src, scene);
+        tex = LoadTexture(path, src, scene);
     }
     else
     {
-        dst.Texture = Texture2D::GetWhite();
+        tex = Texture2D::GetWhite();
     }
+    dst.albedoTexture = std::move(tex);
 
     // Metallic, Roughness, Ambientテクスチャの読み込み
     Texture2D::SetDefaultColor(pbr);
     if (src->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path) == aiReturn_SUCCESS)
     {
-        LoadTexture(path, dst.PbrTexture, src, scene);
+        tex = LoadTexture(path, src, scene);
     }
     else
     {
-        dst.PbrTexture = Texture2D::GetMono(pbr);
+        tex = Texture2D::GetMono(pbr);
     }
+    dst.pbrTexture = std::move(tex);
 
     // Normalテクスチャの読み込み
     Texture2D::SetDefaultColor(normal);
     if (src->GetTexture(aiTextureType_NORMALS, 0, &path) == aiReturn_SUCCESS)
     {
-        LoadTexture(path, dst.NormalTexture, src, scene);
+        tex = LoadTexture(path, src, scene);
     }
     else
     {
-        dst.NormalTexture = Texture2D::GetMono(normal);
+        tex = Texture2D::GetMono(normal);
     }
+    dst.normalTexture = std::move(tex);
 
     // アルファモードを取得
     aiString alphaMode = aiString("OPAQUE");
@@ -417,30 +431,18 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     
     if (alphaMode == aiString("BLEND"))
     {
-        dst.AlphaMode = 1;
+        dst.alphaMode = 1;
     }
     else
     {
-        dst.AlphaMode = 0;
+        dst.alphaMode = 0;
     }
 
     // 色を取得
     aiColor4D color;
     src->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-    dst.BaseColor = { color.r, color.g, color.b, color.a };
+    dst.baseColor = { color.r, color.g, color.b, color.a };
     
-    // 光沢度を取得
-    float shininess;
-    auto result = src->Get(AI_MATKEY_SHININESS, shininess);
-    if (result)
-    {
-        dst.Shininess = shininess;
-    }
-    else
-    {
-        dst.Shininess = 250;
-    }
-
     // プロパティ一覧の表示
     /*printf("%s\n", path.C_Str());
     auto prop = src->mProperties;
@@ -475,7 +477,7 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
         {
             auto weight = weights[j].mWeight;
             auto vertexId = weights[j].mVertexId;
-            auto vertex = &(mesh.Vertices[vertexId]);
+            auto vertex = &(mesh.vertices[vertexId]);
 
             auto n = vertex->BoneNum;
             uint32_t indices[] = { vertex->BoneIndices.x, vertex->BoneIndices.y, vertex->BoneIndices.z, vertex->BoneIndices.w };
@@ -497,7 +499,7 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
 
     for (auto i = 0u; i < pMesh->mNumVertices; ++i)
     {
-        auto vertex = &(mesh.Vertices[i]);
+        auto vertex = &(mesh.vertices[i]);
         auto n = vertex->BoneNum;
 
         if (n >= 4) continue;
@@ -514,13 +516,13 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
     }
 }
 
-void AssimpLoader::LoadTexture(aiString path, Texture2D*& dst, const aiMaterial* src, const aiScene* scene)
+std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(aiString path, const aiMaterial* src, const aiScene* scene)
 {
     // 埋め込み画像かどうか
     const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(path.C_Str());
     if (embeddedTexture != nullptr)
     {
-        LoadEmbeddedTexture(dst, embeddedTexture);
+        return LoadEmbeddedTexture(embeddedTexture);
     }
     else
     {
@@ -529,19 +531,19 @@ void AssimpLoader::LoadTexture(aiString path, Texture2D*& dst, const aiMaterial*
         auto texturePath = directoryPath + ToWideString(file);
 
         //dst.DiffuseMap = dir + ToWideString(file);
-        dst = Texture2D::Get(texturePath);
+        return Texture2D::Load(texturePath);
     }
 }
 
-void AssimpLoader::LoadEmbeddedTexture(Texture2D*& dst, const aiTexture* texture)
+std::unique_ptr<Texture2D> AssimpLoader::LoadEmbeddedTexture(const aiTexture* texture)
 {
     if (texture->mHeight == 0)
     {
-        dst = Texture2D::Get(texture->pcData, texture->mWidth);
+        return Texture2D::Load(texture->pcData, texture->mWidth);
     }
     else
     {
-        dst = Texture2D::Get(texture->pcData, static_cast<size_t>(texture->mWidth) * texture->mHeight);
+        return Texture2D::Load(texture->pcData, static_cast<size_t>(texture->mWidth) * texture->mHeight);
     }
 }
 
@@ -639,25 +641,25 @@ void AssimpLoader::GenSmoothNormal(Mesh& dst)
 {
     float distance = 1e-8f;
 
-    for (int i = 0; i < dst.Vertices.size(); i++)
+    for (int i = 0; i < dst.vertices.size(); i++)
     {
-        auto position1 = (Vec3)dst.Vertices[i].Position;
+        auto position1 = (Vec3)dst.vertices[i].Position;
         auto normal = Vec3(0, 0, 0);
 
-        for (int j = 0; j < dst.Vertices.size(); j++)
+        for (int j = 0; j < dst.vertices.size(); j++)
         {
-            auto position2 = (Vec3)dst.Vertices[j].Position;
+            auto position2 = (Vec3)dst.vertices[j].Position;
             auto v = position1 - position2;
 
             if (v.length() < distance)
             {
-                normal = normal + dst.Vertices[j].Normal;
+                normal = normal + dst.vertices[j].Normal;
             }
         }
 
         normal = normal.normalized();
 
-        auto vertex = &(dst.Vertices[i]);
+        auto vertex = &(dst.vertices[i]);
         vertex->SmoothNormal = normal;
     }
 }

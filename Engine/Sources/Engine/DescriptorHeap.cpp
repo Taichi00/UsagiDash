@@ -31,7 +31,7 @@ ID3D12DescriptorHeap* DescriptorHeap::GetHeap()
 	return m_pHeap.Get();
 }
 
-DescriptorHandle* DescriptorHeap::Alloc()
+DescriptorHandle DescriptorHeap::Alloc()
 {
 	if (!m_freeList.empty())	// 解放済みのディスクリプタがあればそれを使う
 	{
@@ -48,10 +48,10 @@ DescriptorHandle* DescriptorHeap::Alloc()
 
 	m_index++;
 
-	return new DescriptorHandle(hCPU, hGPU);
+	return DescriptorHandle(hCPU, hGPU);
 }
 
-void DescriptorHeap::Free(DescriptorHandle* handle)
+void DescriptorHeap::Free(DescriptorHandle& handle)
 {
 	m_freeList.push_back(handle);
 }

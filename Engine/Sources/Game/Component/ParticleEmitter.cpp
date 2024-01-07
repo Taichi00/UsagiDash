@@ -12,6 +12,8 @@
 #include "DescriptorHeap.h"
 #include "Quaternion.h"
 #include "Easing.h"
+#include "Model.h"
+#include <memory>
 
 ParticleEmitter::ParticleEmitter(ParticleEmitterProperty prop)
 {
@@ -28,9 +30,9 @@ ParticleEmitter::ParticleEmitter(ParticleEmitterProperty prop)
 
 ParticleEmitter::~ParticleEmitter()
 {
-	delete[] m_pTransformCB;
+	/*delete[] m_pTransformCB;
 	delete[] m_pSceneCB;
-	delete[] m_pParticleCB;
+	delete[] m_pParticleCB;*/
 	delete m_pRootSignature;
 	delete m_pShadowPSO;
 	delete m_pGBufferPSO;
@@ -84,17 +86,17 @@ void ParticleEmitter::DrawShadow()
 	commandList->SetDescriptorHeaps(1, heaps);
 
 	// メッシュの描画
-	for (Mesh& mesh : m_particleModel.Meshes)
+	for (auto& mesh : m_particleModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_particleModel.Materials[mesh.MaterialIndex];
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_particleModel->materials[mesh.materialIndex];
 
 		commandList->IASetVertexBuffers(0, 1, &vbView);
 		commandList->IASetIndexBuffer(&ibView);
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
 	}
 }
 
@@ -122,17 +124,17 @@ void ParticleEmitter::DrawDepth()
 	commandList->SetDescriptorHeaps(1, heaps);
 
 	// メッシュの描画
-	for (Mesh& mesh : m_particleModel.Meshes)
+	for (auto& mesh : m_particleModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_particleModel.Materials[mesh.MaterialIndex];
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_particleModel->materials[mesh.materialIndex];
 		
 		commandList->IASetVertexBuffers(0, 1, &vbView);
 		commandList->IASetIndexBuffer(&ibView);
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
 	}
 }
 
@@ -161,20 +163,20 @@ void ParticleEmitter::DrawGBuffer()
 	commandList->SetDescriptorHeaps(1, heaps);
 
 	// メッシュの描画
-	for (Mesh& mesh : m_particleModel.Meshes)
+	for (auto& mesh : m_particleModel->meshes)
 	{
-		auto vbView = mesh.pVertexBuffer->View();
-		auto ibView = mesh.pIndexBuffer->View();
-		auto mat = &m_particleModel.Materials[mesh.MaterialIndex];
+		auto vbView = mesh.vertexBuffer->View();
+		auto ibView = mesh.indexBuffer->View();
+		auto mat = &m_particleModel->materials[mesh.materialIndex];
 
 		commandList->IASetVertexBuffers(0, 1, &vbView);
 		commandList->IASetIndexBuffer(&ibView);
-		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.MaterialIndex]->GetAddress());
-		commandList->SetGraphicsRootDescriptorTable(4, mat->pHandle->HandleGPU());
-		commandList->SetGraphicsRootDescriptorTable(5, mat->pPbrHandle->HandleGPU());
-		commandList->SetGraphicsRootDescriptorTable(6, mat->pNormalHandle->HandleGPU());
+		commandList->SetGraphicsRootConstantBufferView(3, m_pMaterialCBs[mesh.materialIndex]->GetAddress());
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedoHandle.HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(5, mat->pbrHandle.HandleGPU());
+		commandList->SetGraphicsRootDescriptorTable(6, mat->normalHandle.HandleGPU());
 
-		commandList->DrawIndexedInstanced(mesh.Indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
+		commandList->DrawIndexedInstanced(mesh.indices.size(), MAX_PARTICLE_COUNT, 0, 0, 0);
 	}
 }
 
@@ -233,49 +235,49 @@ void ParticleEmitter::PrepareModel()
 	};
 
 	Mesh mesh{};
-	mesh.Vertices = vertices;
-	mesh.Indices = indices;
-	mesh.MaterialIndex = 0;
+	mesh.vertices = vertices;
+	mesh.indices = indices;
+	mesh.materialIndex = 0;
 	meshes.push_back(mesh);
 
 	Material material{};
-	material.Texture = albedoTexture;
-	material.PbrTexture = pbrTexture;
-	material.NormalTexture = normalTexture;
-	material.BaseColor = { 0.72, 0.72, 0.72, 1 };
+	material.albedoTexture = albedoTexture;
+	material.pbrTexture = pbrTexture;
+	material.normalTexture = normalTexture;
+	material.baseColor = { 0.72, 0.72, 0.72, 1 };
 	materials.push_back(material);
 
 	for (int i = 0; i < meshes.size(); i++)
 	{
 		// 頂点バッファの生成
-		auto vSize = sizeof(Vertex) * meshes[i].Vertices.size();
+		auto vSize = sizeof(Vertex) * meshes[i].vertices.size();
 		auto stride = sizeof(Vertex);
-		auto vertices = meshes[i].Vertices.data();
-		auto pVB = new VertexBuffer(vSize, stride, vertices);
+		auto vertices = meshes[i].vertices.data();
+		auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices);
 		if (!pVB->IsValid())
 		{
 			printf("頂点バッファの生成に失敗\n");
 			break;
 		}
-		meshes[i].pVertexBuffer = pVB;
+		meshes[i].vertexBuffer = std::move(pVB);
 
 		// インデックスバッファの生成
-		auto iSize = sizeof(uint32_t) * meshes[i].Indices.size();
-		auto indices = meshes[i].Indices.data();
-		auto pIB = new IndexBuffer(iSize, indices);
+		auto iSize = sizeof(uint32_t) * meshes[i].indices.size();
+		auto indices = meshes[i].indices.data();
+		auto pIB = std::make_unique<IndexBuffer>(iSize, indices);
 		if (!pIB->IsValid())
 		{
 			printf("インデックスバッファの生成に失敗\n");
 			break;
 		}
-		meshes[i].pIndexBuffer = pIB;
+		meshes[i].indexBuffer = std::move(pIB);
 	}
 
-	Model model{};
-	model.Meshes = meshes;
-	model.Materials = materials;
+	auto model = std::make_shared<Model>();
+	model->meshes = meshes;
+	model->materials = materials;
 
-	m_particleModel = model;
+	m_particleModel = std::move(model);
 }
 
 bool ParticleEmitter::PrepareCB()
@@ -303,7 +305,7 @@ bool ParticleEmitter::PrepareCB()
 	}
 
 	// Material CBs
-	for (size_t i = 0; i < m_particleModel.Materials.size(); i++)
+	for (size_t i = 0; i < m_particleModel->materials.size(); i++)
 	{
 		ConstantBuffer* cb = new ConstantBuffer(sizeof(MaterialParameter));
 		if (!cb->IsValid())
@@ -312,10 +314,10 @@ bool ParticleEmitter::PrepareCB()
 			return false;
 		}
 
-		auto mat = &m_particleModel.Materials[i];
+		auto mat = &m_particleModel->materials[i];
 		auto ptr = cb->GetPtr<MaterialParameter>();
 
-		ptr->BaseColor = mat->BaseColor;
+		ptr->BaseColor = mat->baseColor;
 
 		m_pMaterialCBs.push_back(cb);
 	}
@@ -808,37 +810,37 @@ bool ParticleEmitter::PrepareSRV()
 	D3D12_DESCRIPTOR_HEAP_DESC desc{};
 	desc.NodeMask = 0;	// どのGPU向けのディスクリプタヒープかを指定（GPU１つの場合は０）
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = m_particleModel.Materials.size();
+	desc.NumDescriptors = m_particleModel->materials.size();
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	m_pDescriptorHeap = new DescriptorHeap(desc);
 
 	// SRVの生成
-	for (size_t i = 0; i < m_particleModel.Materials.size(); i++)
+	for (size_t i = 0; i < m_particleModel->materials.size(); i++)
 	{
 		// Albedoテクスチャ
-		auto texture = m_particleModel.Materials[i].Texture;
+		auto& texture = m_particleModel->materials[i].albedoTexture;
 		auto pHandle = m_pDescriptorHeap->Alloc();
 		auto resource = texture->Resource();
 		auto desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_particleModel.Materials[i].pHandle = pHandle;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_particleModel->materials[i].albedoHandle = pHandle;
 
 		// PBRテクスチャ
-		texture = m_particleModel.Materials[i].PbrTexture;
+		texture = m_particleModel->materials[i].pbrTexture;
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_particleModel.Materials[i].pPbrHandle = pHandle;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_particleModel->materials[i].pbrHandle = pHandle;
 
 		// Normalテクスチャ
-		texture = m_particleModel.Materials[i].NormalTexture;
+		texture = m_particleModel->materials[i].normalTexture;
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle->HandleCPU());
-		m_particleModel.Materials[i].pNormalHandle = pHandle;
+		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		m_particleModel->materials[i].normalHandle = pHandle;
 	}
 
 	return true;

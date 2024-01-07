@@ -50,15 +50,15 @@ std::wstring FileExtension(const std::wstring& path)
 	return path.substr(idx + 1, path.length() - idx - 1);
 }
 
-Texture2D* Texture2D::Get(std::string path)
+std::unique_ptr<Texture2D> Texture2D::Load(std::string path)
 {
 	auto wpath = GetWideString(path);
-    return Get(wpath);
+    return Load(wpath);
 }
 
-Texture2D* Texture2D::Get(std::wstring path)
+std::unique_ptr<Texture2D> Texture2D::Load(std::wstring path)
 {
-	auto tex = new Texture2D(path);
+	auto tex = std::make_unique<Texture2D>(path);
 	if (!tex->IsValid())
 	{
 		return GetMono(defaultColor);	// 読み込みに失敗したときは単色テクスチャを返す
@@ -66,9 +66,9 @@ Texture2D* Texture2D::Get(std::wstring path)
 	return tex;
 }
 
-Texture2D* Texture2D::Get(const void* pSource, size_t size)
+std::unique_ptr<Texture2D> Texture2D::Load(const void* pSource, size_t size)
 {
-	auto tex = new Texture2D(pSource, size);
+	auto tex = std::make_unique<Texture2D>(pSource, size);
 	if (!tex->IsValid())
 	{
 		return GetMono(defaultColor);	// 読み込みに失敗したときは単色テクスチャを返す
@@ -76,9 +76,9 @@ Texture2D* Texture2D::Get(const void* pSource, size_t size)
 	return tex;
 }
 
-Texture2D* Texture2D::GetMono(const float color[4])
+std::unique_ptr<Texture2D> Texture2D::GetMono(const float color[4])
 {
-	ID3D12Resource* buff = GetDefaultResource(4, 4);
+	auto buff = GetDefaultResource(4, 4);
 
 	std::vector<unsigned char> data(4 * 4 * 4);
 
@@ -97,10 +97,22 @@ Texture2D* Texture2D::GetMono(const float color[4])
 		return nullptr;
 	}
 
-	return new Texture2D(buff);
+	return std::make_unique<Texture2D>(buff.Get());
+
+	/*std::vector<unsigned char> data(4 * 4 * 4);
+
+	for (size_t i = 0; i < 4 * 4 * 4; i += 4)
+	{
+		data[i + 0] = color[0] * 255;
+		data[i + 1] = color[1] * 255;
+		data[i + 2] = color[2] * 255;
+		data[i + 3] = color[3] * 255;
+	}
+
+	return new Texture2D(data.data(), 16);*/
 }
 
-Texture2D* Texture2D::GetWhite()
+std::unique_ptr<Texture2D> Texture2D::GetWhite()
 {
 	float white[4] = {1, 1, 1, 1};
 	return GetMono(white);
@@ -144,14 +156,18 @@ DirectX::TexMetadata Texture2D::Metadata()
 	return m_metadata;
 }
 
+Texture2D::Texture2D()
+{
+}
+
 Texture2D::Texture2D(std::wstring path)
 {
-	m_IsValid = Load(path);
+	m_IsValid = LoadTexture(path);
 }
 
 Texture2D::Texture2D(const void* pSource, size_t size)
 {
-	m_IsValid = Load(pSource, size);
+	m_IsValid = LoadTexture(pSource, size);
 }
 
 Texture2D::Texture2D(ID3D12Resource* buffer)
@@ -160,7 +176,11 @@ Texture2D::Texture2D(ID3D12Resource* buffer)
 	m_IsValid = m_pResource != nullptr;
 }
 
-bool Texture2D::Load(std::wstring& path)
+Texture2D::~Texture2D()
+{
+}
+
+bool Texture2D::LoadTexture(std::wstring& path)
 {
 	// WICテクスチャのロード
 	TexMetadata meta = {};
@@ -200,7 +220,7 @@ bool Texture2D::Load(std::wstring& path)
 	return CreateResource(&image, meta);
 }
 
-bool Texture2D::Load(const void* pSource, size_t size)
+bool Texture2D::LoadTexture(const void* pSource, size_t size)
 {
 	// WICテクスチャのロード
 	DirectX::ScratchImage image = {};
@@ -287,11 +307,11 @@ bool Texture2D::CreateResource(
 	return true;
 }
 
-ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
+ComPtr<ID3D12Resource> Texture2D::GetDefaultResource(size_t width, size_t height)
 {
 	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
-	ID3D12Resource* buff = nullptr;
+	ComPtr<ID3D12Resource> buff = nullptr;
 	
 	auto result = g_Engine->Device()->CreateCommittedResource(
 		&texHeapProp,
@@ -299,13 +319,14 @@ ID3D12Resource* Texture2D::GetDefaultResource(size_t width, size_t height)
 		&resDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
-		IID_PPV_ARGS(&buff)
+		IID_PPV_ARGS(buff.ReleaseAndGetAddressOf())
 	);
 	if (FAILED(result))
 	{
+		auto hr = g_Engine->Device()->GetDeviceRemovedReason();
 		assert(SUCCEEDED(result));
 		return nullptr;
 	}
 
-	return buff;
+	return std::move(buff);
 }

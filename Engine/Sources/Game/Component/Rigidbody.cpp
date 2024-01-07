@@ -82,6 +82,7 @@ void Rigidbody::Resolve()
 			if (Vec3::Angle(normal, Vec3(0, 1, 0)) < 0.9)
 			{
 				isGrounded |= true;
+				floorRigidbody = hitRigidbody;
 				floorNormal = normal;
 				floorVelocity = hitRigidbody->velocity;
 			}

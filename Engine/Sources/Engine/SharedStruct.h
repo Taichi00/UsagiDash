@@ -1,22 +1,9 @@
 #pragma once
-#include "d3dx12.h"
-#include <DirectXMath.h>
-#include "ComPtr.h"
-#include "Engine.h"
-#include "BoneList.h"
 #include "Vec.h"
-#include <string>
+#include <DirectXMath.h>
+#include <d3d12.h>
+#include <vector>
 #include <utility>
-
-class Texture2D;
-class VertexBuffer;
-class IndexBuffer;
-class ConstantBuffer;
-class PipelineState;
-class DescriptorHandle;
-class DescriptorHeap;
-class RootSignature;
-class Bone;
 
 using namespace DirectX;
 
@@ -68,36 +55,6 @@ struct alignas(256) MaterialParameter
 	XMVECTOR BaseColor;
 	float Shininess;
 	float OutlineWidth;
-};
-
-struct Mesh
-{
-	std::vector<Vertex> Vertices;	// 頂点データの配列
-	std::vector<uint32_t> Indices;	// インデックスの配列
-	VertexBuffer* pVertexBuffer;	// 頂点バッファへのポインタ
-	IndexBuffer* pIndexBuffer;		// インデックスバッファへのポインタ
-	int MaterialIndex;
-};
-
-struct Material
-{
-	Texture2D* Texture;
-	Texture2D* PbrTexture;
-	Texture2D* NormalTexture;
-	DescriptorHandle* pHandle;
-	DescriptorHandle* pPbrHandle;
-	DescriptorHandle* pNormalHandle;
-	PipelineState* pPipelineState;
-	int AlphaMode;
-	XMVECTOR BaseColor;
-	float Shininess;
-};
-
-struct Model
-{
-	std::vector<Mesh> Meshes;
-	std::vector<Material> Materials;
-	BoneList Bones;
 };
 
 struct CollisionVertex

@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "CollisionTestScene.h"
+#include "MainScene.h"
 
 int wmain(int argc, wchar_t** argv, wchar_t** envp)
 {

@@ -9,7 +9,8 @@ void CollisionManager::Update()
 	for (auto rigidbody : m_pRigidbodies)
 	{
 		rigidbody->isGrounded = false;
-		rigidbody->floorVelocity = Vec3::Zero();
+		//rigidbody->floorVelocity = Vec3::Zero();
+		rigidbody->floorRigidbody = nullptr;
 	}
 
 	// €”õ
@@ -40,7 +41,19 @@ void CollisionManager::Update()
 	for (auto rigidbody : m_pRigidbodies)
 	{
 		// ˆÊ’u‚ÌXV
-		rigidbody->velocity += rigidbody->floorVelocity * rigidbody->friction;
+		//rigidbody->velocity += rigidbody->floorVelocity * rigidbody->friction;
+		
+		/*if (rigidbody->floorRigidbody)
+		{
+			rigidbody->transform->position += rigidbody->floorRigidbody->velocity;
+		}*/
+		if (rigidbody->floorRigidbody)
+		{
+			rigidbody->floorVelocity = rigidbody->floorVelocity + rigidbody->floorRigidbody->floorVelocity;
+		}
+		rigidbody->transform->position += rigidbody->floorVelocity;
+		rigidbody->floorVelocity *= 0.98;
+
 		rigidbody->transform->position += rigidbody->velocity;
 
 		if (rigidbody->useGravity)
