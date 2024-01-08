@@ -30,14 +30,6 @@ ParticleEmitter::ParticleEmitter(ParticleEmitterProperty prop)
 
 ParticleEmitter::~ParticleEmitter()
 {
-	/*delete[] m_pTransformCB;
-	delete[] m_pSceneCB;
-	delete[] m_pParticleCB;*/
-	delete m_pRootSignature;
-	delete m_pShadowPSO;
-	delete m_pGBufferPSO;
-	delete m_pDepthPSO;
-	delete m_pDescriptorHeap;
 }
 
 bool ParticleEmitter::Init()
@@ -285,7 +277,7 @@ bool ParticleEmitter::PrepareCB()
 	// Transform CB
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pTransformCB[i] = new ConstantBuffer(sizeof(TransformParameter));
+		m_pTransformCB[i] = std::make_unique<ConstantBuffer>(sizeof(TransformParameter));
 		if (!m_pTransformCB[i]->IsValid())
 		{
 			printf("TransformCBの生成に失敗\n");
@@ -296,7 +288,7 @@ bool ParticleEmitter::PrepareCB()
 	// Scene CB
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pSceneCB[i] = new ConstantBuffer(sizeof(SceneParameter));
+		m_pSceneCB[i] = std::make_unique<ConstantBuffer>(sizeof(SceneParameter));
 		if (!m_pSceneCB[i]->IsValid())
 		{
 			printf("SceneCBの生成に失敗\n");
@@ -307,7 +299,7 @@ bool ParticleEmitter::PrepareCB()
 	// Material CBs
 	for (size_t i = 0; i < m_particleModel->materials.size(); i++)
 	{
-		ConstantBuffer* cb = new ConstantBuffer(sizeof(MaterialParameter));
+		auto cb = std::make_unique<ConstantBuffer>(sizeof(MaterialParameter));
 		if (!cb->IsValid())
 		{
 			printf("MaterialCBの生成に失敗\n");
@@ -319,13 +311,13 @@ bool ParticleEmitter::PrepareCB()
 
 		ptr->BaseColor = mat->baseColor;
 
-		m_pMaterialCBs.push_back(cb);
+		m_pMaterialCBs.push_back(std::move(cb));
 	}
 
 	// Particle CB
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pParticleCB[i] = new ConstantBuffer(sizeof(ParticleParameter));
+		m_pParticleCB[i] = std::make_unique<ConstantBuffer>(sizeof(ParticleParameter));
 		if (!m_pParticleCB[i]->IsValid())
 		{
 			printf("ParticleCBの生成に失敗\n");
@@ -348,7 +340,7 @@ bool ParticleEmitter::PrepareRootSignature()
 		RSTexture,
 	};
 
-	m_pRootSignature = new RootSignature(_countof(params), params);
+	m_pRootSignature = std::make_unique<RootSignature>(_countof(params), params);
 	if (!m_pRootSignature->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
@@ -361,7 +353,7 @@ bool ParticleEmitter::PrepareRootSignature()
 bool ParticleEmitter::PreparePSO()
 {
 	// ShadowMap用
-	m_pShadowPSO = new PipelineState();
+	m_pShadowPSO = std::make_unique<PipelineState>();
 	m_pShadowPSO->SetInputLayout(Vertex::InputLayout);
 	m_pShadowPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pShadowPSO->SetVS(L"ParticleShadowVS.cso");
@@ -376,7 +368,7 @@ bool ParticleEmitter::PreparePSO()
 	}
 
 	// Depthプリパス用
-	m_pDepthPSO = new PipelineState();
+	m_pDepthPSO = std::make_unique<PipelineState>();
 	m_pDepthPSO->SetInputLayout(Vertex::InputLayout);
 	m_pDepthPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pDepthPSO->SetVS(L"ParticleVS.cso");
@@ -396,7 +388,7 @@ bool ParticleEmitter::PreparePSO()
 	}
 
 	// G-Buffer出力用
-	m_pGBufferPSO = new PipelineState();
+	m_pGBufferPSO = std::make_unique<PipelineState>();
 	m_pGBufferPSO->SetInputLayout(Vertex::InputLayout);
 	m_pGBufferPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pGBufferPSO->SetVS(L"ParticleVS.cso");
@@ -815,7 +807,7 @@ bool ParticleEmitter::PrepareSRV()
 	desc.NumDescriptors = m_particleModel->materials.size() * 3;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	m_pDescriptorHeap = new DescriptorHeap(desc);
+	m_pDescriptorHeap = std::make_unique<DescriptorHeap>(desc);
 
 	// SRVの生成
 	for (size_t i = 0; i < m_particleModel->materials.size(); i++)

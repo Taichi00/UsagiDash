@@ -14,7 +14,7 @@ class PipelineState;
 class MeshRenderer : public Component
 {
 public:
-	MeshRenderer() {};
+	MeshRenderer();
 	MeshRenderer(std::shared_ptr<Model> model);
 	~MeshRenderer();
 
@@ -49,25 +49,23 @@ protected:
 	std::shared_ptr<Model> m_pModel;	// モデルデータへのポインタ
 	BoneList m_bones;	// モデルのボーン
 
-	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];
-	ConstantBuffer* m_pSceneCB[Engine::FRAME_BUFFER_COUNT];
-	ConstantBuffer* m_pBoneCB[Engine::FRAME_BUFFER_COUNT];
-	std::vector<ConstantBuffer*> m_pMaterialCBs;
-	RootSignature* m_pRootSignature;
+	std::unique_ptr<ConstantBuffer> m_pTransformCB[Engine::FRAME_BUFFER_COUNT];
+	std::unique_ptr<ConstantBuffer> m_pSceneCB[Engine::FRAME_BUFFER_COUNT];
+	std::unique_ptr<ConstantBuffer> m_pBoneCB[Engine::FRAME_BUFFER_COUNT];
+	std::vector<std::unique_ptr<ConstantBuffer>> m_pMaterialCBs;
+	std::unique_ptr<RootSignature> m_pRootSignature;
 
-	PipelineState* m_pOpaquePSO;
-	PipelineState* m_pAlphaPSO;
-	PipelineState* m_pOutlinePSO;
-	PipelineState* m_pShadowPSO;
-	PipelineState* m_pDepthPSO;
-	PipelineState* m_pGBufferPSO;
+	std::unique_ptr<PipelineState> m_pOpaquePSO;
+	std::unique_ptr<PipelineState> m_pAlphaPSO;
+	std::unique_ptr<PipelineState> m_pOutlinePSO;
+	std::unique_ptr<PipelineState> m_pShadowPSO;
+	std::unique_ptr<PipelineState> m_pDepthPSO;
+	std::unique_ptr<PipelineState> m_pGBufferPSO;
 
-	DescriptorHeap* m_pDescriptorHeap;
+	std::unique_ptr<DescriptorHeap> m_pDescriptorHeap;
 	std::vector<DescriptorHandle> m_albedoHandles;
 	std::vector<DescriptorHandle> m_pbrHandles;
 	std::vector<DescriptorHandle> m_normalHandles;
-
-	DescriptorHandle m_pShadowHandle;
 
 	float m_outlineWidth;
 };

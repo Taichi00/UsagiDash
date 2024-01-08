@@ -13,34 +13,19 @@
 #include "Bone.h"
 
 
-MeshRenderer::MeshRenderer(std::shared_ptr<Model> model)
+MeshRenderer::MeshRenderer()
+{
+	m_outlineWidth = 0.003;
+}
+
+MeshRenderer::MeshRenderer(std::shared_ptr<Model> model) : MeshRenderer()
 {
 	m_pModel = model;
 	m_bones = BoneList::Copy(m_pModel->bones);
-	m_outlineWidth = 0.003;
 }
 
 MeshRenderer::~MeshRenderer()
 {
-	/*delete[] m_pTransformCB;
-	delete[] m_pSceneCB;
-	delete[] m_pBoneCB;*/
-	delete m_pRootSignature;
-	delete m_pOpaquePSO;
-	delete m_pAlphaPSO;
-	delete m_pOutlinePSO;
-	delete m_pShadowPSO;
-	delete m_pGBufferPSO;
-	delete m_pDepthPSO;
-	delete m_pDescriptorHeap;
-
-	/*for (size_t i = 0; i < m_model.Materials.size(); i++)
-	{
-		auto& mat = m_model.Materials[i];
-		delete mat.Texture;
-		delete mat.PbrTexture;
-		delete mat.NormalTexture;
-	}*/
 	printf("Delete MeshRenderer\n");
 }
 
@@ -59,7 +44,7 @@ bool MeshRenderer::Init()
 {
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pTransformCB[i] = new ConstantBuffer(sizeof(TransformParameter));
+		m_pTransformCB[i] = std::make_unique<ConstantBuffer>(sizeof(TransformParameter));
 		if (!m_pTransformCB[i]->IsValid())
 		{
 			printf("変換行列用定数バッファの生成に失敗\n");
@@ -69,7 +54,7 @@ bool MeshRenderer::Init()
 
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pSceneCB[i] = new ConstantBuffer(sizeof(SceneParameter));
+		m_pSceneCB[i] = std::make_unique<ConstantBuffer>(sizeof(SceneParameter));
 		if (!m_pSceneCB[i]->IsValid())
 		{
 			printf("ライト用定数バッファの生成に失敗\n");
@@ -79,7 +64,7 @@ bool MeshRenderer::Init()
 
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
 	{
-		m_pBoneCB[i] = new ConstantBuffer(sizeof(BoneParameter));
+		m_pBoneCB[i] = std::make_unique<ConstantBuffer>(sizeof(BoneParameter));
 		if (!m_pBoneCB[i]->IsValid())
 		{
 			printf("ボーン用定数バッファの生成に失敗\n");
@@ -89,7 +74,7 @@ bool MeshRenderer::Init()
 
 	for (size_t i = 0; i < m_pModel->materials.size(); i++)
 	{
-		ConstantBuffer* cb = new ConstantBuffer(sizeof(MaterialParameter));
+		auto cb = std::make_unique<ConstantBuffer>(sizeof(MaterialParameter));
 		if (!cb->IsValid())
 		{
 			printf("マテリアル用定数バッファの生成に失敗\n");
@@ -101,7 +86,7 @@ bool MeshRenderer::Init()
 		ptr->BaseColor = mat->baseColor;
 		ptr->OutlineWidth = m_outlineWidth;
 
-		m_pMaterialCBs.push_back(cb);
+		m_pMaterialCBs.push_back(std::move(cb));
 	}
 
 	// マテリアルの読み込み
@@ -111,7 +96,7 @@ bool MeshRenderer::Init()
 	desc.NumDescriptors = m_pModel->materials.size() * 3; // Material数 + ShadowMap
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	m_pDescriptorHeap = new DescriptorHeap(desc);
+	m_pDescriptorHeap = std::make_unique<DescriptorHeap>(desc);
 
 	m_albedoHandles.resize(m_pModel->materials.size());
 	m_pbrHandles.resize(m_pModel->materials.size());
@@ -168,7 +153,7 @@ bool MeshRenderer::Init()
 		RSTexture,
 		RSTexture,
 	};
-	m_pRootSignature = new RootSignature(_countof(params), params);
+	m_pRootSignature = std::make_unique<RootSignature>(_countof(params), params);
 	if (!m_pRootSignature->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
@@ -283,7 +268,7 @@ void MeshRenderer::DrawAlpha()
 		m_pDescriptorHeap->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
-	commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle.HandleGPU());	// ディスクリプタテーブルをセット
+	//commandList->SetGraphicsRootDescriptorTable(5, m_pShadowHandle.HandleGPU());	// ディスクリプタテーブルをセット
 
 	// メッシュの描画
 	for (const auto& mesh : m_pModel->meshes)
@@ -476,7 +461,7 @@ void MeshRenderer::DrawOutline()
 
 bool MeshRenderer::PreparePSO()
 {
-	m_pOpaquePSO = new PipelineState();
+	m_pOpaquePSO = std::make_unique<PipelineState>();
 	m_pOpaquePSO->SetInputLayout(Vertex::InputLayout);
 	m_pOpaquePSO->SetRootSignature(m_pRootSignature->Get());
 	m_pOpaquePSO->SetVS(L"SimpleVS.cso");
@@ -488,7 +473,7 @@ bool MeshRenderer::PreparePSO()
 		return false;
 	}
 
-	m_pAlphaPSO = new PipelineState();
+	m_pAlphaPSO = std::make_unique<PipelineState>();
 	m_pAlphaPSO->SetInputLayout(Vertex::InputLayout);
 	m_pAlphaPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pAlphaPSO->SetVS(L"SimpleVS.cso");
@@ -501,7 +486,7 @@ bool MeshRenderer::PreparePSO()
 		return false;
 	}
 
-	m_pOutlinePSO = new PipelineState();
+	m_pOutlinePSO = std::make_unique<PipelineState>();
 	m_pOutlinePSO->SetInputLayout(Vertex::InputLayout);
 	m_pOutlinePSO->SetRootSignature(m_pRootSignature->Get());
 	m_pOutlinePSO->SetVS(L"OutlineVS.cso");
@@ -513,7 +498,7 @@ bool MeshRenderer::PreparePSO()
 		return false;
 	}
 
-	m_pShadowPSO = new PipelineState();
+	m_pShadowPSO = std::make_unique<PipelineState>();
 	m_pShadowPSO->SetInputLayout(Vertex::InputLayout);
 	m_pShadowPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pShadowPSO->SetVS(L"ShadowVS.cso");
@@ -527,7 +512,7 @@ bool MeshRenderer::PreparePSO()
 	}
 
 	// Depthプリパス用
-	m_pDepthPSO = new PipelineState();
+	m_pDepthPSO = std::make_unique<PipelineState>();
 	m_pDepthPSO->SetInputLayout(Vertex::InputLayout);
 	m_pDepthPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pDepthPSO->SetVS(L"SimpleVS.cso");
@@ -546,7 +531,7 @@ bool MeshRenderer::PreparePSO()
 	}
 	
 	// G-Buffer出力用
-	m_pGBufferPSO = new PipelineState();
+	m_pGBufferPSO = std::make_unique<PipelineState>();
 	m_pGBufferPSO->SetInputLayout(Vertex::InputLayout);
 	m_pGBufferPSO->SetRootSignature(m_pRootSignature->Get());
 	m_pGBufferPSO->SetVS(L"SimpleVS.cso");

@@ -1,25 +1,25 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <random>
-#include <memory>
 #include "Component.h"
-#include "Vec.h"
-#include "Particle.h"
-#include "SharedStruct.h"
+#include "DescriptorHeap.h"
 #include "Engine.h"
+#include "Model.h"
+#include "Particle.h"
+#include "Scene.h"
+#include "Texture2D.h"
+#include "Vec.h"
+#include <DirectXMath.h>
+#include <memory>
+#include <random>
+#include <vector>
 
 
 const int MAX_PARTICLE_COUNT = 500;
 const float PARTICLE_SPRITE_SIZE_PER_PIXEL = 0.01;
 
 
-class Texture2D;
 class ConstantBuffer;
 class PipelineState;
-class DescriptorHeap;
-class Model;
 class RootSignature;
 
 
@@ -233,16 +233,16 @@ private:
 	std::mt19937 m_rand;		// 乱数生成器
 
 private:
-	ConstantBuffer* m_pTransformCB[Engine::FRAME_BUFFER_COUNT];	// Transform Constant Buffer
-	ConstantBuffer* m_pSceneCB[Engine::FRAME_BUFFER_COUNT];		// Scene Constant Buffer
-	std::vector<ConstantBuffer*> m_pMaterialCBs;				// Material Constant Buffers
-	ConstantBuffer* m_pParticleCB[Engine::FRAME_BUFFER_COUNT];	// Particle Constant Buffer
+	std::unique_ptr<ConstantBuffer> m_pTransformCB[Engine::FRAME_BUFFER_COUNT];	// Transform Constant Buffer
+	std::unique_ptr<ConstantBuffer> m_pSceneCB[Engine::FRAME_BUFFER_COUNT];		// Scene Constant Buffer
+	std::vector<std::unique_ptr<ConstantBuffer>> m_pMaterialCBs;				// Material Constant Buffers
+	std::unique_ptr<ConstantBuffer> m_pParticleCB[Engine::FRAME_BUFFER_COUNT];	// Particle Constant Buffer
 
-	RootSignature* m_pRootSignature;	// Root Signature
+	std::unique_ptr<RootSignature> m_pRootSignature;	// Root Signature
 
-	PipelineState* m_pShadowPSO;
-	PipelineState* m_pDepthPSO;
-	PipelineState* m_pGBufferPSO;
+	std::unique_ptr<PipelineState> m_pShadowPSO;
+	std::unique_ptr<PipelineState> m_pDepthPSO;
+	std::unique_ptr<PipelineState> m_pGBufferPSO;
 
-	DescriptorHeap* m_pDescriptorHeap;	// SRVを格納するディスクリプタヒープ
+	std::unique_ptr<DescriptorHeap> m_pDescriptorHeap;	// SRVを格納するディスクリプタヒープ
 };
