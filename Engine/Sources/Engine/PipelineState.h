@@ -2,6 +2,7 @@
 #include "ComPtr.h"
 #include "d3dx12.h"
 #include <string>
+#include <dxgiformat.h>
 
 class PipelineState
 {
@@ -14,7 +15,8 @@ public:
 	void SetVS(std::wstring filePath);			// 頂点シェーダーを設定
 	void SetPS(std::wstring filePath);			// ピクセルシェーダーを設定
 	void SetCullMode(D3D12_CULL_MODE cullMode);	// カリングモードを設定
-	void SetAlpha();							// 透過テクスチャ用に設定
+	void SetRTVFormat(DXGI_FORMAT format);		// RTVのフォーマットを設定
+	void SetAlpha();							// 透過テクスチャ用に設
 	void Create();	// パイプラインステートを生成
 
 	ID3D12PipelineState* Get();

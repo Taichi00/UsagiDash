@@ -11,6 +11,7 @@ class ShadowMap
 {
 public:
 	ShadowMap();
+	~ShadowMap();
 
 	void BeginRender();
 	void EndRender();

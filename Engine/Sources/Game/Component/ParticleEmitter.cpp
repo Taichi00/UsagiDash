@@ -63,8 +63,8 @@ void ParticleEmitter::Update()
 
 void ParticleEmitter::DrawShadow()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
 
 	// ルートシグネチャをセット
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());
@@ -102,8 +102,8 @@ void ParticleEmitter::DrawShadow()
 
 void ParticleEmitter::DrawDepth()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
 
 	// ルートシグネチャをセット
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());
@@ -140,8 +140,8 @@ void ParticleEmitter::DrawDepth()
 
 void ParticleEmitter::DrawGBuffer()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
 
 	// ルートシグネチャをセット
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());
@@ -367,6 +367,7 @@ bool ParticleEmitter::PreparePSO()
 	m_pShadowPSO->SetVS(L"ParticleShadowVS.cso");
 	m_pShadowPSO->SetPS(L"ShadowPS.cso");
 	m_pShadowPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pShadowPSO->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	m_pShadowPSO->Create();
 	if (!m_pShadowPSO->IsValid())
 	{
@@ -381,10 +382,11 @@ bool ParticleEmitter::PreparePSO()
 	m_pDepthPSO->SetVS(L"ParticleVS.cso");
 	m_pDepthPSO->SetPS(L"DepthPS.cso");
 	m_pDepthPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pDepthPSO->SetRTVFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 
-	auto desc = m_pDepthPSO->GetDesc();
+	/*auto desc = m_pDepthPSO->GetDesc();
 	desc->NumRenderTargets = 0;
-	desc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+	desc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;*/
 
 	m_pDepthPSO->Create();
 	if (!m_pDepthPSO->IsValid())
@@ -401,7 +403,7 @@ bool ParticleEmitter::PreparePSO()
 	m_pGBufferPSO->SetPS(L"GBufferPS.cso");
 	m_pGBufferPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
 
-	desc = m_pGBufferPSO->GetDesc();
+	auto desc = m_pGBufferPSO->GetDesc();
 	desc->NumRenderTargets = 5;
 	desc->RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Position
 	desc->RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Normal
@@ -810,7 +812,7 @@ bool ParticleEmitter::PrepareSRV()
 	D3D12_DESCRIPTOR_HEAP_DESC desc{};
 	desc.NodeMask = 0;	// どのGPU向けのディスクリプタヒープかを指定（GPU１つの場合は０）
 	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = m_particleModel->materials.size();
+	desc.NumDescriptors = m_particleModel->materials.size() * 3;
 	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	m_pDescriptorHeap = new DescriptorHeap(desc);
@@ -823,7 +825,7 @@ bool ParticleEmitter::PrepareSRV()
 		auto pHandle = m_pDescriptorHeap->Alloc();
 		auto resource = texture->Resource();
 		auto desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		Engine::Get()->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
 		m_particleModel->materials[i].albedoHandle = pHandle;
 
 		// PBRテクスチャ
@@ -831,7 +833,7 @@ bool ParticleEmitter::PrepareSRV()
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		Engine::Get()->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
 		m_particleModel->materials[i].pbrHandle = pHandle;
 
 		// Normalテクスチャ
@@ -839,7 +841,7 @@ bool ParticleEmitter::PrepareSRV()
 		pHandle = m_pDescriptorHeap->Alloc();
 		resource = texture->Resource();
 		desc = texture->ViewDesc();
-		g_Engine->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
+		Engine::Get()->Device()->CreateShaderResourceView(resource, &desc, pHandle.HandleCPU());
 		m_particleModel->materials[i].normalHandle = pHandle;
 	}
 
@@ -848,7 +850,7 @@ bool ParticleEmitter::PrepareSRV()
 
 void ParticleEmitter::UpdateCB()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
 	auto camera = GetEntity()->GetScene()->GetMainCamera();
 
 	// Transform CB

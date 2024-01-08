@@ -44,7 +44,7 @@ public:
 	void SetMainCamera(Entity* camera);
 	Camera* GetMainCamera();
 
-	ShadowMap* GetShadowMap();
+	//ShadowMap* GetShadowMap();
 
 	CollisionManager* GetCollisionManager();
 
@@ -64,7 +64,7 @@ private:
 	std::vector<std::unique_ptr<Entity>> m_pEntities;
 
 	Camera* m_pMainCamera = nullptr;
-	std::unique_ptr<ShadowMap> m_pShadowMap;
+	//std::unique_ptr<ShadowMap> m_pShadowMap;
 	std::unique_ptr<CollisionManager> m_pCollisionManager;
 
 	std::unique_ptr<RootSignature> m_pRootSignature;		// ルートシグネチャ
@@ -93,4 +93,8 @@ private:
 
 	std::unique_ptr<Texture2D> m_pBrdfTex;					// BRDF のテクスチャ
 	DescriptorHandle m_pBrdfHandle;		// BRDF の DescriptorHandle
+
+	std::shared_ptr<DescriptorHeap> m_pRtvHeap;
+	std::shared_ptr<DescriptorHeap> m_pDsvHeap;
+	std::shared_ptr<DescriptorHeap> m_pGBufferHeap;
 };

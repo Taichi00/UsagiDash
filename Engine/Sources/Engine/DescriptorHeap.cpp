@@ -5,7 +5,7 @@
 
 DescriptorHeap::DescriptorHeap(const D3D12_DESCRIPTOR_HEAP_DESC& desc)
 {
-	auto device = g_Engine->Device();
+	auto device = Engine::Get()->Device();
 
 	// ディスクリプタヒープを生成
 	auto hr = device->CreateDescriptorHeap(
@@ -19,11 +19,21 @@ DescriptorHeap::DescriptorHeap(const D3D12_DESCRIPTOR_HEAP_DESC& desc)
 	}
 
 	m_handleCPU = m_pHeap->GetCPUDescriptorHandleForHeapStart();
-	m_handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+
+	// シェーダを利用する場合のみhandleGPUを設定する
+	if (desc.Flags && D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+	{
+		m_handleGPU = m_pHeap->GetGPUDescriptorHandleForHeapStart();
+	}
+
 	m_IncrementSize = device->GetDescriptorHandleIncrementSize(desc.Type);
 	m_index = 0;
 
 	m_IsValid = true;
+}
+
+DescriptorHeap::~DescriptorHeap()
+{
 }
 
 ID3D12DescriptorHeap* DescriptorHeap::GetHeap()

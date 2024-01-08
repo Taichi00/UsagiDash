@@ -25,9 +25,18 @@ ShadowMap::ShadowMap()
 	}
 }
 
+ShadowMap::~ShadowMap()
+{
+	Engine::Get()->RtvHeap()->Free(m_pRtvHandle[0]);
+	Engine::Get()->RtvHeap()->Free(m_pRtvHandle[1]);
+	Engine::Get()->DsvHeap()->Free(m_pDsvHandle);
+	Engine::Get()->GBufferHeap()->Free(m_pSrvHandle[0]);
+	Engine::Get()->GBufferHeap()->Free(m_pSrvHandle[1]);
+}
+
 void ShadowMap::BeginRender()
 {
-	auto commandList = g_Engine->CommandList();
+	auto commandList = Engine::Get()->CommandList();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	D3D12_RESOURCE_BARRIER barriers[] = {
@@ -69,7 +78,7 @@ void ShadowMap::BeginRender()
 
 void ShadowMap::EndRender()
 {	
-	auto commandList = g_Engine->CommandList();
+	auto commandList = Engine::Get()->CommandList();
 	
 	// バリア設定
 	auto barrierToSR = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -131,7 +140,7 @@ bool ShadowMap::CreateShadowBuffer()
 	clearDepth.Format = depthDesc.Format;
 	clearDepth.DepthStencil.Depth = 1.0f;
 
-	auto device = g_Engine->Device();
+	auto device = Engine::Get()->Device();
 
 	// Render Target の生成
 	const auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -139,7 +148,7 @@ bool ShadowMap::CreateShadowBuffer()
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&colorDesc,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		&clearColor,
 		IID_PPV_ARGS(m_pColor[0].ReleaseAndGetAddressOf())
 	);
@@ -152,7 +161,7 @@ bool ShadowMap::CreateShadowBuffer()
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&colorDesc,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		&clearColor,
 		IID_PPV_ARGS(m_pColor[1].ReleaseAndGetAddressOf())
 	);
@@ -175,12 +184,15 @@ bool ShadowMap::CreateShadowBuffer()
 		return false;
 	}
 
+	m_pColor[0]->SetName(L"ShadowMap[0]");
+	m_pColor[1]->SetName(L"ShadowMap[1]");
+
 	// ディスクリプタの登録
-	m_pRtvHandle[0] = g_Engine->RtvHeap()->Alloc();
-	m_pRtvHandle[1] = g_Engine->RtvHeap()->Alloc();
-	m_pDsvHandle = g_Engine->DsvHeap()->Alloc();
-	m_pSrvHandle[0] = g_Engine->GBufferHeap()->Alloc();
-	m_pSrvHandle[1] = g_Engine->GBufferHeap()->Alloc();
+	m_pRtvHandle[0] = Engine::Get()->RtvHeap()->Alloc();
+	m_pRtvHandle[1] = Engine::Get()->RtvHeap()->Alloc();
+	m_pDsvHandle = Engine::Get()->DsvHeap()->Alloc();
+	m_pSrvHandle[0] = Engine::Get()->GBufferHeap()->Alloc();
+	m_pSrvHandle[1] = Engine::Get()->GBufferHeap()->Alloc();
 
 	// ビューの生成
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
@@ -214,6 +226,7 @@ bool ShadowMap::PreparePSO()
 	m_pBlurHorizontalPSO->SetVS(L"ScreenVS.cso");
 	m_pBlurHorizontalPSO->SetPS(L"GaussianBlurHorizontal.cso");
 	m_pBlurHorizontalPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pBlurHorizontalPSO->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	auto desc = m_pBlurHorizontalPSO->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
@@ -231,6 +244,7 @@ bool ShadowMap::PreparePSO()
 	m_pBlurVerticalPSO->SetVS(L"ScreenVS.cso");
 	m_pBlurVerticalPSO->SetPS(L"GaussianBlurVertical.cso");
 	m_pBlurVerticalPSO->SetCullMode(D3D12_CULL_MODE_FRONT);
+	m_pBlurVerticalPSO->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	desc = m_pBlurVerticalPSO->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
@@ -261,17 +275,7 @@ bool ShadowMap::PrepareRootSignature()
 
 void ShadowMap::BlurHorizontal()
 {
-	auto commandList = g_Engine->CommandList();
-
-	// レンダーターゲットが使用可能になるまで待つ
-	D3D12_RESOURCE_BARRIER barriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pColor[0].Get(),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-		),
-	};
-	commandList->ResourceBarrier(_countof(barriers), barriers);
+	auto commandList = Engine::Get()->CommandList();
 
 	// レンダーターゲットを設定
 	auto rtvHandle = m_pRtvHandle[1].HandleCPU();
@@ -284,7 +288,7 @@ void ShadowMap::BlurHorizontal()
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	ID3D12DescriptorHeap* heaps[] = {
-		g_Engine->GBufferHeap()->GetHeap(),
+		Engine::Get()->GBufferHeap()->GetHeap(),
 	};
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(m_pBlurHorizontalPSO->Get());		// パイプラインステートをセット
@@ -295,7 +299,7 @@ void ShadowMap::BlurHorizontal()
 
 void ShadowMap::BlurVertical()
 {
-	auto commandList = g_Engine->CommandList();
+	auto commandList = Engine::Get()->CommandList();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	D3D12_RESOURCE_BARRIER barriers[] = {

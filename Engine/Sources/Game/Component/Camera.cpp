@@ -65,7 +65,7 @@ void Camera::CameraUpdate()
 {
     auto pos = XMFLOAT3(transform->position);
     auto fov = XMConvertToRadians(m_fov);
-    auto aspect = g_Engine->AspectRate();
+    auto aspect = Engine::Get()->AspectRate();
 
     if (transform->position != m_focusPos)
     {

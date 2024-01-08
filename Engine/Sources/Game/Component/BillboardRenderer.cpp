@@ -113,7 +113,7 @@ void BillboardRenderer::Update()
 
 void BillboardRenderer::DrawShadow()
 {
-	/*auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	/*auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
 	auto currentTransform = m_pTransformCB[currentIndex]->GetPtr<TransformParameter>();
 
 	auto camera = m_pEntity->GetScene()->GetMainCamera();
@@ -140,7 +140,7 @@ void BillboardRenderer::DrawShadow()
 
 void BillboardRenderer::DrawDepth()
 {
-	/*auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	/*auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
 	auto currentTransform = m_pTransformCB[currentIndex]->GetPtr<TransformParameter>();
 
 	auto camera = m_pEntity->GetScene()->GetMainCamera();
@@ -165,7 +165,7 @@ void BillboardRenderer::DrawDepth()
 
 void BillboardRenderer::UpdateCB()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
 
 	auto camera = GetEntity()->GetScene()->GetMainCamera();
 

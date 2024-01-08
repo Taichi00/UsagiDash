@@ -21,6 +21,7 @@
 
 class Window;
 class GBufferManager;
+class ShadowMap;
 
 
 class Engine
@@ -28,9 +29,16 @@ class Engine
 public:
 	enum { FRAME_BUFFER_COUNT = 2 };	// ダブルバッファリング
 
-public:
+private:
 	Engine();
 	~Engine();
+
+public:
+	static Engine* Get()
+	{
+		static Engine instance;
+		return &instance;
+	}
 
 	bool Init(Window* window);	// エンジン初期化
 
@@ -64,10 +72,11 @@ public: // 外からアクセスしたいのでGetterとして公開するもの
 	ID3D12GraphicsCommandList* CommandList();
 	ID3D12CommandAllocator* Allocator();
 	ID3D12CommandQueue* Queue();
-	DescriptorHeap* RtvHeap();
-	DescriptorHeap* DsvHeap();
-	DescriptorHeap* GBufferHeap();
+	std::shared_ptr<DescriptorHeap> RtvHeap();
+	std::shared_ptr<DescriptorHeap> DsvHeap();
+	std::shared_ptr<DescriptorHeap> GBufferHeap();
 	GBufferManager* GetGBufferManager();
+	ShadowMap* GetShadowMap();
 	UINT CurrentBackBufferIndex();
 
 	float AspectRate();
@@ -77,6 +86,7 @@ public:
 		ID3D12Resource* textureData, std::vector<D3D12_SUBRESOURCE_DATA> subresources);
 
 private: // DirectX12初期化に使う関数たち
+	bool EnableDebugLayer();	// デバッグデバイスを生成
 	bool CreateDevice();		// デバイスを生成
 	bool CreateCommandQueue();	// コマンドキューを生成
 	bool CreateD3D11Device();	// D3D11Deviceを生成
@@ -111,6 +121,7 @@ private: // 描画に使うDirectX12のオブジェクト
 	ComPtr<ID3D11Device> m_pD3d11Device = nullptr;	// D3D11のデバイス
 	ComPtr<IDWriteFactory> m_pDirectWriteFactory = nullptr;
 	ComPtr<ID2D1DeviceContext> m_pD2dDeviceContext = nullptr;
+	ComPtr<ID3D12DebugDevice> m_pDebugDevice = nullptr;
 
 private: // 描画に使うオブジェクトとその生成関数たち
 	bool CreateRenderTarget();	// レンダーターゲットを生成
@@ -122,12 +133,12 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	void RegisterTextFormat(const std::string& key, const std::wstring& fontName, const FLOAT fontSize) noexcept;
 
 	UINT m_RtvDescriptorSize = 0;									// レンダーターゲットビューのディスクリプタサイズ
-	std::unique_ptr<DescriptorHeap> m_pRtvHeap;						// レンダーターゲットのディスクリプタヒープ
+	std::shared_ptr<DescriptorHeap> m_pRtvHeap;						// レンダーターゲットのディスクリプタヒープ
 	DescriptorHandle m_pRtvHandles[FRAME_BUFFER_COUNT];
 	ComPtr<ID3D12Resource> m_pRenderTargets[FRAME_BUFFER_COUNT];	// レンダーターゲット
 
 	UINT m_DsvDescriptorSize = 0;							// 深度ステンシルのディスクリプタサイズ
-	std::unique_ptr<DescriptorHeap> m_pDsvHeap;				// 深度ステンシルのディスクリプタヒープ
+	std::shared_ptr<DescriptorHeap> m_pDsvHeap;				// 深度ステンシルのディスクリプタヒープ
 	DescriptorHandle m_pDsvHandle;
 	ComPtr<ID3D12Resource> m_pDepthStencilBuffer;			// 深度ステンシルバッファ
 
@@ -137,15 +148,17 @@ private: // 描画に使うオブジェクトとその生成関数たち
 	DescriptorHandle m_pMSAARtvHandle;
 	DescriptorHandle m_pMSAADsvHandle;
 
-	std::unique_ptr<DescriptorHeap> m_pShadowTexHeap;
+	/*std::unique_ptr<DescriptorHeap> m_pShadowTexHeap;
 	DescriptorHandle m_pShadowDsvHandle;
 	DescriptorHandle m_pShadowRtvHandle;
 	DescriptorHandle m_pShadowTexHandle;
 	ComPtr<ID3D12Resource> m_pShadowTex;
-	ComPtr<ID3D12Resource> m_pShadowDepth;
+	ComPtr<ID3D12Resource> m_pShadowDepth;*/
+
+	std::unique_ptr<ShadowMap> m_pShadowMap;
 
 	std::unique_ptr<GBufferManager> m_pGBufferManager;
-	std::unique_ptr<DescriptorHeap> m_pGBufferHeap;
+	std::shared_ptr<DescriptorHeap> m_pGBufferHeap;
 
 	ComPtr<ID3D11Resource> m_pWrappedBackBuffers[FRAME_BUFFER_COUNT];
 	ComPtr<ID2D1Bitmap1> m_pD2dRenderTargets[FRAME_BUFFER_COUNT];
@@ -159,4 +172,4 @@ private: // 描画ループで使用するもの
 
 };
 
-extern std::unique_ptr<Engine> g_Engine;	// どこからでも参照したいのでグローバルにする
+//extern std::unique_ptr<Engine> g_Engine;	// どこからでも参照したいのでグローバルにする

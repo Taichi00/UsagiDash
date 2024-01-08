@@ -25,6 +25,8 @@ bool MainScene::Init()
 	std::shared_ptr<Model> model;
 	std::vector<Animation*> animations;
 
+	SetSkybox("Assets/grass2");
+
 	auto playerModel = LoadResource<Model>("Assets/PlatformerPack/Character.gltf");
 
 	float pbrColor[4] = { 0, 1, 0, 1 };

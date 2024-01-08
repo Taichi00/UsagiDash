@@ -7,8 +7,9 @@
 #include "d3dx12.h"
 #include "GBufferManager.h"
 #include "GBuffer.h"
+#include "ShadowMap.h"
 
-std::unique_ptr<Engine> g_Engine;
+//std::unique_ptr<Engine> g_Engine;
 
 Engine::Engine()
 {
@@ -16,7 +17,9 @@ Engine::Engine()
 
 Engine::~Engine()
 {
-	
+	printf("Delete Engine\n");
+	m_pShadowMap.release();
+	m_pDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 }
 
 bool Engine::Init(Window* window)
@@ -25,6 +28,10 @@ bool Engine::Init(Window* window)
 	m_FrameBufferWidth = window->Width();
 	m_FrameBufferHeight = window->Height();
 	m_hWnd = window->HWnd();
+
+#if _DEBUG
+	EnableDebugLayer();
+#endif
 
 	if (!CreateDevice())
 	{
@@ -103,6 +110,9 @@ bool Engine::Init(Window* window)
 
 	RegisterTextFormat("normal", L"Source Han Sans VF", 24);
 	RegisterSolidColorBrush("white", D2D1::ColorF::White);
+
+	// シャドウマップの生成
+	m_pShadowMap = std::make_unique<ShadowMap>();
 
 	printf("描画エンジンの初期化に成功\n");
 	return true;
@@ -322,7 +332,7 @@ void Engine::BeginDeferredRender()
 			m_pGBufferManager->Get("Lighting")->Resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
+		/*CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("SSAO")->Resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_RENDER_TARGET),
@@ -333,7 +343,7 @@ void Engine::BeginDeferredRender()
 		CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("BlurredSSAO2")->Resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
+			D3D12_RESOURCE_STATE_RENDER_TARGET),*/
 		CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("PostProcess")->Resource(),
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
@@ -480,10 +490,10 @@ void Engine::PostProcessPath()
 			m_pGBufferManager->Get("Lighting")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-		CD3DX12_RESOURCE_BARRIER::Transition(
+		/*CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGBufferManager->Get("BlurredSSAO2")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),*/
 	};
 	m_pCommandList->ResourceBarrier(_countof(barriers), barriers);
 	
@@ -577,18 +587,18 @@ ID3D12CommandQueue* Engine::Queue()
 	return m_pQueue.Get();
 }
 
-DescriptorHeap* Engine::RtvHeap()
+std::shared_ptr<DescriptorHeap> Engine::RtvHeap()
 {
-	return m_pRtvHeap.get();
+	return m_pRtvHeap;
 }
 
-DescriptorHeap* Engine::DsvHeap()
+std::shared_ptr<DescriptorHeap> Engine::DsvHeap()
 {
-	return m_pDsvHeap.get();
+	return m_pDsvHeap;
 }
-DescriptorHeap* Engine::GBufferHeap()
+std::shared_ptr<DescriptorHeap> Engine::GBufferHeap()
 {
-	return m_pGBufferHeap.get();
+	return m_pGBufferHeap;
 }
 
 UINT Engine::CurrentBackBufferIndex()
@@ -666,9 +676,31 @@ bool Engine::UploadTexture(
 	return true;
 }
 
+bool Engine::EnableDebugLayer()
+{
+	// デバッグレイヤーを有効化
+	ComPtr<ID3D12Debug> pDebug;
+	auto hr = D3D12GetDebugInterface(IID_PPV_ARGS(&pDebug));
+	if (FAILED(hr))
+	{
+		return false;
+	}
+
+	pDebug->EnableDebugLayer();
+
+	return true;
+}
+
 bool Engine::CreateDevice()
 {
 	auto hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.ReleaseAndGetAddressOf()));
+
+	m_pDevice.As(&m_pDebugDevice);
+
+	ComPtr<ID3D12InfoQueue> pInfoQueue;
+	m_pDevice.As(&pInfoQueue);
+	pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+
 	return SUCCEEDED(hr);
 }
 
@@ -1098,7 +1130,7 @@ bool Engine::CreateGBuffer()
 	m_pGBufferManager = std::make_unique<GBufferManager>();
 
 	GBufferProperty propRGBA{
-		DXGI_FORMAT_R16G16B16A16_UNORM,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
 		m_FrameBufferWidth, m_FrameBufferHeight,
 		m_pGBufferHeap.get(), m_pRtvHeap.get()
 	};
@@ -1134,7 +1166,7 @@ bool Engine::CreateD2DRenderTarget()
 		static_cast<float>(dpi)
 	);
 
-	for (UINT i = 0U; i < g_Engine->FRAME_BUFFER_COUNT; ++i)
+	for (UINT i = 0U; i < FRAME_BUFFER_COUNT; ++i)
 	{
 		ComPtr<ID3D11Resource> wrappedBackBuffer = nullptr;
 		
@@ -1241,6 +1273,11 @@ void Engine::WaitRender()
 GBufferManager* Engine::GetGBufferManager()
 {
 	return m_pGBufferManager.get();
+}
+
+ShadowMap* Engine::GetShadowMap()
+{
+	return m_pShadowMap.get();
 }
 
 

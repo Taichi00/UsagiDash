@@ -251,7 +251,7 @@ bool Texture2D::CreateResource(
 	auto prop = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 
 	// リソースを生成
-	auto hr = g_Engine->Device()->CreateCommittedResource(
+	auto hr = Engine::Get()->Device()->CreateCommittedResource(
 		&prop,
 		D3D12_HEAP_FLAG_NONE,
 		&desc,
@@ -285,17 +285,17 @@ bool Texture2D::CreateResource(
 {
 	// テクスチャ生成
 	ComPtr<ID3D12Resource> texture;
-	CreateTexture(g_Engine->Device(), metadata, &texture);
+	CreateTexture(Engine::Get()->Device(), metadata, &texture);
 
 	// アップロードヒープ用準備
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	PrepareUpload(
-		g_Engine->Device(), image->GetImages(), image->GetImageCount(),
+		Engine::Get()->Device(), image->GetImages(), image->GetImageCount(),
 		metadata, subresources
 	);
 
 	// アップロード
-	if (!g_Engine->UploadTexture(texture.Get(), subresources))
+	if (!Engine::Get()->UploadTexture(texture.Get(), subresources))
 	{
 		printf("テクスチャのアップロードに失敗\n");
 		return false;
@@ -313,7 +313,7 @@ ComPtr<ID3D12Resource> Texture2D::GetDefaultResource(size_t width, size_t height
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	ComPtr<ID3D12Resource> buff = nullptr;
 	
-	auto result = g_Engine->Device()->CreateCommittedResource(
+	auto result = Engine::Get()->Device()->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc,
@@ -323,7 +323,7 @@ ComPtr<ID3D12Resource> Texture2D::GetDefaultResource(size_t width, size_t height
 	);
 	if (FAILED(result))
 	{
-		auto hr = g_Engine->Device()->GetDeviceRemovedReason();
+		auto hr = Engine::Get()->Device()->GetDeviceRemovedReason();
 		assert(SUCCEEDED(result));
 		return nullptr;
 	}

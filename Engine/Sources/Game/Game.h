@@ -14,6 +14,7 @@ class Input;
 class Scene;
 class ResourceManager;
 class Resource;
+class Engine;
 
 
 class Game

@@ -25,7 +25,12 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-	
+	printf("Delete Scene\n");
+
+	m_pGBufferHeap->Free(m_pSkyboxHandle);
+	m_pGBufferHeap->Free(m_pDiffuseMapHandle);
+	m_pGBufferHeap->Free(m_pSpecularMapHandle);
+	m_pGBufferHeap->Free(m_pBrdfHandle);
 }
 
 bool Scene::Init()
@@ -34,10 +39,14 @@ bool Scene::Init()
 	m_pEntities.clear();
 
 	// シャドウマップの生成
-	m_pShadowMap = std::make_unique<ShadowMap>();
+	//m_pShadowMap = std::make_unique<ShadowMap>();
 
 	// CollisionManagerの生成
 	m_pCollisionManager = std::make_unique<CollisionManager>();
+
+	m_pRtvHeap = Engine::Get()->RtvHeap();
+	m_pDsvHeap = Engine::Get()->DsvHeap();
+	m_pGBufferHeap = Engine::Get()->GBufferHeap();
 
 	// ルートシグネチャの生成
 	RootSignatureParameter params[] = {
@@ -135,62 +144,62 @@ float ang = 0;
 void Scene::Draw()
 {
 	// レンダリングの準備
-	g_Engine->InitRender();
+	Engine::Get()->InitRender();
 
 	// シャドウマップの描画
-	m_pShadowMap->BeginRender();
+	Engine::Get()->GetShadowMap()->BeginRender();
 	for (auto& entity : m_pEntities) entity->DrawShadow();
-	m_pShadowMap->EndRender();
+	Engine::Get()->GetShadowMap()->EndRender();
 
-	/*g_Engine->BeginRenderMSAA();
+	/*Engine::Get()->BeginRenderMSAA();
 
 	for (auto entity : m_pEntities) entity->Draw();
 	for (auto entity : m_pEntities) entity->DrawAlpha();
 
-	g_Engine->EndRenderMSAA();*/
+	Engine::Get()->EndRenderMSAA();*/
 
 	// レンダリングの開始
-	g_Engine->BeginDeferredRender();
+	Engine::Get()->BeginDeferredRender();
 
 	// デプスプリパス
-	g_Engine->DepthPrePath();
+	Engine::Get()->DepthPrePath();
 	for (auto& entity : m_pEntities) entity->DrawDepth();
 
 	// G-Bufferへの書き込み
-	g_Engine->GBufferPath();
+	Engine::Get()->GBufferPath();
 	for (auto& entity : m_pEntities)	entity->DrawGBuffer();
 
 	// ライティングパス
-	g_Engine->LightingPath();
+	Engine::Get()->LightingPath();
 	DrawLighting();
 
 	// Skybox描画（フォワードレンダリング）
 	DrawSkybox();
 
 	// SSAO
-	//g_Engine->SSAOPath();
+	//Engine::Get()->SSAOPath();
 	//DrawSSAO();
 
 	//// ぼかし
-	//g_Engine->BlurHorizontalPath();
+	//Engine::Get()->BlurHorizontalPath();
 	//DrawBlurHorizontal();
-	//g_Engine->BlurVerticalPath();
+	//Engine::Get()->BlurVerticalPath();
 	//DrawBlurVertical();
 
 	// ポストプロセス
-	g_Engine->PostProcessPath();
+	Engine::Get()->PostProcessPath();
 	DrawPostProcess();
 
 	// アウトライン描画（フォワードレンダリング）
 	//for (auto entity : m_pEntities) entity->DrawOutline();
 
 	// FXAA
-	g_Engine->FXAAPath();
+	Engine::Get()->FXAAPath();
 	DrawFXAA();
 
-	g_Engine->EndRenderD3D();
+	Engine::Get()->EndRenderD3D();
 
-	g_Engine->BeginRenderD2D();
+	Engine::Get()->BeginRenderD2D();
 
 	float x = cos(ang) * 100 + 1280 / 2.0;
 	float y = sin(ang) * 100 + 720 / 2.0;
@@ -198,20 +207,21 @@ void Scene::Draw()
 		x - 400, y - 100, x + 400, y + 100
 	};
 	ang += 0.04;
-	g_Engine->drawText("normal", "white", L"DirectWriteで文字表示\nHello, Direct2D & DirectWrite", rect);
+	Engine::Get()->drawText("normal", "white", L"DirectWriteで文字表示\nHello, Direct2D & DirectWrite", rect);
 
-	g_Engine->EndRenderD2D();
+	Engine::Get()->EndRenderD2D();
 
 	// レンダリングの終了
-	g_Engine->EndDeferredRender();
+	Engine::Get()->EndDeferredRender();
 }
 
 void Scene::DrawLighting()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
+	auto shadowMap = Engine::Get()->GetShadowMap();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pSceneCB[currentIndex]->GetAddress());
@@ -227,7 +237,7 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("MetallicRoughness")->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Depth")->SrvHandle()->HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(7, m_pShadowMap->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(7, shadowMap->SrvHandle()->HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(8, m_pDiffuseMapHandle.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(9, m_pSpecularMapHandle.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(10, m_pBrdfHandle.HandleGPU());
@@ -240,9 +250,9 @@ void Scene::DrawSkybox()
 	if (m_pSkyboxTex == nullptr)
 		return;
 
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
 
 	commandList->SetGraphicsRootSignature(m_pSkyboxRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -268,10 +278,10 @@ void Scene::DrawSkybox()
 
 void Scene::DrawSSAO()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -293,10 +303,10 @@ void Scene::DrawSSAO()
 
 void Scene::DrawBlurHorizontal()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -313,10 +323,10 @@ void Scene::DrawBlurHorizontal()
 
 void Scene::DrawBlurVertical()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -333,10 +343,10 @@ void Scene::DrawBlurVertical()
 
 void Scene::DrawPostProcess()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, m_pTransformCB[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -360,10 +370,10 @@ void Scene::DrawPostProcess()
 
 void Scene::DrawFXAA()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
-	auto commandList = g_Engine->CommandList();
-	auto gbufferHeap = g_Engine->GBufferHeap()->GetHeap();
-	auto gbufferManager = g_Engine->GetGBufferManager();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
+	auto commandList = Engine::Get()->CommandList();
+	auto gbufferHeap = Engine::Get()->GBufferHeap()->GetHeap();
+	auto gbufferManager = Engine::Get()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(m_pRootSignature->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -398,10 +408,10 @@ Camera* Scene::GetMainCamera()
 	return m_pMainCamera;
 }
 
-ShadowMap* Scene::GetShadowMap()
-{
-	return m_pShadowMap.get();
-}
+//ShadowMap* Scene::GetShadowMap()
+//{
+//	return m_pShadowMap.get();
+//}
 
 CollisionManager* Scene::GetCollisionManager()
 {
@@ -410,7 +420,7 @@ CollisionManager* Scene::GetCollisionManager()
 
 void Scene::SetSkybox(const std::string path)
 {
-	auto device = g_Engine->Device();
+	auto device = Engine::Get()->Device();
 
 	m_pSkyboxTex = Texture2D::Load(path + "EnvHDR.dds");
 
@@ -423,7 +433,7 @@ void Scene::SetSkybox(const std::string path)
 	skyboxDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	skyboxDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	m_pSkyboxHandle = g_Engine->GBufferHeap()->Alloc();	// GBufferHeapに追加
+	m_pSkyboxHandle = Engine::Get()->GBufferHeap()->Alloc();	// GBufferHeapに追加
 	device->CreateShaderResourceView(m_pSkyboxTex->Resource(), &skyboxDesc, m_pSkyboxHandle.HandleCPU());	// シェーダーリソースビュー作成
 
 	// DiffuseMap
@@ -437,7 +447,7 @@ void Scene::SetSkybox(const std::string path)
 	diffuseDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	diffuseDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	m_pDiffuseMapHandle = g_Engine->GBufferHeap()->Alloc();
+	m_pDiffuseMapHandle = Engine::Get()->GBufferHeap()->Alloc();
 	device->CreateShaderResourceView(m_pDiffuseMapTex->Resource(), &diffuseDesc, m_pDiffuseMapHandle.HandleCPU());
 
 	// SpecularMap
@@ -451,7 +461,7 @@ void Scene::SetSkybox(const std::string path)
 	specularDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	specularDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	m_pSpecularMapHandle = g_Engine->GBufferHeap()->Alloc();
+	m_pSpecularMapHandle = Engine::Get()->GBufferHeap()->Alloc();
 	device->CreateShaderResourceView(m_pSpecularMapTex->Resource(), &specularDesc, m_pSpecularMapHandle.HandleCPU());
 
 	// brdfLUT
@@ -463,7 +473,7 @@ void Scene::SetSkybox(const std::string path)
 	brdfDesc.Texture2D.MipLevels = m_pBrdfTex->Metadata().mipLevels;
 	brdfDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-	m_pBrdfHandle = g_Engine->GBufferHeap()->Alloc();
+	m_pBrdfHandle = Engine::Get()->GBufferHeap()->Alloc();
 	device->CreateShaderResourceView(m_pBrdfTex->Resource(), &brdfDesc, m_pBrdfHandle.HandleCPU());
 
 
@@ -642,7 +652,7 @@ bool Scene::PreparePSO()
 
 void Scene::UpdateCB()
 {
-	auto currentIndex = g_Engine->CurrentBackBufferIndex();
+	auto currentIndex = Engine::Get()->CurrentBackBufferIndex();
 	auto camera = GetMainCamera();
 
 	// Transform

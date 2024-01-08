@@ -8,7 +8,7 @@ VertexBuffer::VertexBuffer(size_t size, size_t stride, const void* pInitData)
 	auto desc = CD3DX12_RESOURCE_DESC::Buffer(size);	// リソースの設定
 
 	// リソースを生成
-	auto hr = g_Engine->Device()->CreateCommittedResource(
+	auto hr = Engine::Get()->Device()->CreateCommittedResource(
 		&prop,
 		D3D12_HEAP_FLAG_NONE,
 		&desc,

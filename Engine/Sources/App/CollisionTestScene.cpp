@@ -324,6 +324,6 @@ void CollisionTestScene::Update()
 
 	if (Input::GetKeyDown(DIK_END))
 	{
-		Game::Get()->LoadScene(new MainScene());
+		Game::Get()->LoadScene(new CollisionTestScene());
 	}
 }

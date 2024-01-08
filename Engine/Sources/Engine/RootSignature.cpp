@@ -69,7 +69,7 @@ RootSignature::RootSignature(const int numParams, RootSignatureParameter params[
 	}
 
 	// ルートシグネチャ生成
-	hr = g_Engine->Device()->CreateRootSignature(
+	hr = Engine::Get()->Device()->CreateRootSignature(
 		0,							// GPUが複数ある場合のノードマスク
 		pBlob->GetBufferPointer(),	// シリアライズしたデータのポインタ
 		pBlob->GetBufferSize(),		// シリアライズしたデータのサイズ

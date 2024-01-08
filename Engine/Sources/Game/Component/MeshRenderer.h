@@ -63,6 +63,9 @@ protected:
 	PipelineState* m_pGBufferPSO;
 
 	DescriptorHeap* m_pDescriptorHeap;
+	std::vector<DescriptorHandle> m_albedoHandles;
+	std::vector<DescriptorHandle> m_pbrHandles;
+	std::vector<DescriptorHandle> m_normalHandles;
 
 	DescriptorHandle m_pShadowHandle;
 

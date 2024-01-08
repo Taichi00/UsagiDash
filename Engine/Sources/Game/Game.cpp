@@ -16,6 +16,7 @@ Game::Game()
 
 Game::~Game()
 {
+	printf("Delete Game\n");
 }
 
 void Game::Run(Scene* scene)
@@ -61,8 +62,8 @@ void Game::SetWindowTitle(std::wstring title)
 
 Scene* Game::LoadScene(Scene* scene)
 {
+	Engine::Get()->WaitRender();
 	m_pCurrentScene.reset(scene);
-	g_Engine->WaitRender();
 	scene->Init();
 	return scene;
 }
@@ -83,8 +84,8 @@ void Game::Init()
 	m_pWindow = std::make_unique<Window>(m_windowTitle.c_str(), m_windowWidth, m_windowHeight);
 
 	// •`‰æƒGƒ“ƒWƒ“‚Ì‰Šú‰»‚ğs‚¤
-	g_Engine = std::make_unique<Engine>();
-	if (!g_Engine->Init(m_pWindow.get()))
+	//g_Engine = std::make_unique<Engine>();
+	if (!Engine::Get()->Init(m_pWindow.get()))
 	{
 		return;
 	}
@@ -104,3 +105,4 @@ void Game::End()
 {
 	Input::Destroy();
 }
+

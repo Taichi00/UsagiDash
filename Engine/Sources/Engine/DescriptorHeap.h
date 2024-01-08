@@ -8,6 +8,7 @@ class DescriptorHandle
 {
 public:
 	DescriptorHandle() : m_handleCPU(), m_handleGPU() {}
+	~DescriptorHandle() {};
 
 	DescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE hCPU, D3D12_GPU_DESCRIPTOR_HANDLE hGPU) :
 		m_handleCPU(hCPU), m_handleGPU(hGPU) {}
@@ -27,6 +28,8 @@ class DescriptorHeap
 {
 public:
 	DescriptorHeap(const D3D12_DESCRIPTOR_HEAP_DESC& desc);	// コンストラクタで生成する
+	~DescriptorHeap();
+
 	ID3D12DescriptorHeap* GetHeap();				// ディスクリプタヒープを返す
 	DescriptorHandle Alloc();						// ディスクリプタを割り当てる
 	void Free(DescriptorHandle& handle);			// ディスクリプタを開放する

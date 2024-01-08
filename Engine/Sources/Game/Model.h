@@ -49,4 +49,5 @@ public:
 	std::vector<Material> materials;
 	std::vector<std::shared_ptr<Animation>> animations;
 	BoneList bones;
+	std::unique_ptr<DescriptorHeap> descriptorHeap;
 };

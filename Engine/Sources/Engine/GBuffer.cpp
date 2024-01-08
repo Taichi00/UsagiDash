@@ -70,7 +70,7 @@ bool GBuffer::CreateResource(GBufferProperty prop)
 	D3D12_CLEAR_VALUE clear{};
 	clear.Format = prop.format;
 
-	auto device = g_Engine->Device();
+	auto device = Engine::Get()->Device();
 
 	// ÉäÉ\Å[ÉXÇÃê∂ê¨
 	const auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -78,7 +78,7 @@ bool GBuffer::CreateResource(GBufferProperty prop)
 		&heapProps,
 		D3D12_HEAP_FLAG_NONE,
 		&desc,
-		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		&clear,
 		IID_PPV_ARGS(m_pResource.ReleaseAndGetAddressOf())
 	);
@@ -104,7 +104,7 @@ bool GBuffer::CreateSrv(GBufferProperty prop)
 	m_pSrvHandle = std::make_shared<DescriptorHandle>(prop.srvHeap->Alloc());
 
 	// SRVÇÃê∂ê¨
-	g_Engine->Device()->CreateShaderResourceView(m_pResource.Get(), &desc, m_pSrvHandle->HandleCPU());
+	Engine::Get()->Device()->CreateShaderResourceView(m_pResource.Get(), &desc, m_pSrvHandle->HandleCPU());
 
 	return true;
 }
@@ -119,7 +119,7 @@ bool GBuffer::CreateRtv(GBufferProperty prop)
 	m_pRtvHandle = std::make_shared<DescriptorHandle>(prop.rtvHeap->Alloc());
 
 	// RTVÇÃê∂ê¨
-	g_Engine->Device()->CreateRenderTargetView(m_pResource.Get(), &desc, m_pRtvHandle->HandleCPU());
+	Engine::Get()->Device()->CreateRenderTargetView(m_pResource.Get(), &desc, m_pRtvHandle->HandleCPU());
 
 	return true;
 }
