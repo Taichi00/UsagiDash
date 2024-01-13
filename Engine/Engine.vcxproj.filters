@@ -42,321 +42,339 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sources\Engine\Engine.cpp">
+    <ClCompile Include="src\engine\engine.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\ConstantBuffer.cpp">
+    <ClCompile Include="src\engine\constant_buffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\DescriptorHeap.cpp">
+    <ClCompile Include="src\engine\descriptor_heap.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\IndexBuffer.cpp">
+    <ClCompile Include="src\engine\index_buffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\PipelineState.cpp">
+    <ClCompile Include="src\engine\pipeline_state.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\RootSignature.cpp">
+    <ClCompile Include="src\engine\root_signature.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\SharedStruct.cpp">
+    <ClCompile Include="src\engine\shared_struct.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\VertexBuffer.cpp">
+    <ClCompile Include="src\engine\vertex_buffer.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\Texture2D.cpp">
+    <ClCompile Include="src\engine\texture2d.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\ShadowMap.cpp">
+    <ClCompile Include="src\game\shadow_map.cpp">
       <Filter>ソース ファイル\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Game.cpp">
+    <ClCompile Include="src\game\game.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\AssimpLoader.cpp">
+    <ClCompile Include="src\game\assimp_loader.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Camera.cpp">
+    <ClCompile Include="src\game\component\camera.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Entity.cpp">
+    <ClCompile Include="src\game\entity.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\Window.cpp">
+    <ClCompile Include="src\engine\window.cpp">
       <Filter>ソース ファイル\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Input.cpp">
+    <ClCompile Include="src\game\input.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Bone.cpp">
+    <ClCompile Include="src\game\bone.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Animation.cpp">
+    <ClCompile Include="src\game\animation.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Animator.cpp">
+    <ClCompile Include="src\game\component\animator.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\BoneList.cpp">
+    <ClCompile Include="src\game\bone_list.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Component.cpp">
+    <ClCompile Include="src\game\component\component.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\App.cpp">
+    <ClCompile Include="src\app\app.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\MeshRenderer.cpp">
+    <ClCompile Include="src\game\component\mesh_renderer.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\Player.cpp">
+    <ClCompile Include="src\app\player.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Transform.cpp">
+    <ClCompile Include="src\game\component\transform.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\GameCamera.cpp">
+    <ClCompile Include="src\app\game_camera.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\main.cpp">
+    <ClCompile Include="src\app\main.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\SphereMesh.cpp">
+    <ClCompile Include="src\game\component\sphere_mesh.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\MainScene.cpp">
+    <ClCompile Include="src\app\main_scene.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Scene.cpp">
+    <ClCompile Include="src\game\scene.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\CollisionTestScene.cpp">
+    <ClCompile Include="src\app\collision_test_scene.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\App\FloatingPlayer.cpp">
+    <ClCompile Include="src\app\floating_player.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\Collider.cpp">
+    <ClCompile Include="src\game\component\collider\collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\CollisionManager.cpp">
+    <ClCompile Include="src\game\collision_manager.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\FloorCollider.cpp">
+    <ClCompile Include="src\game\component\collider\floor_collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\MeshCollider.cpp">
+    <ClCompile Include="src\game\component\collider\mesh_collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Rigidbody.cpp">
+    <ClCompile Include="src\game\component\rigidbody.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\SphereCollider.cpp">
+    <ClCompile Include="src\game\component\collider\sphere_collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\CapsuleMesh.cpp">
+    <ClCompile Include="src\game\component\capsule_mesh.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\CapsuleCollider.cpp">
+    <ClCompile Include="src\game\component\collider\capsule_collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Physics.cpp">
+    <ClCompile Include="src\game\physics.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\Collider\Ray.cpp">
+    <ClCompile Include="src\game\component\collider\ray.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\GBuffer.cpp">
+    <ClCompile Include="src\engine\gbuffer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Engine\GBufferManager.cpp">
+    <ClCompile Include="src\engine\gbuffer_manager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\BillboardRenderer.cpp">
+    <ClCompile Include="src\game\component\billboard_renderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Component\ParticleEmitter.cpp">
+    <ClCompile Include="src\game\component\particle_emitter.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Particle.cpp">
+    <ClCompile Include="src\game\particle.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\ResourceManager.cpp">
+    <ClCompile Include="src\game\resource_manager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Resource.cpp">
+    <ClCompile Include="src\game\resource.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Sources\Game\Model.cpp">
+    <ClCompile Include="src\game\model.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\engine2d.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\label.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Sources\Game\AssimpLoader.h">
+    <ClInclude Include="src\game\assimp_loader.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Camera.h">
+    <ClInclude Include="src\game\component\camera.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\ComPtr.h">
+    <ClInclude Include="src\engine\comptr.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\ConstantBuffer.h">
+    <ClInclude Include="src\engine\constant_buffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\DescriptorHeap.h">
+    <ClInclude Include="src\engine\descriptor_heap.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\Engine.h">
+    <ClInclude Include="src\engine\engine.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Entity.h">
+    <ClInclude Include="src\game\entity.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\IndexBuffer.h">
+    <ClInclude Include="src\engine\index_buffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\PipelineState.h">
+    <ClInclude Include="src\engine\pipeline_state.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\RootSignature.h">
+    <ClInclude Include="src\engine\root_signature.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\ShadowMap.h">
+    <ClInclude Include="src\game\shadow_map.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\SharedStruct.h">
+    <ClInclude Include="src\engine\shared_struct.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\streamreader.h">
+    <ClInclude Include="src\engine\streamreader.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\Texture2D.h">
+    <ClInclude Include="src\engine\texture2d.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\VertexBuffer.h">
+    <ClInclude Include="src\engine\vertex_buffer.h">
       <Filter>ヘッダー ファイル\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Game.h">
+    <ClInclude Include="src\game\game.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\VertexShader.h">
-      <Filter>ヘッダー ファイル\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Sources\Engine\Window.h">
+    <ClInclude Include="src\engine\window.h">
       <Filter>ヘッダー ファイル\Window</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Input.h">
+    <ClInclude Include="src\game\input.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Bone.h">
+    <ClInclude Include="src\game\bone.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\BoneList.h">
+    <ClInclude Include="src\game\bone_list.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Math\Vec.h">
+    <ClInclude Include="src\math\vec.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Math\Quaternion.h">
+    <ClInclude Include="src\math\quaternion.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Animation.h">
+    <ClInclude Include="src\game\animation.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Animator.h">
+    <ClInclude Include="src\game\component\animator.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\App.h">
+    <ClInclude Include="src\app\app.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Component.h">
+    <ClInclude Include="src\game\component\component.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Math\Easing.h">
+    <ClInclude Include="src\math\easing.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\GameCamera.h">
+    <ClInclude Include="src\app\game_camera.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\MeshRenderer.h">
+    <ClInclude Include="src\game\component\mesh_renderer.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\Player.h">
+    <ClInclude Include="src\app\player.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Transform.h">
+    <ClInclude Include="src\game\component\transform.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\MainScene.h">
+    <ClInclude Include="src\app\main_scene.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Scene.h">
+    <ClInclude Include="src\game\scene.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\SphereMesh.h">
+    <ClInclude Include="src\game\component\sphere_mesh.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\CollisionTestScene.h">
+    <ClInclude Include="src\app\collision_test_scene.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\App\FloatingPlayer.h">
+    <ClInclude Include="src\app\floating_player.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\Collider.h">
+    <ClInclude Include="src\game\component\collider\collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\CollisionManager.h">
+    <ClInclude Include="src\game\collision_manager.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\FloorCollider.h">
+    <ClInclude Include="src\game\component\collider\floor_collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\MeshCollider.h">
+    <ClInclude Include="src\game\component\collider\mesh_collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Rigidbody.h">
+    <ClInclude Include="src\game\component\rigidbody.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\SphereCollider.h">
+    <ClInclude Include="src\game\component\collider\sphere_collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\CapsuleMesh.h">
+    <ClInclude Include="src\game\component\capsule_mesh.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\CapsuleCollider.h">
+    <ClInclude Include="src\game\component\collider\capsule_collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Physics.h">
+    <ClInclude Include="src\game\physics.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\Collider\Ray.h">
+    <ClInclude Include="src\game\component\collider\ray.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\GBuffer.h">
+    <ClInclude Include="src\engine\gbuffer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Engine\GBufferManager.h">
+    <ClInclude Include="src\engine\gbuffer_manager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Component\BillboardRenderer.h">
+    <ClInclude Include="src\game\component\billboard_renderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\ParticleEmitter.h">
+    <ClInclude Include="src\game\component\particle_emitter.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Particle.h">
+    <ClInclude Include="src\game\particle.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\ResourceManager.h">
+    <ClInclude Include="src\game\resource_manager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Resource.h">
+    <ClInclude Include="src\game\resource.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Sources\Game\Model.h">
+    <ClInclude Include="src\game\model.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\engine2d.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\label.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\color.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\string_methods.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine\d3dx12.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
