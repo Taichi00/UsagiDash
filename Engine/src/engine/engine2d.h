@@ -22,6 +22,8 @@ public:
 
 	bool Init();	// 初期化
 
+	bool CreateD2DRenderTarget();	// Direct2D用のレンダーターゲットを生成
+
 	void BeginRenderD2D() const;	// D2Dの描画開始
 	void EndRenderD2D() const;	// D2Dの描画終了
 
@@ -30,17 +32,18 @@ public:
 	void DrawText(const std::string& textFormatKey, const std::string& solidColorBrushKey,
 		const std::wstring& text, const D2D1_RECT_F& rect) const noexcept;
 
+	void ResetRenderTargets();
+
 private:
-	bool CreateD3D11Device();	// D3D11Deviceを生成
+	bool CreateD3D11Device();		// D3D11Deviceを生成
 	bool CreateD2DDeviceContext();	// D2Dデバイスコンテキストを生成
 	bool CreateDWriteFactory();		// DirectWriteのファクトリを生成
-	bool CreateD2DRenderTarget();	// Direct2D用のレンダーターゲットを生成
 
 private:
 	ComPtr<ID3D11DeviceContext> d3d11_device_context_;	// D3D11のデバイスコンテキスト
-	ComPtr<ID3D11On12Device> d3d11on12_device_;		// D3D11On12のデバイス（Direct2Dを使用するために必要）
-	ComPtr<ID3D11Device> d3d11_device_;				// D3D11のデバイス
-	ComPtr<IDWriteFactory> dwrite_factory_;		// DirectWriteのファクトリ
+	ComPtr<ID3D11On12Device> d3d11on12_device_;			// D3D11On12のデバイス（Direct2Dを使用するために必要）
+	ComPtr<ID3D11Device> d3d11_device_;					// D3D11のデバイス
+	ComPtr<IDWriteFactory> dwrite_factory_;				// DirectWriteのファクトリ
 	ComPtr<ID2D1DeviceContext> d2d_device_context_;		// D2D1のデバイスコンテキスト
 
 private:

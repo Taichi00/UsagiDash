@@ -1,6 +1,6 @@
 #include "root_signature.h"
 #include "engine/engine.h"
-#include "d3dx12.h"
+#include "engine/d3dx12.h"
 #include "game/game.h"
 
 RootSignature::RootSignature(const int numParams, RootSignatureParameter params[])

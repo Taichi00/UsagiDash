@@ -197,8 +197,6 @@ float4 main(VSOutput input) : SV_TARGET
     
     // SSAO
     //float ssao = gSSAO.Sample(gSampler, uv).r;
-    //ssao = pow(ssao, 2);
-    //color.rgb *= lerp(float3(0, 0, 0.5), 1, ssao);
     //color.rgb *= saturate(ssao);
     
     

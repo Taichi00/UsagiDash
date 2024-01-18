@@ -7,7 +7,7 @@
 #include <d3d12.h>
 #include <d3d12sdklayers.h>
 #include <dxgi.h>
-#include <dxgi1_4.h>
+#include <dxgi1_6.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -17,7 +17,7 @@
 #pragma comment(lib, "dxgi.lib")	// dxgiライブラリをリンクする
 
 class Window;
-class GBufferManager;
+class BufferManager;
 class ShadowMap;
 class Engine2D;
 class VertexBuffer;
@@ -39,7 +39,7 @@ public:
 		return &instance;
 	}*/
 
-	bool Init(Window* window); // エンジン初期化
+	bool Init(std::shared_ptr<Window> window); // エンジン初期化
 
 	void InitRender();
 	void BeginRender(); // 描画の開始処理
@@ -59,7 +59,10 @@ public:
 	void FXAAPath();
 	void EndDeferredRender();
 
-	void WaitRender(); // 描画完了を待つ処理
+	void WaitGPU(); // 描画完了を待つ処理
+	void FlushGPU();
+
+	void ToggleFullscreen();
 
 public:
 	ID3D12Device6* Device();
@@ -70,11 +73,11 @@ public:
 	ID3D12Resource* RenderTarget(int index);
 	std::shared_ptr<DescriptorHeap> RtvHeap();
 	std::shared_ptr<DescriptorHeap> DsvHeap();
-	std::shared_ptr<DescriptorHeap> GBufferHeap();
-	GBufferManager* GetGBufferManager();
+	std::shared_ptr<DescriptorHeap> SrvHeap();
+	BufferManager* GetGBufferManager();
 	ShadowMap* GetShadowMap();
 	UINT CurrentBackBufferIndex();
-	Window* GetWindow();
+	std::shared_ptr<Window> GetWindow();
 	UINT FrameBufferWidth();
 	UINT FrameBufferHeight();
 	Engine2D* GetEngine2D();
@@ -92,6 +95,8 @@ public:
 	void CreateShaderResourceView(const Texture2D& texture, const DescriptorHandle& handle); // SRVを生成
 	std::unique_ptr<DescriptorHeap> CreateDescriptorHeap(const unsigned int num); // ディスクリプタヒープを生成
 
+	void ResizeWindow(const unsigned int width, const unsigned int height);
+
 private: // DirectX12初期化に使う関数
 	bool EnableDebugLayer();	// デバッグデバイスを生成
 	bool CreateDevice();		// デバイスを生成
@@ -103,7 +108,7 @@ private: // DirectX12初期化に使う関数
 	void CreateScissorRect();	// シザー矩形を生成
 	
 private:
-	Window* window_ = nullptr;
+	std::shared_ptr<Window> window_;
 	HWND hwnd_;
 	UINT frame_buffer_width_ = 0;
 	UINT frame_buffer_height_ = 0;
@@ -111,7 +116,7 @@ private:
 
 	ComPtr<ID3D12Device6> device_; // デバイス
 	ComPtr<ID3D12CommandQueue> queue_; // コマンドキュー
-	ComPtr<IDXGISwapChain3> swapchain_; // スワップチェイン
+	ComPtr<IDXGISwapChain4> swapchain_; // スワップチェイン
 	ComPtr<ID3D12CommandAllocator> allocator_[FRAME_BUFFER_COUNT]; // コマンドアロケーター
 	ComPtr<ID3D12CommandAllocator> oneshot_allocator_;
 	ComPtr<ID3D12GraphicsCommandList> command_list_; // コマンドリスト
@@ -123,6 +128,7 @@ private:
 	ComPtr<ID3D12DebugDevice> debug_device_;
 
 private:
+	bool CreateDescriptorHeap();
 	bool CreateRenderTarget();	// レンダーターゲットを生成
 	bool CreateDepthStencil();	// 深度ステンシルバッファを生成
 	bool CreateMSAA();
@@ -131,12 +137,12 @@ private:
 	UINT rtv_descriptor_size_ = 0; // レンダーターゲットビューのディスクリプタサイズ
 	std::shared_ptr<DescriptorHeap> rtv_heap_; // レンダーターゲットのディスクリプタヒープ
 	DescriptorHandle rtv_handles_[FRAME_BUFFER_COUNT];
-	ComPtr<ID3D12Resource> render_targets_[FRAME_BUFFER_COUNT];	// レンダーターゲット
+	ComPtr<ID3D12Resource1> render_targets_[FRAME_BUFFER_COUNT];	// レンダーターゲット
 
 	UINT dsv_descriptor_size_ = 0; // 深度ステンシルのディスクリプタサイズ
 	std::shared_ptr<DescriptorHeap> dsv_heap_; // 深度ステンシルのディスクリプタヒープ
 	DescriptorHandle dsv_handle_;
-	ComPtr<ID3D12Resource> depth_stencil_buffer_; // 深度ステンシルバッファ
+	ComPtr<ID3D12Resource1> depth_stencil_buffer_; // 深度ステンシルバッファ
 
 	UINT sample_count_;
 	ComPtr<ID3D12Resource> msaa_color_target_;
@@ -146,8 +152,8 @@ private:
 
 	std::unique_ptr<ShadowMap> shadowmap_;
 
-	std::unique_ptr<GBufferManager> gbuffer_manager_;
-	std::shared_ptr<DescriptorHeap> gbuffer_heap_;
+	std::unique_ptr<BufferManager> buffer_manager_;
+	std::shared_ptr<DescriptorHeap> srv_heap_;
 
 	std::unique_ptr<Engine2D> engine2d_; // 2D描画エンジンへのポインタ
 

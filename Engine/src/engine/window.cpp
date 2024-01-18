@@ -1,4 +1,5 @@
 #include "window.h"
+#include "game/game.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -7,6 +8,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	case WM_SYSKEYDOWN:
+		if ((wp == VK_RETURN) && (lp & (1 << 29)))
+		{
+			Game::Get()->ToggleFullscreen();
+		}
 	default:
 		break;
 	}

@@ -58,10 +58,6 @@ bool CollisionTestScene::Init()
 	runSmokeProp.position_easing.start_range = Vec3(0.5, 0.1, 0.5);
 	runSmokeProp.position_easing.end = Vec3(0, 2, -2);
 	runSmokeProp.position_easing.end_range = Vec3(0.5, 0.8, 0.5);
-	/*runSmokeProp.positionPVA.position = Vec3(0, 0.7, -1);
-	runSmokeProp.positionPVA.positionRange = Vec3(0.5, 0.1, 0.2);
-	runSmokeProp.positionPVA.velocity = Vec3(0, 0.01, -0.05);
-	runSmokeProp.positionPVA.velocityRange = Vec3(0.01, 0.01, 0.01);*/
 	runSmokeProp.rotation_pva.rotation_range = Vec3(0, 0, 3.14);
 	runSmokeProp.rotation_pva.velocity_range = Vec3(0, 0, 0.1);
 	runSmokeProp.scaleType = PARTICAL_PROP_TYPE_EASING;
@@ -206,11 +202,10 @@ bool CollisionTestScene::Init()
 
 
 	auto pbrEntity = new Entity("PBR Entity");
-	pbrEntity->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/dog.glb")));
+	pbrEntity->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/DamagedHelmet.glb")));
 	CreateEntity(pbrEntity);
 	pbrEntity->transform->position = Vec3(0, -3, -13);
-	//pbrEntity->transform->rotation = Quaternion::FromEuler(1.57, 0, 0);
-	pbrEntity->transform->scale = Vec3(3, 3, 3);
+	pbrEntity->transform->scale = Vec3(5, 5, 5);
 
 
 	/*auto billboard = new Entity("Billboard");
@@ -234,21 +229,9 @@ bool CollisionTestScene::Init()
 	smokeEmitter->AddComponent(new ParticleEmitter(smokeProp));
 	CreateEntity(smokeEmitter);*/
 
-
-	//AssimpLoader::Load(L"Assets/checker_plane.obj", model, animations);
-	//auto plane = new Entity();
-	//plane->AddComponent(new MeshRenderer({ model }));
-	//collider = plane->AddComponent(new FloorCollider());
-	//plane->AddComponent(new Rigidbody({ (Collider*)collider, 1, false, true, 0.5 }));
-	//CreateEntity(plane);
-
-	//plane->transform->scale = Vec3(2, 2, 2);
-	//plane->transform->position = Vec3(0, -2, 0);
-	//plane->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
-
-	AssimpLoader::LoadCollision(L"Assets/Map/CollisionTest.obj", collisionModel);
+	AssimpLoader::LoadCollision(L"Assets/Map/level1.obj", collisionModel);
 	auto plane = new Entity("Map");
-	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/Map/CollisionTest.obj")));
+	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/Map/level1.obj")));
 	collider = (Collider*)plane->AddComponent(new MeshCollider({ collisionModel }));
 	plane->AddComponent(new Rigidbody({ collider, 1, false, true, 0.5 }));
 	CreateEntity(plane);
@@ -257,22 +240,9 @@ bool CollisionTestScene::Init()
 	plane->transform->position = Vec3(0, -10, 0);
 	plane->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
 
-	
-	/*AssimpLoader::Load(L"Assets/mikuNT.glb", model, animations);
-	auto miku = new Entity();
-	miku->AddComponent(new MeshRenderer({ model }));
-	collider = (Collider*)miku->AddComponent(new CapsuleCollider({ 2, 6 }));
-	miku->AddComponent(new Rigidbody({ collider, 1, true, false, 0.5 }));
-	CreateEntity(miku);
-
-	miku->transform->scale = Vec3(5, 5, 5);
-	miku->transform->position = Vec3(0, 0, 5);
-	collider->offset = Vec3(0, 5, 0);
-	miku->GetComponent<MeshRenderer>()->SetOutlineWidth(0);*/
-
 
 	auto label = new Entity("Label");
-	label->AddComponent(new Label("Label‚Å‚·A‚±‚ñ‚É‚¿‚ÍB", "Source Han Sans VF", 32));
+	label->AddComponent(new Label("Label Entity •¶Žš—ñ‚Ì•\Ž¦", "Source Han Sans VF", 32));
 	CreateEntity(label);
 
 
@@ -330,6 +300,11 @@ void CollisionTestScene::Update()
 	if (Input::GetKeyDown(DIK_END))
 	{
 		Game::Get()->LoadScene(new CollisionTestScene());
+	}
+
+	if (Input::GetKeyDown(DIK_F))
+	{
+		Game::Get()->GetEngine()->ResizeWindow(1920, 1080);
 	}
 
 }

@@ -65,9 +65,14 @@ void Game::SetWindowTitle(std::wstring title)
 	window_title_ = title;
 }
 
+void Game::ToggleFullscreen()
+{
+	engine_->ToggleFullscreen();
+}
+
 Scene* Game::LoadScene(Scene* scene)
 {
-	Game::Get()->GetEngine()->WaitRender();
+	Game::Get()->GetEngine()->WaitGPU();
 	current_scene_.reset(scene);
 	scene->Init();
 	return scene;
@@ -78,19 +83,19 @@ Scene* Game::GetCurrentScene()
 	return current_scene_.get();
 }
 
-DirectX::XMVECTOR Game::GetSWindowSize()
+Vec2 Game::GetWindowSize()
 {
-	return { (float)window_width_, (float)window_height_ };
+	return Vec2((float)window_->Width(), (float)window_->Height());
 }
 
 void Game::Init()
 {
 	// ウィンドウの生成
-	window_ = std::make_unique<Window>(window_title_.c_str(), window_width_, window_height_);
+	window_ = std::make_shared<Window>(window_title_.c_str(), window_width_, window_height_);
 
 	// 描画エンジンの初期化を行う
 	engine_ = std::make_unique<Engine>();
-	if (!Game::Get()->GetEngine()->Init(window_.get()))
+	if (!Game::Get()->GetEngine()->Init(window_))
 	{
 		return;
 	}

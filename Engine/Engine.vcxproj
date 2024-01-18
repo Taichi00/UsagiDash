@@ -24,6 +24,7 @@
     <ProjectGuid>{cc745b27-a984-4fa9-9a00-22ac8118c73c}</ProjectGuid>
     <RootNamespace>Engine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Game</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -74,7 +75,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)src/;$(ProjectDir)src/engine/;$(ProjectDir)src/game/;$(ProjectDir)src/game/component/;$(ProjectDir)src/game/component/collider/;$(ProjectDir)src/math/</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)src/</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -166,8 +167,8 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\collider\floor_collider.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\app\game_camera.cpp" />
-    <ClCompile Include="src\engine\gbuffer.cpp" />
-    <ClCompile Include="src\engine\gbuffer_manager.cpp" />
+    <ClCompile Include="src\engine\buffer.cpp" />
+    <ClCompile Include="src\engine\buffer_manager.cpp" />
     <ClCompile Include="src\engine\index_buffer.cpp" />
     <ClCompile Include="src\game\input.cpp" />
     <ClCompile Include="src\app\main.cpp" />
@@ -226,8 +227,8 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\collider\floor_collider.h" />
     <ClInclude Include="src\game\game.h" />
     <ClInclude Include="src\app\game_camera.h" />
-    <ClInclude Include="src\engine\gbuffer.h" />
-    <ClInclude Include="src\engine\gbuffer_manager.h" />
+    <ClInclude Include="src\engine\buffer.h" />
+    <ClInclude Include="src\engine\buffer_manager.h" />
     <ClInclude Include="src\engine\index_buffer.h" />
     <ClInclude Include="src\game\input.h" />
     <ClInclude Include="src\app\main_scene.h" />

@@ -1,9 +1,9 @@
-#include "d3dx12.h"
+#include "engine/d3dx12.h"
 #include "engine.h"
 #include "engine/descriptor_heap.h"
 #include "engine/engine2d.h"
-#include "engine/gbuffer.h"
-#include "engine/gbuffer_manager.h"
+#include "engine/buffer.h"
+#include "engine/buffer_manager.h"
 #include "engine/pipeline_state.h"
 #include "engine/window.h"
 #include "engine/vertex_buffer.h"
@@ -11,6 +11,7 @@
 #include "engine/constant_buffer.h"
 #include "game/shadow_map.h"
 #include <d3d12.h>
+#include <stdexcept>
 #include <stdio.h>
 
 //std::unique_ptr<Engine> g_Engine;
@@ -26,7 +27,7 @@ Engine::~Engine()
 	debug_device_->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
 }
 
-bool Engine::Init(Window* window)
+bool Engine::Init(std::shared_ptr<Window> window)
 {
 	window_ = window;
 	frame_buffer_width_ = window->Width();
@@ -71,6 +72,11 @@ bool Engine::Init(Window* window)
 	CreateViewPort();
 	CreateScissorRect();
 
+	if (!CreateDescriptorHeap())
+	{
+		printf("ディスクリプタヒープの生成に失敗\n");
+	}
+
 	if (!CreateRenderTarget())
 	{
 		printf("レンダーターゲットの生成に失敗\n");
@@ -82,10 +88,13 @@ bool Engine::Init(Window* window)
 		printf("デプスステンシルバッファの生成に失敗\n");
 	}
 
-	if (!CreateMSAA())
-	{
-		printf("MSAAリソースの生成に失敗\n");
-	}
+	//if (!CreateMSAA())
+	//{
+	//	printf("MSAAリソースの生成に失敗\n");
+	//}
+
+	// GBufferManagerの生成
+	buffer_manager_ = std::make_unique<BufferManager>();
 
 	if (!CreateGBuffer())
 	{
@@ -193,7 +202,7 @@ void Engine::EndRender()
 	swapchain_->Present(1, 0);
 
 	// 描画完了を待つ
-	WaitRender();
+	WaitGPU();
 
 	// バックバッファ番号更新
 	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
@@ -239,7 +248,7 @@ void Engine::EndRenderMSAA()
 	swapchain_->Present(1, 0);
 
 	// 描画完了を待つ
-	WaitRender();
+	WaitGPU();
 
 	// バックバッファ番号更新
 	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
@@ -247,6 +256,62 @@ void Engine::EndRenderMSAA()
 
 void Engine::EndRenderD3D()
 {
+	D3D12_RESOURCE_BARRIER barriers[] = {
+		/*CD3DX12_RESOURCE_BARRIER::Transition(
+			current_render_target_,
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			D3D12_RESOURCE_STATE_PRESENT),*/
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("Position")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("Normal")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("Albedo")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("MetallicRoughness")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("Depth")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("Lighting")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		/*CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("SSAO")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("BlurredSSAO1")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("BlurredSSAO2")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),*/
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("PostProcess")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("ShadowMapColor_0")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			buffer_manager_->Get("ShadowMapColor_1")->Resource(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_RENDER_TARGET),
+	};
+	command_list_->ResourceBarrier(_countof(barriers), barriers);
+
 	// コマンドの記録を終了
 	command_list_->Close();
 
@@ -255,7 +320,7 @@ void Engine::EndRenderD3D()
 	queue_->ExecuteCommandLists(1, ppCmdLists);
 
 	// 描画完了を待つ
-	WaitRender();
+	WaitGPU();
 }
 
 void Engine::BeginDeferredRender()
@@ -276,46 +341,6 @@ void Engine::BeginDeferredRender()
 			current_render_target_,
 			D3D12_RESOURCE_STATE_PRESENT,
 			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Position")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Normal")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Albedo")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("MetallicRoughness")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Depth")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Lighting")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		/*CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pGBufferManager->Get("SSAO")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pGBufferManager->Get("BlurredSSAO1")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pGBufferManager->Get("BlurredSSAO2")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),*/
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("PostProcess")->Resource(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET),
 	};
 	command_list_->ResourceBarrier(_countof(barriers), barriers);
 
@@ -325,13 +350,13 @@ void Engine::BeginDeferredRender()
 	const float oneFloat[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	const float zeroAlbedo[] = { 0, 0, 0, 1 };	// Aはアウトラインマスクなので１で初期化
 	command_list_->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("Position")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("Normal")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(), zeroAlbedo, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("Depth")->RtvHandle().HandleCPU(), oneFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("Lighting")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(gbuffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Position")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Normal")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(), zeroAlbedo, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Depth")->RtvHandle().HandleCPU(), oneFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Lighting")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 
 	// 深度ステンシルビューをクリア
 	command_list_->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -353,11 +378,11 @@ void Engine::GBufferPath()
 {
 	// レンダーターゲットを設定
 	D3D12_CPU_DESCRIPTOR_HANDLE handleRtvs[] = {
-		gbuffer_manager_->Get("Position")->RtvHandle().HandleCPU(),
-		gbuffer_manager_->Get("Normal")->RtvHandle().HandleCPU(),
-		gbuffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(),
-		gbuffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(),
-		gbuffer_manager_->Get("Depth")->RtvHandle().HandleCPU()
+		buffer_manager_->Get("Position")->RtvHandle().HandleCPU(),
+		buffer_manager_->Get("Normal")->RtvHandle().HandleCPU(),
+		buffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(),
+		buffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(),
+		buffer_manager_->Get("Depth")->RtvHandle().HandleCPU()
 	};
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
 
@@ -369,30 +394,30 @@ void Engine::LightingPath()
 	// レンダーターゲットに書き込み終わるまで待つ
 	D3D12_RESOURCE_BARRIER barriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Position")->Resource(),
+			buffer_manager_->Get("Position")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Normal")->Resource(),
+			buffer_manager_->Get("Normal")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Albedo")->Resource(),
+			buffer_manager_->Get("Albedo")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("MetallicRoughness")->Resource(),
+			buffer_manager_->Get("MetallicRoughness")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Depth")->Resource(),
+			buffer_manager_->Get("Depth")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
 	};
 	command_list_->ResourceBarrier(_countof(barriers), barriers);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = gbuffer_manager_->Get("Lighting")->RtvHandle().HandleCPU();
+	auto currentRtvHandle = buffer_manager_->Get("Lighting")->RtvHandle().HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
@@ -404,7 +429,7 @@ void Engine::LightingPath()
 void Engine::SSAOPath()
 {
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = gbuffer_manager_->Get("SSAO")->RtvHandle().HandleCPU();
+	auto currentRtvHandle = buffer_manager_->Get("SSAO")->RtvHandle().HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
@@ -417,13 +442,14 @@ void Engine::BlurHorizontalPath()
 {
 	D3D12_RESOURCE_BARRIER barriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("SSAO")->Resource(),
+			buffer_manager_->Get("SSAO")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 	};
+	command_list_->ResourceBarrier(_countof(barriers), barriers);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = gbuffer_manager_->Get("BlurredSSAO1")->RtvHandle().HandleCPU();
+	auto currentRtvHandle = buffer_manager_->Get("BlurredSSAO1")->RtvHandle().HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
@@ -436,13 +462,14 @@ void Engine::BlurVerticalPath()
 {
 	D3D12_RESOURCE_BARRIER barriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("BlurredSSAO1")->Resource(),
+			buffer_manager_->Get("BlurredSSAO1")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 	};
+	command_list_->ResourceBarrier(_countof(barriers), barriers);
 
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = gbuffer_manager_->Get("BlurredSSAO2")->RtvHandle().HandleCPU();
+	auto currentRtvHandle = buffer_manager_->Get("BlurredSSAO2")->RtvHandle().HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
@@ -455,18 +482,18 @@ void Engine::PostProcessPath()
 {
 	D3D12_RESOURCE_BARRIER barriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			gbuffer_manager_->Get("Lighting")->Resource(),
+			buffer_manager_->Get("Lighting")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 		/*CD3DX12_RESOURCE_BARRIER::Transition(
-			m_pGBufferManager->Get("BlurredSSAO2")->Resource(),
+			buffer_manager_->Get("BlurredSSAO2")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),*/
 	};
 	command_list_->ResourceBarrier(_countof(barriers), barriers);
 	
 	// 現在のフレームのレンダーターゲットビューのディスクリプタヒープの開始アドレスを取得
-	auto currentRtvHandle = gbuffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU();
+	auto currentRtvHandle = buffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU();
 
 	// 深度ステンシルのディスクリプタヒープの開始アドレス取得
 	auto currentDsvHandle = dsv_handle_.HandleCPU();
@@ -479,7 +506,7 @@ void Engine::FXAAPath()
 {
 	D3D12_RESOURCE_BARRIER barriers[] = {
 		CD3DX12_RESOURCE_BARRIER::Transition(
-			 gbuffer_manager_->Get("PostProcess")->Resource(),
+			 buffer_manager_->Get("PostProcess")->Resource(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 	};
@@ -497,25 +524,18 @@ void Engine::FXAAPath()
 
 void Engine::EndDeferredRender()
 {
-	// レンダーターゲットに書き込み終わるまで待つ
-	//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-	//	m_currentRenderTarget,
-	//	D3D12_RESOURCE_STATE_RENDER_TARGET,
-	//	D3D12_RESOURCE_STATE_PRESENT);
-	//m_pCommandList->ResourceBarrier(1, &barrier);
-
 	//// コマンドの記録を終了
-	//m_pCommandList->Close();
+	//command_list_->Close();
 
 	//// コマンドを実行
-	//ID3D12CommandList* ppCmdLists[] = { m_pCommandList.Get() };
-	//m_pQueue->ExecuteCommandLists(1, ppCmdLists);
+	//ID3D12CommandList* ppCmdLists[] = { command_list_.Get() };
+	//queue_->ExecuteCommandLists(1, ppCmdLists);
 
 	// スワップチェーンを切り替え
 	swapchain_->Present(1, 0);
 
 	// 描画完了を待つ
-	WaitRender();
+	WaitGPU();
 
 	// バックバッファ番号更新
 	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
@@ -560,9 +580,9 @@ std::shared_ptr<DescriptorHeap> Engine::DsvHeap()
 {
 	return dsv_heap_;
 }
-std::shared_ptr<DescriptorHeap> Engine::GBufferHeap()
+std::shared_ptr<DescriptorHeap> Engine::SrvHeap()
 {
-	return gbuffer_heap_;
+	return srv_heap_;
 }
 
 UINT Engine::CurrentBackBufferIndex()
@@ -570,7 +590,7 @@ UINT Engine::CurrentBackBufferIndex()
 	return current_back_buffer_index_;
 }
 
-Window* Engine::GetWindow()
+std::shared_ptr<Window> Engine::GetWindow()
 {
 	return window_;
 }
@@ -658,7 +678,7 @@ bool Engine::UploadTexture(
 	ID3D12CommandList* cmds[] = { command.Get() };
 	queue_->ExecuteCommandLists(1, cmds);
 
-	WaitRender();
+	WaitGPU();
 
 	oneshot_allocator_->Reset();
 
@@ -732,6 +752,57 @@ std::unique_ptr<DescriptorHeap> Engine::CreateDescriptorHeap(const unsigned int 
 	}
 
 	return std::move(dh);
+}
+
+void Engine::ResizeWindow(const unsigned int width, const unsigned int height)
+{
+	FlushGPU();
+
+	for (auto i = 0; i < FRAME_BUFFER_COUNT; i++)
+	{
+		render_targets_[i].Reset();
+		rtv_heap_->Free(rtv_handles_[i]);
+	}
+
+	depth_stencil_buffer_.Reset();
+	dsv_heap_->Free(dsv_handle_);
+
+	auto bm = buffer_manager_.get();
+	bm->Get("Position"         )->Reset();
+	bm->Get("Normal"           )->Reset();
+	bm->Get("Albedo"           )->Reset();
+	bm->Get("MetallicRoughness")->Reset();
+	bm->Get("Depth"            )->Reset();
+	bm->Get("Lighting"         )->Reset();
+	bm->Get("SSAO"             )->Reset();
+	bm->Get("BlurredSSAO1"     )->Reset();
+	bm->Get("BlurredSSAO2"     )->Reset();
+	bm->Get("PostProcess"      )->Reset();
+
+	engine2d_->ResetRenderTargets();
+	
+	DXGI_SWAP_CHAIN_DESC desc = {};
+	swapchain_->GetDesc(&desc);
+
+	auto hr = swapchain_->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
+	if (FAILED(hr))
+	{
+		throw std::runtime_error("バックバッファのサイズ変更に失敗");
+	}
+	
+	frame_buffer_width_ = width;
+	frame_buffer_height_ = height;
+
+	CreateViewPort();
+	CreateScissorRect();
+
+	CreateRenderTarget();
+	CreateDepthStencil();
+	CreateGBuffer();
+
+	engine2d_->CreateD2DRenderTarget();
+
+	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
 }
 
 bool Engine::EnableDebugLayer()
@@ -820,9 +891,15 @@ bool Engine::CreateSwapChain()
 		return false;
 	}
 
+
+	// Alt-Enterでフルスクリーンを防止
+	pFactory->MakeWindowAssociation(hwnd_, DXGI_MWA_NO_ALT_ENTER);
+
 	// バックバッファ番号を取得
 	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
 
+	//swapchain_->SetFullscreenState(TRUE, NULL);
+	
 	pFactory->Release();
 	pSwapChain->Release();
 	return true;
@@ -916,21 +993,9 @@ void Engine::CreateScissorRect()
 
 bool Engine::CreateRenderTarget()
 {
-	// RTV用のディスクリプタヒープを作成する
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = 100; //FRAME_BUFFER_COUNT + 2;
-	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-
-	rtv_heap_ = std::make_unique<DescriptorHeap>(desc);
-	if (!rtv_heap_->IsValid())
-	{
-		return false;
-	}
 
 	for (UINT i = 0; i < FRAME_BUFFER_COUNT; i++)
 	{
@@ -944,18 +1009,6 @@ bool Engine::CreateRenderTarget()
 
 bool Engine::CreateDepthStencil()
 {
-	// DSV用のディスクリプタヒープを作成する
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors	= 3;
-	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	
-	dsv_heap_ = std::make_unique<DescriptorHeap>(desc);
-	if (!dsv_heap_->IsValid())
-	{
-		return false;
-	}
-
 	D3D12_CLEAR_VALUE dsvClearValue;
 	dsvClearValue.Format				= DXGI_FORMAT_D32_FLOAT;
 	dsvClearValue.DepthStencil.Depth	= 1.0f;
@@ -1083,46 +1136,97 @@ bool Engine::CreateMSAA()
 
 bool Engine::CreateGBuffer()
 {
-	// SRV用のディスクリプタヒープを作成
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
-	srvHeapDesc.NodeMask = 1;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.NumDescriptors = 32; //6 + 1 + 1;	// GBuffer * 6 + ShadowMap + Skybox
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	// GBufferの生成
+	auto bm = buffer_manager_.get();
 
-	gbuffer_heap_ = std::make_unique<DescriptorHeap>(srvHeapDesc);
-	if (!gbuffer_heap_->IsValid())
-		return false;
- 
-	// GBufferManagerの生成
-	gbuffer_manager_ = std::make_unique<GBufferManager>();
+	auto color_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	auto float_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-	GBufferProperty propRGBA{
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		frame_buffer_width_, frame_buffer_height_,
-		gbuffer_heap_.get(), rtv_heap_.get()
-	};
+	bm->CreateGBuffer("Position"         , float_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("Normal"           , float_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("Albedo"           , color_format, { 0, 0, 0, 1 });
+	bm->CreateGBuffer("MetallicRoughness", color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("Depth"            , float_format, { 1, 1, 1, 1 });
+	bm->CreateGBuffer("Lighting"         , color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("SSAO"             , color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("BlurredSSAO1"     , color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("BlurredSSAO2"     , color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("PostProcess"      , color_format, { 0, 0, 0, 0 });
 
-	GBufferProperty propFloat{
-		DXGI_FORMAT_R32G32B32A32_FLOAT,
-		frame_buffer_width_, frame_buffer_height_,
-		gbuffer_heap_.get(), rtv_heap_.get()
-	};
+	//Buffer::BufferProperty propRGBA{
+	//	DXGI_FORMAT_R8G8B8A8_UNORM,
+	//	frame_buffer_width_, frame_buffer_height_,
+	//	srv_heap_.get(), rtv_heap_.get()
+	//};
 
-	// GBufferの作成
-	gbuffer_manager_->CreateGBuffer("Position", propFloat);
-	gbuffer_manager_->CreateGBuffer("Normal", propFloat);
-	gbuffer_manager_->CreateGBuffer("Albedo", propRGBA);
-	gbuffer_manager_->CreateGBuffer("MetallicRoughness", propRGBA);
-	gbuffer_manager_->CreateGBuffer("Depth", propFloat);
-	gbuffer_manager_->CreateGBuffer("Lighting", propRGBA);
-	gbuffer_manager_->CreateGBuffer("SSAO", propFloat);
-	gbuffer_manager_->CreateGBuffer("BlurredSSAO1", propFloat);
-	gbuffer_manager_->CreateGBuffer("BlurredSSAO2", propFloat);
-	gbuffer_manager_->CreateGBuffer("PostProcess", propRGBA);
+	//Buffer::BufferProperty propFloat{
+	//	DXGI_FORMAT_R32G32B32A32_FLOAT,
+	//	frame_buffer_width_, frame_buffer_height_,
+	//	srv_heap_.get(), rtv_heap_.get()
+	//};
+
+	//// GBufferの作成
+	//buffer_manager_->CreateGBuffer("Position", propFloat);
+	//buffer_manager_->CreateGBuffer("Normal", propFloat);
+	//buffer_manager_->CreateGBuffer("Albedo", propRGBA);
+	//buffer_manager_->CreateGBuffer("MetallicRoughness", propRGBA);
+	//buffer_manager_->CreateGBuffer("Depth", propFloat);
+	//buffer_manager_->CreateGBuffer("Lighting", propRGBA);
+	//buffer_manager_->CreateGBuffer("SSAO", propFloat);
+	//buffer_manager_->CreateGBuffer("BlurredSSAO1", propFloat);
+	//buffer_manager_->CreateGBuffer("BlurredSSAO2", propFloat);
+	//buffer_manager_->CreateGBuffer("PostProcess", propRGBA);
+
+	return true;
 }
 
-void Engine::WaitRender()
+bool Engine::CreateDescriptorHeap()
+{
+	// RTV用のディスクリプタヒープを作成する
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+		desc.NumDescriptors = 32; //FRAME_BUFFER_COUNT + 2;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+		rtv_heap_ = std::make_unique<DescriptorHeap>(desc);
+		if (!rtv_heap_->IsValid())
+		{
+			return false;
+		}
+	}
+
+	// DSV用のディスクリプタヒープを作成する
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+		desc.NumDescriptors = 32;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+		dsv_heap_ = std::make_unique<DescriptorHeap>(desc);
+		if (!dsv_heap_->IsValid())
+		{
+			return false;
+		}
+	}
+
+	// SRV用のディスクリプタヒープを作成
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{};
+		srvHeapDesc.NodeMask = 1;
+		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		srvHeapDesc.NumDescriptors = 32; //6 + 1 + 1;	// GBuffer * 6 + ShadowMap + Skybox
+		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+		srv_heap_ = std::make_unique<DescriptorHeap>(srvHeapDesc);
+		if (!srv_heap_->IsValid())
+			return false;
+	}
+
+	return true;
+}
+
+void Engine::WaitGPU()
 {
 	// 描画終了待ち
 	const UINT64 fenceValue = fence_value_[current_back_buffer_index_];
@@ -1147,9 +1251,75 @@ void Engine::WaitRender()
 	}
 }
 
-GBufferManager* Engine::GetGBufferManager()
+void Engine::FlushGPU()
 {
-	return gbuffer_manager_.get();
+	//for (auto i = 0; i < FRAME_BUFFER_COUNT; i++)
+	//{
+	//	const UINT64 fenceValue = fence_value_[i];
+	//	queue_->Signal(fence_.Get(), fenceValue);
+	//	fence_value_[i]++;
+
+	//	// 次のフレームの描画準備がまだであれば待機する
+	//	if (fence_->GetCompletedValue() < fenceValue)
+	//	{
+	//		// 完了時にイベントを設定
+	//		auto hr = fence_->SetEventOnCompletion(fenceValue, fence_event_);
+	//		if (FAILED(hr))
+	//		{
+	//			return;
+	//		}
+
+	//		// 待機処理
+	//		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(fence_event_, INFINITE, FALSE))
+	//		{
+	//			return;
+	//		}
+	//	}
+	//}
+	ComPtr<ID3D12Fence1> fence;
+	const UINT64 expect_value = 1;
+	device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+	queue_->Signal(fence.Get(), expect_value);
+	if (fence->GetCompletedValue() != expect_value)
+	{
+		fence->SetEventOnCompletion(expect_value, fence_event_);
+		WaitForSingleObject(fence_event_, INFINITE);
+	}
+}
+
+void Engine::ToggleFullscreen()
+{
+	BOOL is_fullscreen;
+	swapchain_->GetFullscreenState(&is_fullscreen, nullptr);
+
+	if (is_fullscreen)
+	{
+		swapchain_->SetFullscreenState(FALSE, nullptr);
+		SetWindowLong(hwnd_, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+		ShowWindow(hwnd_, SW_NORMAL);
+
+		ResizeWindow(1280, 720);
+	}
+	else
+	{
+		swapchain_->SetFullscreenState(TRUE, nullptr);
+
+		DXGI_SWAP_CHAIN_DESC desc = {};
+		swapchain_->GetDesc(&desc);
+
+		DXGI_MODE_DESC mode_desc = desc.BufferDesc;
+		mode_desc.Width = 1920;
+		mode_desc.Height = 1080;
+		swapchain_->ResizeTarget(&mode_desc);
+
+		ResizeWindow(1920, 1080);
+	}
+	
+}
+
+BufferManager* Engine::GetGBufferManager()
+{
+	return buffer_manager_.get();
 }
 
 ShadowMap* Engine::GetShadowMap()

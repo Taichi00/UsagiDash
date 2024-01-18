@@ -1,7 +1,7 @@
 #include "engine2d.h"
 #include "engine/window.h"
-#include "engine/gbuffer_manager.h"
-#include "engine/gbuffer.h"
+#include "engine/buffer_manager.h"
+#include "engine/buffer.h"
 #include "game/game.h"
 
 Engine2D::Engine2D()
@@ -119,6 +119,18 @@ void Engine2D::DrawText(const std::string& textFormatKey, const std::string& sol
 		&rect,
 		solidColorBrush.Get()
 	);
+}
+
+void Engine2D::ResetRenderTargets()
+{
+	for (auto i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
+	{
+		wrapped_back_buffers_[i].Reset();
+		d2d_render_targets_[i].Reset();
+	}
+	d2d_device_context_->SetTarget(nullptr);
+	//d2d_device_context_->Flush();
+	d3d11_device_context_->Flush();
 }
 
 bool Engine2D::CreateD3D11Device()

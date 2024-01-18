@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <memory>
 #include "game/resource_manager.h"
+#include "math/vec.h"
 
 class Window;
 class Entity;
@@ -36,10 +37,12 @@ public:
 	void SetWindowSize(unsigned int width, unsigned int height);
 	void SetWindowTitle(std::wstring title);
 
+	void ToggleFullscreen();
+
 	Scene* LoadScene(Scene* scene);
 	Scene* GetCurrentScene();
 
-	DirectX::XMVECTOR GetSWindowSize();
+	Vec2 GetWindowSize();
 
 	template<class T> std::shared_ptr<T> LoadResource(std::string path)	// リソースを読み込む
 	{
@@ -55,7 +58,7 @@ protected:
 	virtual void End();
 
 private:
-	std::unique_ptr<Window> window_; // ウィンドウへのポインタ
+	std::shared_ptr<Window> window_; // ウィンドウへのポインタ
 	unsigned int window_width_ = 640;
 	unsigned int window_height_ = 480;
 	std::wstring window_title_ = L"Game";

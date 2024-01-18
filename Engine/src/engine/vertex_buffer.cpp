@@ -1,6 +1,6 @@
 #include "vertex_buffer.h"
 #include "engine/engine.h"
-#include "d3dx12.h"
+#include "engine/d3dx12.h"
 #include "game/game.h"
 
 VertexBuffer::VertexBuffer(size_t size, size_t stride, const void* pInitData)

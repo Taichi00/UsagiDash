@@ -82,8 +82,8 @@ float4 main(VSOutput input) : SV_TARGET
     float3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
     float3 bitangent = cross(viewNormal, tangent);
     float3x3 TBN = float3x3(tangent, bitangent, viewNormal);
-    float radius = 0.5;
-    float bias = 0.05;
+    float radius = 1;
+    float bias = 0.5;
     float occlusion = 0;
     for (int i = 0; i < SSAO_SAMPLENUM; i++)
     {

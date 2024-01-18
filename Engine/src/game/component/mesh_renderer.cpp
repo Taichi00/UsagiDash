@@ -257,16 +257,16 @@ void MeshRenderer::DrawDepth()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
-	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->SetGraphicsRootSignature(root_signature_->Get()); // ルートシグネチャをセット
+	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress()); // 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ID3D12DescriptorHeap* heaps[] = {
 		model_->descriptor_heap->GetHeap(),
 	};
-	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetDescriptorHeaps(1, heaps); // ディスクリプタヒープをセット
 
-	commandList->SetPipelineState(depth_pso_->Get());								// パイプラインステートをセット
+	commandList->SetPipelineState(depth_pso_->Get()); // パイプラインステートをセット
 
 	// メッシュの描画
 	for (const auto& mesh : model_->meshes)
@@ -281,9 +281,9 @@ void MeshRenderer::DrawDepth()
 			continue;
 
 		commandList->SetGraphicsRootConstantBufferView(3, materials_cb_[materialIndex]->GetAddress());
-		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
-		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->IASetVertexBuffers(0, 1, &vbView); // 頂点バッファをスロット0番を使って1個だけ設定する
+		commandList->IASetIndexBuffer(&ibView); // インデックスバッファをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU()); // ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}

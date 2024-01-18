@@ -18,7 +18,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/material.h>
 #include <assimp/pbrmaterial.h>
-#include "d3dx12.h"
+#include "engine/d3dx12.h"
 #include <filesystem>
 #include <d3d12.h>
 #include <stdio.h>

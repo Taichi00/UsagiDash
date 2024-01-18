@@ -13,8 +13,8 @@
 #include "engine/texture2d.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
-#include "engine/gbuffer.h"
-#include "engine/gbuffer_manager.h"
+#include "engine/buffer.h"
+#include "engine/buffer_manager.h"
 #include "game/model.h"
 #include "game/game.h"
 #include "game/resource_manager.h"
@@ -47,7 +47,7 @@ bool Scene::Init()
 
 	rtv_heap_ = Game::Get()->GetEngine()->RtvHeap();
 	dsv_heap_ = Game::Get()->GetEngine()->DsvHeap();
-	gbuffer_heap_ = Game::Get()->GetEngine()->GBufferHeap();
+	gbuffer_heap_ = Game::Get()->GetEngine()->SrvHeap();
 
 	// ルートシグネチャの生成
 	RootSignatureParameter params[] = {
@@ -177,7 +177,7 @@ void Scene::Draw()
 	// Skybox描画（フォワードレンダリング）
 	DrawSkybox();
 
-	// SSAO
+	//// SSAO
 	//Game::Get()->GetEngine()->SSAOPath();
 	//DrawSSAO();
 
@@ -213,7 +213,7 @@ void Scene::DrawLighting()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 	auto shadowMap = Game::Get()->GetEngine()->GetShadowMap();
 
@@ -231,7 +231,7 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(4, gbufferManager->Get("Albedo")->SrvHandle().HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("MetallicRoughness")->SrvHandle().HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Depth")->SrvHandle().HandleGPU());
-	commandList->SetGraphicsRootDescriptorTable(7, shadowMap->SrvHandle()->HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(7, shadowMap->SrvHandle().HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(8, diffusemap_handle_.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(9, specularmap_handle_.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(10, brdf_handle_.HandleGPU());
@@ -246,7 +246,7 @@ void Scene::DrawSkybox()
 
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 
 	commandList->SetGraphicsRootSignature(skybox_root_signature_->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -274,7 +274,7 @@ void Scene::DrawSSAO()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -299,7 +299,7 @@ void Scene::DrawBlurHorizontal()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -319,7 +319,7 @@ void Scene::DrawBlurVertical()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -339,7 +339,7 @@ void Scene::DrawPostProcess()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -358,7 +358,7 @@ void Scene::DrawPostProcess()
 	commandList->SetGraphicsRootDescriptorTable(5, gbufferManager->Get("Depth")->SrvHandle().HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(6, gbufferManager->Get("Position")->SrvHandle().HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(7, gbufferManager->Get("BlurredSSAO2")->SrvHandle().HandleGPU());
-
+	
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
@@ -366,7 +366,7 @@ void Scene::DrawFXAA()
 {
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto gbufferHeap = Game::Get()->GetEngine()->GBufferHeap()->GetHeap();
+	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
 	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -378,7 +378,7 @@ void Scene::DrawFXAA()
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	commandList->SetPipelineState(fxaa_pso_->Get());		// パイプラインステートをセット
 	commandList->SetGraphicsRootDescriptorTable(2, gbufferManager->Get("PostProcess")->SrvHandle().HandleGPU());	// ディスクリプタテーブルをセット
-
+	
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
@@ -427,7 +427,7 @@ void Scene::SetSkybox(const std::string path)
 	skyboxDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	skyboxDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	skybox_handle_ = Game::Get()->GetEngine()->GBufferHeap()->Alloc();	// GBufferHeapに追加
+	skybox_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();	// GBufferHeapに追加
 	device->CreateShaderResourceView(skybox_tex_->Resource(), &skyboxDesc, skybox_handle_.HandleCPU());	// シェーダーリソースビュー作成
 
 	// DiffuseMap
@@ -441,7 +441,7 @@ void Scene::SetSkybox(const std::string path)
 	diffuseDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	diffuseDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	diffusemap_handle_ = Game::Get()->GetEngine()->GBufferHeap()->Alloc();
+	diffusemap_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
 	device->CreateShaderResourceView(diffusemap_tex_->Resource(), &diffuseDesc, diffusemap_handle_.HandleCPU());
 
 	// SpecularMap
@@ -455,7 +455,7 @@ void Scene::SetSkybox(const std::string path)
 	specularDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	specularDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
-	specularmap_handle_ = Game::Get()->GetEngine()->GBufferHeap()->Alloc();
+	specularmap_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
 	device->CreateShaderResourceView(specularmap_tex_->Resource(), &specularDesc, specularmap_handle_.HandleCPU());
 
 	// brdfLUT
@@ -467,7 +467,7 @@ void Scene::SetSkybox(const std::string path)
 	brdfDesc.Texture2D.MipLevels = brdf_tex_->Metadata().mipLevels;
 	brdfDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-	brdf_handle_ = Game::Get()->GetEngine()->GBufferHeap()->Alloc();
+	brdf_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
 	device->CreateShaderResourceView(brdf_tex_->Resource(), &brdfDesc, brdf_handle_.HandleCPU());
 
 
