@@ -2,6 +2,9 @@
 
 #include "game/component/component.h"
 #include "math/vec.h"
+#include "math/aabb.h"
+#include <memory>
+#include <string>
 
 class Rigidbody;
 class SphereCollider;
@@ -9,15 +12,32 @@ class CapsuleCollider;
 class FloorCollider;
 class MeshCollider;
 class Ray;
+class CollisionManager;
 
 class Collider : public Component
 {
 public:
+	struct HitInfo
+	{
+		Collider* collider;
+		Vec3 normal;
+		float depth;
+	};
+
+	Collider() = default;
+	~Collider();
+
 	bool Init();
 
+	void ResetHits();
 	void Prepare();
+
 	Vec3 GetPosition();
 	Vec3 GetExtension();
+	AABB GetAABB();
+
+	bool HasDetected();
+	void SetHasDetected(bool flag);
 
 	Rigidbody* GetRigidbody();
 
@@ -30,16 +50,28 @@ public:
 
 	static Vec3 ClosestPointOnLineSegment(const Vec3& a, const Vec3& b, const Vec3& point);
 
+	void AddHit(const HitInfo& hit);
+	const std::vector<HitInfo>& GetHits();
+
+	const HitInfo& GetNearestHit();
+
+private:
+	virtual void PrepareAABB() = 0;
+
 public:
 	Vec3 offset;
-	
-	std::vector<Collider*> hit_colliders;
-	std::vector<Vec3> hit_normals;
-	std::vector<float> hit_depths;
+	Vec3 scale = Vec3(1, 1, 1);
 	
 protected:
 	Rigidbody* rigidbody_;
 	Vec3 position_;
-	Vec3 scale_;
 	Vec3 extension_;	// 地面吸着用の延長ベクトル
+	AABB aabb_;
+
+	std::vector<HitInfo> hits_;
+	HitInfo nearest_hit_; // 最も近い衝突
+
+	std::shared_ptr<CollisionManager> collision_manager_;
+
+	bool has_detected_; // 判定が終了したかどうか
 };

@@ -35,5 +35,5 @@ public:
 	void ResetAll();
 
 private:
-	std::map<std::string, std::shared_ptr<Buffer>> gbuffer_map_;
+	std::map<std::string, std::shared_ptr<Buffer>> buffer_map_;
 };

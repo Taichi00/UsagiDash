@@ -14,4 +14,7 @@ public:
 
 	bool Intersects(SphereCollider* sphere);
 	bool Intersects(FloorCollider* floor);
+
+private:
+	void PrepareAABB() override;
 };

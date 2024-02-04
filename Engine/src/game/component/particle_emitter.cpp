@@ -1,6 +1,6 @@
 #include "game/component/particle_emitter.h"
 #include "game/particle.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
 #include "engine/constant_buffer.h"
@@ -12,7 +12,7 @@
 #include "engine/descriptor_heap.h"
 #include "math/quaternion.h"
 #include "math/easing.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 #include <memory>
 
 ParticleEmitter::ParticleEmitter(ParticleEmitterProperty prop)
@@ -720,7 +720,9 @@ void ParticleEmitter::UpdateScale(const ParticleEmitterScalePropertyPVA& prop)
 
 void ParticleEmitter::UpdateScale(const ParticleEmitterScalePropertyEasing& prop)
 {
-	float (*easing)(const float&) = GetEasingFunc(prop.type);
+
+	float (*easing)(const float&);
+	easing = GetEasingFunc(prop.type);
 	
 	if (prop.middle_enabled)
 	{
@@ -761,6 +763,8 @@ float (*ParticleEmitter::GetEasingFunc(const ParticleEmitterEasingType& type))(c
 	case PARTICLE_EASE_INOUT_CUBIC:
 		return &Easing::InOutCubic;
 	}
+
+	return &Easing::Linear;
 }
 
 void ParticleEmitter::UpdateCB()

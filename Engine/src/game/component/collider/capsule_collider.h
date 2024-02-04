@@ -25,6 +25,9 @@ public:
 	bool Intersects(FloorCollider* floor);
 	bool Intersects(MeshCollider* collider);
 
+private:
+	void PrepareAABB() override;
+
 public:
 	float radius;
 	float height;

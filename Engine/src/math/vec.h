@@ -3,6 +3,7 @@
 #include <cmath>
 #include <string>
 #include <DirectXMath.h>
+#include <utility>
 
 #undef min
 #undef max
@@ -138,14 +139,34 @@ public:
 		return { x, y, z };
 	}
 
-	bool operator ==(const Vec3& v)
+	bool operator ==(const Vec3& v) const
 	{
 		return (x == v.x) && (y == v.y) && (z == v.z);
 	}
 
-	bool operator !=(const Vec3& v)
+	bool operator !=(const Vec3& v) const
 	{
-		return (x != v.x) || (y != v.y) || (z != v.z);
+		return !(*this == v);
+	}
+
+	bool operator >(const Vec3& v) const
+	{
+		return x > v.x && y > v.y && z > v.z;
+	}
+
+	bool operator >=(const Vec3& v) const
+	{
+		return x >= v.x && y >= v.y && z >= v.z;
+	}
+
+	bool operator <(const Vec3& v) const
+	{
+		return x < v.x && y < v.y && z < v.z;
+	}
+
+	bool operator <=(const Vec3& v) const
+	{
+		return x <= v.x && y <= v.y && z <= v.z;
 	}
 
 	float Length() const
@@ -199,6 +220,22 @@ public:
 	static Vec3 Lerp(const Vec3& v1, const Vec3& v2, const float& t)
 	{
 		return v1 * (1 - t) + v2 * t;
+	}
+
+	static Vec3 Max(const Vec3& v1, const Vec3& v2)
+	{
+		float mx = (std::max(v1.x, v2.x));
+		float my = (std::max(v1.y, v2.y));
+		float mz = (std::max(v1.z, v2.z));
+		return Vec3(mx, my, mz);
+	}
+
+	static Vec3 Min(const Vec3& v1, const Vec3& v2)
+	{
+		float mx = (std::min(v1.x, v2.x));
+		float my = (std::min(v1.y, v2.y));
+		float mz = (std::min(v1.z, v2.z));
+		return Vec3(mx, my, mz);
 	}
 
 	std::string GetString() const

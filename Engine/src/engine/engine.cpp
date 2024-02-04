@@ -5,6 +5,7 @@
 #include "engine/buffer.h"
 #include "engine/buffer_manager.h"
 #include "engine/pipeline_state.h"
+#include "engine/pipeline_state_manager.h"
 #include "engine/window.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
@@ -24,7 +25,10 @@ Engine::~Engine()
 {
 	printf("Delete Engine\n");
 	shadowmap_.release();
+
+#if _DEBUG
 	debug_device_->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
+#endif
 }
 
 bool Engine::Init(std::shared_ptr<Window> window)
@@ -93,7 +97,7 @@ bool Engine::Init(std::shared_ptr<Window> window)
 	//	printf("MSAAリソースの生成に失敗\n");
 	//}
 
-	// GBufferManagerの生成
+	// BufferManagerの生成
 	buffer_manager_ = std::make_unique<BufferManager>();
 
 	if (!CreateGBuffer())
@@ -107,6 +111,9 @@ bool Engine::Init(std::shared_ptr<Window> window)
 	{
 		return false;
 	}
+
+	// PipelineStateManagerの生成
+	pipeline_manager_ = std::make_unique<PipelineStateManager>();
 
 	// シャドウマップの生成
 	shadowmap_ = std::make_unique<ShadowMap>();
@@ -347,14 +354,14 @@ void Engine::BeginDeferredRender()
 	// レンダーターゲットをクリア
 	const float clearColor[] = { 0.9f, 0.9f, 0.9f, 1.0f };
 	const float zeroFloat[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	const float oneFloat[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	const float depthFloat[] = { 10000.0f, 0.0f, 0.0f, 0.0f };
 	const float zeroAlbedo[] = { 0, 0, 0, 1 };	// Aはアウトラインマスクなので１で初期化
 	command_list_->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Position")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Normal")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(), zeroAlbedo, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(buffer_manager_->Get("Depth")->RtvHandle().HandleCPU(), oneFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("Depth")->RtvHandle().HandleCPU(), depthFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Lighting")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 
@@ -824,11 +831,13 @@ bool Engine::CreateDevice()
 {
 	auto hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device_.ReleaseAndGetAddressOf()));
 
+#if _DEBUG
 	device_.As(&debug_device_);
 
 	ComPtr<ID3D12InfoQueue> pInfoQueue;
 	device_.As(&pInfoQueue);
 	pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+#endif
 
 	return SUCCEEDED(hr);
 }
@@ -893,7 +902,7 @@ bool Engine::CreateSwapChain()
 
 
 	// Alt-Enterでフルスクリーンを防止
-	pFactory->MakeWindowAssociation(hwnd_, DXGI_MWA_NO_ALT_ENTER);
+	pFactory->MakeWindowAssociation(hwnd_, DXGI_MWA_NO_ALT_ENTER | DXGI_MWA_NO_WINDOW_CHANGES);
 
 	// バックバッファ番号を取得
 	current_back_buffer_index_ = swapchain_->GetCurrentBackBufferIndex();
@@ -1289,23 +1298,24 @@ void Engine::FlushGPU()
 
 void Engine::ToggleFullscreen()
 {
+
+	DXGI_SWAP_CHAIN_DESC desc = {};
+	swapchain_->GetDesc(&desc);
+
 	BOOL is_fullscreen;
 	swapchain_->GetFullscreenState(&is_fullscreen, nullptr);
 
 	if (is_fullscreen)
 	{
 		swapchain_->SetFullscreenState(FALSE, nullptr);
-		SetWindowLong(hwnd_, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-		ShowWindow(hwnd_, SW_NORMAL);
+		/*SetWindowLong(hwnd_, GWL_STYLE, WS_OVERLAPPED);
+		ShowWindow(hwnd_, SW_NORMAL);*/
 
 		ResizeWindow(1280, 720);
 	}
 	else
 	{
 		swapchain_->SetFullscreenState(TRUE, nullptr);
-
-		DXGI_SWAP_CHAIN_DESC desc = {};
-		swapchain_->GetDesc(&desc);
 
 		DXGI_MODE_DESC mode_desc = desc.BufferDesc;
 		mode_desc.Width = 1920;
@@ -1317,9 +1327,14 @@ void Engine::ToggleFullscreen()
 	
 }
 
-BufferManager* Engine::GetGBufferManager()
+BufferManager* Engine::GetBufferManager()
 {
 	return buffer_manager_.get();
+}
+
+PipelineStateManager* Engine::GetPipelineStateManager()
+{
+	return pipeline_manager_.get();
 }
 
 ShadowMap* Engine::GetShadowMap()

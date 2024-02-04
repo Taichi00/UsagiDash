@@ -1,5 +1,5 @@
 #include "engine/descriptor_heap.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "engine/d3dx12.h"
 #include "engine/engine.h"
 #include "game/game.h"

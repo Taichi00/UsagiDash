@@ -5,7 +5,7 @@
 
 BufferManager::BufferManager()
 {
-	gbuffer_map_.clear();
+	buffer_map_.clear();
 }
 
 BufferManager::~BufferManager()
@@ -48,7 +48,7 @@ void BufferManager::CreateGBuffer(
 	prop.rtv_heap = engine->RtvHeap().get();
 	prop.srv_heap = engine->SrvHeap().get();
 
-	gbuffer_map_[name] = std::make_shared<Buffer>(name, prop);
+	buffer_map_[name] = std::make_shared<Buffer>(name, prop);
 }
 
 void BufferManager::CreateDepthStencilBuffer(
@@ -70,17 +70,17 @@ void BufferManager::CreateDepthStencilBuffer(
 	prop.clear_value = clear_value;
 	prop.dsv_heap = engine->DsvHeap().get();
 
-	gbuffer_map_[name] = std::make_shared<Buffer>(name, prop);
+	buffer_map_[name] = std::make_shared<Buffer>(name, prop);
 }
 
 std::shared_ptr<Buffer> BufferManager::Get(const std::string& name)
 {
-	return gbuffer_map_[name];
+	return buffer_map_[name];
 }
 
 void BufferManager::CreateAll()
 {
-	for (auto iter = gbuffer_map_.begin(); iter != gbuffer_map_.end(); ++iter)
+	for (auto iter = buffer_map_.begin(); iter != buffer_map_.end(); ++iter)
 	{
 		iter->second->Create();
 	}
@@ -88,7 +88,7 @@ void BufferManager::CreateAll()
 
 void BufferManager::ResetAll()
 {
-	for (auto iter = gbuffer_map_.begin(); iter != gbuffer_map_.end(); ++iter)
+	for (auto iter = buffer_map_.begin(); iter != buffer_map_.end(); ++iter)
 	{
 		iter->second->Reset();
 	}

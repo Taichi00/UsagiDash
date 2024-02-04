@@ -8,12 +8,12 @@
 #include "game/component/sphere_mesh.h"
 #include "game/component/camera.h"
 #include "game/component/particle_emitter.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "game/component/rigidbody.h"
 #include "game/component/collider/capsule_collider.h"
 #include "game/component/collider/collider.h"
 #include "game/component/collider/mesh_collider.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 
 #include "app/player.h"
 #include "app/game_camera.h"
@@ -134,11 +134,9 @@ bool MainScene::Init()
 	CreateEntity(circleSmokeEmitter);
 
 
-	CollisionModel collisionModel;
-	AssimpLoader::LoadCollision(L"Assets/PlatformerPack/Cube_Grass_Single.gltf", collisionModel);
 	auto plane = new Entity();
 	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Cube_Grass_Single.gltf")));
-	collider = (Collider*)plane->AddComponent(new MeshCollider({ collisionModel }));
+	collider = (Collider*)plane->AddComponent(new MeshCollider(LoadResource<CollisionModel>("Assets/PlatformerPack/Cube_Grass_Single.gltf")));
 	plane->AddComponent(new Rigidbody({ collider, 1000, false, true, 0.5 }));
 	CreateEntity(plane);
 

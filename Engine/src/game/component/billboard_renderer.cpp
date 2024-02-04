@@ -1,5 +1,5 @@
 #include "game/component/billboard_renderer.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "engine/shared_struct.h"
 #include "math/vec.h"
 #include "engine/vertex_buffer.h"

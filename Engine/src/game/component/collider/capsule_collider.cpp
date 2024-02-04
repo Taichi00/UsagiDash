@@ -39,14 +39,9 @@ bool CapsuleCollider::Intersects(SphereCollider* sphere)
 	{
 		auto normal = v.Normalized();
 
-		hit_colliders.push_back(sphere);
-		hit_normals.push_back(normal);
-		hit_depths.push_back(distance);
-
-		sphere->hit_colliders.push_back(this);
-		sphere->hit_normals.push_back(-normal);
-		sphere->hit_depths.push_back(distance);
-
+		AddHit({ sphere, normal, distance });
+		sphere->AddHit({ this, -normal, distance });
+		
 		return true;
 	}
 
@@ -98,13 +93,8 @@ bool CapsuleCollider::Intersects(CapsuleCollider* capsule)
 	{
 		auto normal = v.Normalized();
 
-		hit_colliders.push_back(capsule);
-		hit_normals.push_back(normal);
-		hit_depths.push_back(distance);
-
-		capsule->hit_colliders.push_back(this);
-		capsule->hit_normals.push_back(-normal);
-		capsule->hit_depths.push_back(distance);
+		AddHit({ capsule, normal, distance });
+		capsule->AddHit({ this, -normal, distance });
 
 		return true;
 	}
@@ -120,4 +110,11 @@ bool CapsuleCollider::Intersects(FloorCollider* floor)
 bool CapsuleCollider::Intersects(MeshCollider* collider)
 {
 	return collider->Intersects(this);
+}
+
+void CapsuleCollider::PrepareAABB()
+{
+	aabb_ = AABB{};
+	aabb_.max = Vec3(radius, height + radius, radius);
+	aabb_.min = Vec3(-radius, -height - radius, -radius);
 }

@@ -2,8 +2,10 @@
 
 #include "game/component/component.h"
 #include "math/vec.h"
+#include <memory>
 
 class Collider;
+class CollisionManager;
 
 struct RigidbodyProperty
 {
@@ -22,9 +24,11 @@ public:
 
 	bool Init();
 
+	void Prepare();
 	void Resolve();
 
 public:
+	Vec3 position, position_prev;
 	Vec3 velocity, velocity_prev;
 	float mass;
 	bool use_gravity;
@@ -38,4 +42,6 @@ public:
 	Rigidbody* floor_rigidbody;
 	Vec3 floor_normal;
 	Vec3 floor_velocity;
+
+	std::shared_ptr<CollisionManager> collision_manager_;
 };

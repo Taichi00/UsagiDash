@@ -6,15 +6,10 @@
 class Entity;
 class Camera;
 
-struct GameCameraProperty
-{
-	Entity* target;
-};
-
 class GameCamera : public Component
 {
 public:
-	GameCamera(GameCameraProperty prop);
+	GameCamera(Entity* target);
 	~GameCamera();
 
 	bool Init();

@@ -5,9 +5,9 @@
 #include "game/physics.h"
 #include "app/player.h"
 
-GameCamera::GameCamera(GameCameraProperty prop)
+GameCamera::GameCamera(Entity* target)
 {
-	target_ = prop.target;
+	target_ = target;
 	angle_ = Vec3(0.5, 0, 0);
 	current_distance_ = distance_;
 }
@@ -82,7 +82,7 @@ void GameCamera::Move()
 
 	// ÇﬂÇËçûÇ›ñhé~
 	RaycastHit hit;
-	if (Physics::Raycast(origin, direction, distance, hit))
+	if (Physics::Raycast(origin, direction, distance, hit, {"map"}))
 	{
 		distance = max(hit.distance - 0.1, 0);
 	}

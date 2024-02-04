@@ -111,6 +111,11 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC* PipelineState::GetDesc()
 	return &desc_;
 }
 
+ID3D12RootSignature* PipelineState::RootSignature()
+{
+	return desc_.pRootSignature;
+}
+
 
 
 

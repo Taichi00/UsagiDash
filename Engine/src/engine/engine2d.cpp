@@ -231,7 +231,7 @@ bool Engine2D::CreateD2DRenderTarget()
 
 	D3D11_RESOURCE_FLAGS flags = { D3D11_BIND_RENDER_TARGET };
 
-	float dpi = GetDpiForWindow(Game::Get()->GetEngine()->GetWindow()->HWnd());
+	float dpi = (float)GetDpiForWindow(Game::Get()->GetEngine()->GetWindow()->HWnd());
 	D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),

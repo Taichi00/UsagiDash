@@ -3,13 +3,14 @@
 #include "game/component/component.h"
 #include "engine/engine.h"
 #include "game/bone_list.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 #include "engine/descriptor_heap.h"
 #include <memory>
 
 class ConstantBuffer;
 class RootSignature;
 class PipelineState;
+class PipelineStateManager;
 
 class MeshRenderer : public Component
 {
@@ -53,14 +54,8 @@ protected:
 	std::unique_ptr<ConstantBuffer> scene_cb_[Engine::FRAME_BUFFER_COUNT];
 	std::unique_ptr<ConstantBuffer> bone_cb_[Engine::FRAME_BUFFER_COUNT];
 	std::vector<std::unique_ptr<ConstantBuffer>> materials_cb_;
-	std::unique_ptr<RootSignature> root_signature_;
 
-	std::unique_ptr<PipelineState> opaque_pso_;
-	std::unique_ptr<PipelineState> alpha_pso_;
-	std::unique_ptr<PipelineState> outline_pso_;
-	std::unique_ptr<PipelineState> shadow_pso_;
-	std::unique_ptr<PipelineState> depth_pso_;
-	std::unique_ptr<PipelineState> gbuffer_pso_;
+	PipelineStateManager* pipeline_manager_;
 
 	float outline_width_;
 };

@@ -3,10 +3,10 @@
 #include "game/component/component.h"
 #include "engine/descriptor_heap.h"
 #include "engine/engine.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 #include "game/particle.h"
 #include "game/scene.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "math/vec.h"
 #include <DirectXMath.h>
 #include <memory>

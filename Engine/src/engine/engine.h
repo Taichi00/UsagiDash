@@ -3,7 +3,7 @@
 #include "engine/comptr.h"
 #include "engine/descriptor_heap.h"
 #include "engine/shared_struct.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include <d3d12.h>
 #include <d3d12sdklayers.h>
 #include <dxgi.h>
@@ -18,6 +18,7 @@
 
 class Window;
 class BufferManager;
+class PipelineStateManager;
 class ShadowMap;
 class Engine2D;
 class VertexBuffer;
@@ -74,7 +75,8 @@ public:
 	std::shared_ptr<DescriptorHeap> RtvHeap();
 	std::shared_ptr<DescriptorHeap> DsvHeap();
 	std::shared_ptr<DescriptorHeap> SrvHeap();
-	BufferManager* GetGBufferManager();
+	BufferManager* GetBufferManager();
+	PipelineStateManager* GetPipelineStateManager();
 	ShadowMap* GetShadowMap();
 	UINT CurrentBackBufferIndex();
 	std::shared_ptr<Window> GetWindow();
@@ -156,6 +158,8 @@ private:
 	std::shared_ptr<DescriptorHeap> srv_heap_;
 
 	std::unique_ptr<Engine2D> engine2d_; // 2D描画エンジンへのポインタ
+
+	std::unique_ptr<PipelineStateManager> pipeline_manager_;
 
 private:
 	ID3D12Resource* current_render_target_ = nullptr; // 現在フレームのレンダーターゲットを一時的に保存しておく変数

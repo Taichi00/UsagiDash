@@ -133,7 +133,7 @@ float PoissonShadow(float4 possm, int n, float size)
 }
 
 
-float4 pixel(VSOutput input) : SV_TARGET
+float4 main(VSOutput input) : SV_TARGET
 {
     float3 viewDir = normalize(input.worldPos.xyz - CameraPos);
     

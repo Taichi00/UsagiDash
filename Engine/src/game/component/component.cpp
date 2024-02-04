@@ -1,5 +1,6 @@
 #include "game/component/component.h"
 #include "game/entity.h"
+#include "game/scene.h"
 
 Component::Component()
 {
@@ -29,6 +30,10 @@ void Component::Update()
 }
 
 void Component::PhysicsUpdate()
+{
+}
+
+void Component::OnCollisionEnter(Collider* collider)
 {
 }
 
@@ -70,3 +75,9 @@ Entity* Component::GetEntity()
 {
 	return entity_;
 }
+
+Scene* Component::GetScene()
+{
+	return entity_->GetScene();
+}
+

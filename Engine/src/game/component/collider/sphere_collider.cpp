@@ -5,14 +5,18 @@
 #include "game/component/collider/mesh_collider.h"
 #include "game/component/collider/capsule_collider.h"
 #include "game/component/collider/ray.h"
+#include "math/aabb.h"
+#include <math.h>
+#include <cmath>
 
-SphereCollider::SphereCollider(SphereColliderProperty prop)
+SphereCollider::SphereCollider(const float radius)
 {
-	radius = prop.radius;
+	this->radius = radius;
 }
 
 SphereCollider::~SphereCollider()
 {
+	printf("Delete SphereCollider\n");
 }
 
 bool SphereCollider::Init()
@@ -36,13 +40,8 @@ bool SphereCollider::Intersects(SphereCollider* sphere)
 	{
 		auto normal = v.Normalized();
 
-		hit_colliders.push_back(sphere);
-		hit_normals.push_back(normal);
-		hit_depths.push_back(distance);
-
-		sphere->hit_colliders.push_back(this);
-		sphere->hit_normals.push_back(-normal);
-		sphere->hit_depths.push_back(distance);
+		AddHit({ sphere, normal, distance });
+		sphere->AddHit({ this, -normal, distance });
 
 		return true;
 	}
@@ -66,14 +65,9 @@ bool SphereCollider::Intersects(FloorCollider* floor)
 	{
 		auto normal = Vec3(0, 1, 0);
 
-		hit_colliders.push_back(floor);
-		hit_normals.push_back(normal);
-		hit_depths.push_back(distance);
-
-		floor->hit_colliders.push_back(this);
-		floor->hit_normals.push_back(-normal);
-		floor->hit_depths.push_back(distance);
-
+		AddHit({ floor, normal, distance });
+		floor->AddHit({ this, -normal, distance });
+		
 		return true;
 	}
 
@@ -88,8 +82,9 @@ bool SphereCollider::Intersects(MeshCollider* collider)
 bool SphereCollider::Intersects(Ray* ray)
 {
 	Vec3 position = GetPosition() + offset;
+	Vec3 ray_dir = ray->direction;
 	Vec3 rayA = ray->origin;
-	Vec3 rayB = rayA + ray->direction * ray->distance;
+	Vec3 rayB = rayA + ray_dir * ray->distance;
 
 	auto point = ClosestPointOnLineSegment(rayA, rayB, position);
 
@@ -98,14 +93,24 @@ bool SphereCollider::Intersects(Ray* ray)
 
 	if (distance > 0)
 	{
-		auto normal = v.Normalized();
+		// ‹…‚ÆRay‚ÌŒð“_‚ð‹‚ß‚é
+		auto dis = rayA - position;
+		double D = std::pow(Vec3::Dot(ray_dir, dis), 2) - (std::pow(dis.Length(), 2) - radius * radius);
+		auto hit_point = rayA + ray_dir * (-Vec3::Dot(ray_dir, dis) - std::sqrt(D));
 
-		ray->hit_colliders.push_back(this);
-		ray->hit_normals.push_back(-normal);
-		ray->hit_depths.push_back((position - rayA).Length() - radius);
+		auto normal = -ray_dir.Normalized();
+
+		ray->AddHit({ this, normal, (hit_point - rayB).Length() });
 
 		return true;
 	}
 
 	return false;
+}
+
+void SphereCollider::PrepareAABB()
+{
+	aabb_ = AABB{};
+	aabb_.max = Vec3(1, 1, 1) * radius;
+	aabb_.min = -Vec3(1, 1, 1) * radius;
 }

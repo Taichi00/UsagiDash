@@ -1,4 +1,4 @@
-#include "game/resource.h"
+#include "game/resource/resource.h"
 
 Resource::Resource()
 {

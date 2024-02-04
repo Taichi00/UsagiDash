@@ -10,12 +10,13 @@
 #include "engine/root_signature.h"
 #include "engine/descriptor_heap.h"
 #include "engine/constant_buffer.h"
-#include "engine/texture2d.h"
+#include "engine/pipeline_state_manager.h"
+#include "game/resource/texture2d.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
 #include "engine/buffer.h"
 #include "engine/buffer_manager.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 #include "game/game.h"
 #include "game/resource_manager.h"
 #include "engine/engine2d.h"
@@ -42,9 +43,6 @@ bool Scene::Init()
 	// シャドウマップの生成
 	//m_pShadowMap = std::make_unique<ShadowMap>();
 
-	// CollisionManagerの生成
-	collision_manager_ = std::make_unique<CollisionManager>();
-
 	rtv_heap_ = Game::Get()->GetEngine()->RtvHeap();
 	dsv_heap_ = Game::Get()->GetEngine()->DsvHeap();
 	gbuffer_heap_ = Game::Get()->GetEngine()->SrvHeap();
@@ -70,12 +68,28 @@ bool Scene::Init()
 		return false;
 	}
 
-	RootSignatureParameter skyboxParams[] = {
+	RootSignatureParameter mesh_params[] = {
+		RSConstantBuffer,
+		RSConstantBuffer,
+		RSConstantBuffer,
+		RSConstantBuffer,
+		RSTexture,
+		RSTexture,
+		RSTexture,
+	};
+	mesh_root_signature_ = std::make_unique<RootSignature>(_countof(mesh_params), mesh_params);
+	if (!mesh_root_signature_->IsValid())
+	{
+		printf("ルートシグネチャの生成に失敗\n");
+		return false;
+	}
+
+	RootSignatureParameter skybox_params[] = {
 		RSConstantBuffer,	// TransformParameter
 		RSConstantBuffer,	// SceneParameter
 		RSTexture,			// Skybox
 	};
-	skybox_root_signature_ = std::make_unique<RootSignature>(_countof(skyboxParams), skyboxParams);
+	skybox_root_signature_ = std::make_unique<RootSignature>(_countof(skybox_params), skybox_params);
 	if (!skybox_root_signature_->IsValid())
 	{
 		printf("ルートシグネチャの生成に失敗\n");
@@ -136,10 +150,16 @@ void Scene::Update()
 	for (auto& entity : entities_) entity->PhysicsUpdate();
 
 	// 衝突判定
-	collision_manager_->Update();
+	Game::Get()->GetCollisionManager()->Update();
 
 	// 定数バッファの更新
 	UpdateCB();
+}
+
+void Scene::AfterUpdate()
+{
+	// エンティティを削除
+	DestroyEntities();
 }
 
 void Scene::Draw()
@@ -214,7 +234,7 @@ void Scene::DrawLighting()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 	auto shadowMap = Game::Get()->GetEngine()->GetShadowMap();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
@@ -275,7 +295,7 @@ void Scene::DrawSSAO()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -300,7 +320,7 @@ void Scene::DrawBlurHorizontal()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -320,7 +340,7 @@ void Scene::DrawBlurVertical()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -340,7 +360,7 @@ void Scene::DrawPostProcess()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
@@ -367,7 +387,7 @@ void Scene::DrawFXAA()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto gbufferHeap = Game::Get()->GetEngine()->SrvHeap()->GetHeap();
-	auto gbufferManager = Game::Get()->GetEngine()->GetGBufferManager();
+	auto gbufferManager = Game::Get()->GetEngine()->GetBufferManager();
 
 	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -382,7 +402,7 @@ void Scene::DrawFXAA()
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
-void Scene::CreateEntity(Entity* entity)
+Entity* Scene::CreateEntity(Entity* entity)
 {
 	std::unique_ptr<Entity> uentity;
 	uentity.reset(entity);
@@ -390,6 +410,26 @@ void Scene::CreateEntity(Entity* entity)
 
 	entity->RegisterScene(this);
 	entity->Init();
+
+	return entity;
+}
+
+void Scene::AddDestroyEntity(Entity* entity)
+{
+	destroy_entities_.push_back(entity);
+}
+
+Entity* Scene::FindEntityWithTag(const std::string& tag)
+{
+	for (auto& entity : entities_)
+	{
+		if (entity->tag == tag)
+		{
+			return entity.get();
+		}
+	}
+
+	return nullptr;
 }
 
 void Scene::SetMainCamera(Entity* camera)
@@ -407,10 +447,10 @@ Camera* Scene::GetMainCamera()
 //	return m_pShadowMap.get();
 //}
 
-CollisionManager* Scene::GetCollisionManager()
-{
-	return collision_manager_.get();
-}
+//CollisionManager* Scene::GetCollisionManager()
+//{
+//	return collision_manager_.get();
+//}
 
 void Scene::SetSkybox(const std::string path)
 {
@@ -521,8 +561,10 @@ void Scene::SetSkybox(const std::string path)
 
 bool Scene::PreparePSO()
 {
+	auto pm = Game::Get()->GetEngine()->GetPipelineStateManager();
+
 	// ライティング用
-	lighting_pso_ = std::make_unique<PipelineState>();
+	lighting_pso_ = pm->Create("Lighting");
 	lighting_pso_->SetInputLayout({nullptr, 0});
 	lighting_pso_->SetRootSignature(root_signature_->Get());
 	lighting_pso_->SetVS(L"ScreenVS.cso");
@@ -539,7 +581,7 @@ bool Scene::PreparePSO()
 	}
 
 	// SSAO用
-	ssao_pso_ = std::make_unique<PipelineState>();
+	ssao_pso_ = pm->Create("SSAO");
 	ssao_pso_->SetInputLayout({ nullptr, 0 });
 	ssao_pso_->SetRootSignature(root_signature_->Get());
 	ssao_pso_->SetVS(L"ScreenVS.cso");
@@ -556,7 +598,7 @@ bool Scene::PreparePSO()
 	}
 
 	// BlurHorizontal用
-	blur_horizontal_pso_ = std::make_unique<PipelineState>();
+	blur_horizontal_pso_ = pm->Create("BlurHorizontal");
 	blur_horizontal_pso_->SetInputLayout({ nullptr, 0 });
 	blur_horizontal_pso_->SetRootSignature(root_signature_->Get());
 	blur_horizontal_pso_->SetVS(L"ScreenVS.cso");
@@ -573,7 +615,7 @@ bool Scene::PreparePSO()
 	}
 
 	// BlurVertical用
-	blur_vertical_pso_ = std::make_unique<PipelineState>();
+	blur_vertical_pso_ = pm->Create("BlurVertical");
 	blur_vertical_pso_->SetInputLayout({ nullptr, 0 });
 	blur_vertical_pso_->SetRootSignature(root_signature_->Get());
 	blur_vertical_pso_->SetVS(L"ScreenVS.cso");
@@ -590,7 +632,7 @@ bool Scene::PreparePSO()
 	}
 
 	// PostProcess用
-	postprocess_pso_ = std::make_unique<PipelineState>();
+	postprocess_pso_ = pm->Create("PostProcess");
 	postprocess_pso_->SetInputLayout({ nullptr, 0 });
 	postprocess_pso_->SetRootSignature(root_signature_->Get());
 	postprocess_pso_->SetVS(L"ScreenVS.cso");
@@ -607,7 +649,7 @@ bool Scene::PreparePSO()
 	}
 
 	// FXAA用
-	fxaa_pso_ = std::make_unique<PipelineState>();
+	fxaa_pso_ = pm->Create("FXAA");
 	fxaa_pso_->SetInputLayout({ nullptr, 0 });
 	fxaa_pso_->SetRootSignature(root_signature_->Get());
 	fxaa_pso_->SetVS(L"ScreenVS.cso");
@@ -624,7 +666,7 @@ bool Scene::PreparePSO()
 	}
 
 	// Skybox用
-	skybox_pso_ = std::make_unique<PipelineState>();
+	skybox_pso_ = pm->Create("Skybox");
 	skybox_pso_->SetInputLayout(Vertex::InputLayout);
 	skybox_pso_->SetRootSignature(skybox_root_signature_->Get());
 	skybox_pso_->SetVS(L"SkyboxVS.cso");
@@ -637,6 +679,99 @@ bool Scene::PreparePSO()
 	
 	skybox_pso_->Create();
 	if (!skybox_pso_->IsValid())
+	{
+		return false;
+	}
+
+	opaque_pso_ = pm->Create("Opaque");
+	opaque_pso_->SetInputLayout(Vertex::InputLayout);
+	opaque_pso_->SetRootSignature(mesh_root_signature_->Get());
+	opaque_pso_->SetVS(L"SimpleVS.cso");
+	opaque_pso_->SetPS(L"SimplePS.cso");
+	opaque_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+	opaque_pso_->Create();
+	if (!opaque_pso_->IsValid())
+	{
+		return false;
+	}
+
+	alpha_pso_ = pm->Create("Alpha");
+	alpha_pso_->SetInputLayout(Vertex::InputLayout);
+	alpha_pso_->SetRootSignature(mesh_root_signature_->Get());
+	alpha_pso_->SetVS(L"SimpleVS.cso");
+	alpha_pso_->SetPS(L"AlphaPS.cso");
+	alpha_pso_->SetCullMode(D3D12_CULL_MODE_NONE);
+	alpha_pso_->SetAlpha();
+	alpha_pso_->Create();
+	if (!alpha_pso_->IsValid())
+	{
+		return false;
+	}
+
+	outline_pso_ = pm->Create("Outline");
+	outline_pso_->SetInputLayout(Vertex::InputLayout);
+	outline_pso_->SetRootSignature(mesh_root_signature_->Get());
+	outline_pso_->SetVS(L"OutlineVS.cso");
+	outline_pso_->SetPS(L"OutlinePS.cso");
+	outline_pso_->SetCullMode(D3D12_CULL_MODE_BACK);
+	outline_pso_->Create();
+	if (!outline_pso_->IsValid())
+	{
+		return false;
+	}
+
+	shadow_pso_ = pm->Create("Shadow");
+	shadow_pso_->SetInputLayout(Vertex::InputLayout);
+	shadow_pso_->SetRootSignature(mesh_root_signature_->Get());
+	shadow_pso_->SetVS(L"ShadowVS.cso");
+	shadow_pso_->SetPS(L"ShadowPS.cso");
+	shadow_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+	shadow_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
+	shadow_pso_->Create();
+	if (!shadow_pso_->IsValid())
+	{
+		return false;
+	}
+
+	// Depthプリパス用
+	depth_pso_ = pm->Create("Depth");
+	depth_pso_->SetInputLayout(Vertex::InputLayout);
+	depth_pso_->SetRootSignature(mesh_root_signature_->Get());
+	depth_pso_->SetVS(L"SimpleVS.cso");
+	depth_pso_->SetPS(L"DepthPS.cso");
+	depth_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+	depth_pso_->SetRTVFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
+
+	/*auto desc = m_pDepthPSO->GetDesc();
+	desc->NumRenderTargets = 0;
+	desc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;*/
+
+	depth_pso_->Create();
+	if (!depth_pso_->IsValid())
+	{
+		return false;
+	}
+
+	// G-Buffer出力用
+	gbuffer_pso_ = pm->Create("GBuffer");
+	gbuffer_pso_->SetInputLayout(Vertex::InputLayout);
+	gbuffer_pso_->SetRootSignature(mesh_root_signature_->Get());
+	gbuffer_pso_->SetVS(L"SimpleVS.cso");
+	gbuffer_pso_->SetPS(L"GBufferPS.cso");
+	gbuffer_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+
+	desc = gbuffer_pso_->GetDesc();
+	desc->NumRenderTargets = 5;
+	desc->RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Position
+	desc->RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Normal
+	desc->RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;		// Albedo
+	desc->RTVFormats[3] = DXGI_FORMAT_R8G8B8A8_UNORM;		// MetallicRoughness
+	desc->RTVFormats[4] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Depth
+	desc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;	// デプスバッファには書き込まない
+	desc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+
+	gbuffer_pso_->Create();
+	if (!gbuffer_pso_->IsValid())
 	{
 		return false;
 	}
@@ -676,6 +811,28 @@ void Scene::UpdateCB()
 	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
 	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
 	currentScene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
-	currentScene->light_color = { 20, 20, 20 };
+	currentScene->light_color = { 15, 15, 15 };
+}
+
+void Scene::DestroyEntities()
+{
+	if (destroy_entities_.empty())
+	{
+		return;
+	}
+
+	Game::Get()->GetEngine()->WaitGPU();
+
+	for (auto& entity : destroy_entities_)
+	{
+		entities_.erase(
+			std::remove_if(entities_.begin(), entities_.end(), [&entity](const std::unique_ptr<Entity>& e) {
+				return e.get() == entity;
+				}),
+			entities_.end()
+		);
+	}
+
+	destroy_entities_.clear();
 }
 

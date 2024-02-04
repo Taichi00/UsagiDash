@@ -7,15 +7,10 @@ class MeshCollider;
 class CapsuleCollider;
 class Ray;
 
-struct SphereColliderProperty
-{
-	float radius;
-};
-
 class SphereCollider : public Collider
 {
 public:
-	SphereCollider(SphereColliderProperty prop);
+	SphereCollider(const float radius);
 	~SphereCollider();
 
 	bool Init();
@@ -25,6 +20,9 @@ public:
 	bool Intersects(FloorCollider* floor);
 	bool Intersects(MeshCollider* collider);
 	bool Intersects(Ray* ray);
+
+private:
+	void PrepareAABB() override;
 
 public:
 	float radius;

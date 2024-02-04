@@ -4,6 +4,7 @@
 #include "engine/root_signature.h"
 #include "engine/pipeline_state.h"
 #include "engine/buffer_manager.h"
+#include "engine/pipeline_state_manager.h"
 #include "game/game.h"
 
 ShadowMap::ShadowMap()
@@ -41,7 +42,7 @@ void ShadowMap::BeginRender()
 {
 	auto engine = Game::Get()->GetEngine();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	/*D3D12_RESOURCE_BARRIER barriers[] = {
@@ -82,7 +83,7 @@ void ShadowMap::BeginRender()
 void ShadowMap::EndRender()
 {	
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 
 	// バリア設定
 	auto barrierToSR = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -108,19 +109,19 @@ void ShadowMap::EndRender()
 
 ID3D12Resource* ShadowMap::Resource()
 {
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 	return bm->Get("ShadowMapColor_0")->Resource();
 }
 
 const DescriptorHandle& ShadowMap::SrvHandle()
 {
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 	return bm->Get("ShadowMapColor_0")->SrvHandle();
 }
 
 bool ShadowMap::CreateShadowBuffer()
 {
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 
 	bm->CreateGBuffer("ShadowMapColor_0", DXGI_FORMAT_R32G32B32A32_FLOAT, { 1, 1, 1, 1 }, width_, height_);
 	bm->CreateGBuffer("ShadowMapColor_1", DXGI_FORMAT_R32G32B32A32_FLOAT, { 1, 1, 1, 1 }, width_, height_);
@@ -231,8 +232,10 @@ bool ShadowMap::CreateShadowBuffer()
 
 bool ShadowMap::PreparePSO()
 {
+	auto pm = Game::Get()->GetEngine()->GetPipelineStateManager();
+
 	// BlurHorizontal用
-	blur_horizontal_pso_ = new PipelineState();
+	blur_horizontal_pso_ = pm->Create("GaussianBlurHorizontal");
 	blur_horizontal_pso_->SetInputLayout({ nullptr, 0 });
 	blur_horizontal_pso_->SetRootSignature(root_signature_->Get());
 	blur_horizontal_pso_->SetVS(L"ScreenVS.cso");
@@ -250,7 +253,7 @@ bool ShadowMap::PreparePSO()
 	}
 
 	// BlurVertical用
-	blur_vertical_pso_ = new PipelineState();
+	blur_vertical_pso_ = pm->Create("GaussianBlurVertical");
 	blur_vertical_pso_->SetInputLayout({ nullptr, 0 });
 	blur_vertical_pso_->SetRootSignature(root_signature_->Get());
 	blur_vertical_pso_->SetVS(L"ScreenVS.cso");
@@ -288,7 +291,7 @@ bool ShadowMap::PrepareRootSignature()
 void ShadowMap::BlurHorizontal()
 {
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 
 	// レンダーターゲットを設定
 	auto rtvHandle = bm->Get("ShadowMapColor_1")->RtvHandle().HandleCPU();
@@ -313,7 +316,7 @@ void ShadowMap::BlurHorizontal()
 void ShadowMap::BlurVertical()
 {
 	auto commandList = Game::Get()->GetEngine()->CommandList();
-	auto bm = Game::Get()->GetEngine()->GetGBufferManager();
+	auto bm = Game::Get()->GetEngine()->GetBufferManager();
 
 	// レンダーターゲットが使用可能になるまで待つ
 	D3D12_RESOURCE_BARRIER barriers[] = {

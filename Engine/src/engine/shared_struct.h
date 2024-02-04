@@ -56,29 +56,3 @@ struct alignas(256) MaterialParameter
 	float shininess;
 	float outline_width;
 };
-
-struct CollisionVertex
-{
-	Vec3 position;	// 位置座標
-	Vec3 normal;	// 法線
-};
-
-struct CollisionFace
-{
-	uint32_t indices[3];
-	Vec3 normal;
-	std::vector<std::pair<uint32_t, uint32_t>> edges;
-};
-
-struct CollisionMesh
-{
-	std::vector<CollisionVertex> vertices;
-	std::vector<CollisionFace> faces;
-	//std::vector<uint32_t> Indices;
-	//std::vector<bool> edgeIgnoreFlags;	// エッジを無視するかどうか
-};
-
-struct CollisionModel
-{
-	std::vector<CollisionMesh> meshes;
-};

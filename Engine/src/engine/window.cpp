@@ -1,5 +1,7 @@
 #include "window.h"
 #include "game/game.h"
+#include <timeapi.h>
+#include <mmsystem.h>
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -13,6 +15,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 		{
 			Game::Get()->ToggleFullscreen();
 		}
+		break;
 	default:
 		break;
 	}
@@ -76,6 +79,15 @@ Window::Window(const TCHAR* title, const UINT width, const UINT height)
 
 	// ウィンドウにフォーカスする
 	SetFocus(hwnd_);
+
+	// 周波数取得
+	QueryPerformanceFrequency(&time_freq_);
+
+	// 計測開始時間の初期化
+	QueryPerformanceCounter(&time_start_);
+
+	// 1フレームにかけられる時間
+	frame_time_ = 1.0 / 60.0;
 }
 
 HINSTANCE Window::HInstance()
@@ -101,4 +113,29 @@ UINT Window::Height()
 float Window::AspectRate()
 {
 	return (float)width_ / (float)height_;
+}
+
+double Window::TimeAdjustment()
+{
+	// 現在の時間を取得
+	QueryPerformanceCounter(&time_end_);
+
+	double frame_time = static_cast<double>(time_end_.QuadPart - time_start_.QuadPart) / static_cast<double>(time_freq_.QuadPart);
+	double fps = 0.0;
+
+	// 余裕があればその分待つ
+	if (frame_time < frame_time_)
+	{
+		// sleepする時間を計算
+		DWORD sleep_time = static_cast<DWORD>((frame_time_ - frame_time) * 1000);
+		timeBeginPeriod(1);
+		Sleep(sleep_time);
+		timeEndPeriod(1);
+		return 0;
+	}
+
+	fps = 1.0 / frame_time;
+	time_start_ = time_end_;
+	printf("%f\n", fps);
+	return fps;
 }

@@ -1,4 +1,5 @@
 #include "game/entity.h"
+#include "game/scene.h"
 #include <stdio.h>
 #include <typeinfo>
 
@@ -7,9 +8,10 @@ Entity::Entity() : Entity("No Name")
 	
 }
 
-Entity::Entity(std::string name)
+Entity::Entity(const std::string& name, const std::string& tag)
 {
 	name_ = name;
+	this->tag = tag;
 
 	transform = new Transform();
 	AddComponent(transform);
@@ -24,19 +26,19 @@ Entity::~Entity()
 	printf("Delete Entity [%s]\n", name_.c_str());
 }
 
+void Entity::Destroy()
+{
+	scene_->AddDestroyEntity(this);
+}
+
 Component* Entity::AddComponent(Component* component)
 {
 	std::string key = typeid(*component).name();
 
-	// すでに同じ型のコンポーネントが存在する場合、追加しない
-	if (component_map_.find(key) != component_map_.end())
-		return nullptr;
-
 	std::unique_ptr<Component> ucomponent;
 	ucomponent.reset(component);
-	components_.push_back(std::move(ucomponent));
 
-	component_map_[typeid(*component).name()] = component;
+	component_map_[key].push_back(std::move(ucomponent));
 
 	component->RegisterEntity(this);
 
@@ -56,74 +58,112 @@ Scene* Entity::GetScene()
 
 bool Entity::Init()
 {
-	for (auto& component : components_)
+	for (auto& components : component_map_)
 	{
-		component->Init();
+		for (auto& component : components.second)
+		{
+			component->Init();
+		}
 	}
 	return true;
 }
 
 void Entity::BeforeCameraUpdate()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->BeforeCameraUpdate();
+		for (auto& component : components.second)
+		{
+			component->BeforeCameraUpdate();
+		}
 	}
 }
 
 void Entity::CameraUpdate()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->CameraUpdate();
+		for (auto& component : components.second)
+		{
+			component->CameraUpdate();
+		}
 	}
 }
 
 void Entity::Update()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->Update();
+		for (auto& component : components.second)
+		{
+			component->Update();
+		}
 	}
 }
 
 void Entity::PhysicsUpdate()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->PhysicsUpdate();
+		for (auto& component : components.second)
+		{
+			component->PhysicsUpdate();
+		}
+	}
+}
+
+void Entity::OnCollisionEnter(Collider* collider)
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->OnCollisionEnter(collider);
+		}
 	}
 }
 
 void Entity::DrawDepth()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->DrawDepth();
+		for (auto& component : components.second)
+		{
+			component->DrawDepth();
+		}
 	}
 }
 
 void Entity::DrawGBuffer()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->DrawGBuffer();
+		for (auto& component : components.second)
+		{
+			component->DrawGBuffer();
+		}
 	}
 }
 
 void Entity::DrawOutline()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->DrawOutline();
+		for (auto& component : components.second)
+		{
+			component->DrawOutline();
+		}
 	}
 }
 
 void Entity::Draw2D()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->Draw2D();
+		for (auto& component : components.second)
+		{
+			component->Draw2D();
+		}
 	}
 }
 
@@ -139,31 +179,40 @@ Entity* Entity::GetParent()
 	return parent_;
 }
 
-Entity* Entity::GetChild(std::string name)
+Entity* Entity::GetChild(const std::string& name)
 {
 	return children_map_[name];
 }
 
 void Entity::Draw()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->Draw();
+		for (auto& component : components.second)
+		{
+			component->Draw();
+		}
 	}
 }
 
 void Entity::DrawAlpha()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->DrawAlpha();
+		for (auto& component : components.second)
+		{
+			component->DrawAlpha();
+		}
 	}
 }
 
 void Entity::DrawShadow()
 {
-	for (auto& component : components_)
+	for (auto& components: component_map_)
 	{
-		component->DrawShadow();
+		for (auto& component : components.second)
+		{
+			component->DrawShadow();
+		}
 	}
 }

@@ -1,3 +1,6 @@
+#include "game/entity.h"
+#include "game/scene.h"
+#include "game/collision_manager.h"
 #include "game/component/collider/mesh_collider.h"
 #include "game/component/collider/sphere_collider.h"
 #include "game/component/collider/capsule_collider.h"
@@ -5,9 +8,9 @@
 #include "math/vec.h"
 #include <algorithm>
 
-MeshCollider::MeshCollider(MeshColliderProperty prop)
+MeshCollider::MeshCollider(std::shared_ptr<CollisionModel> model)
 {
-	model = prop.model;
+	this->model = model;
 }
 
 MeshCollider::~MeshCollider()
@@ -29,13 +32,23 @@ bool MeshCollider::Intersects(SphereCollider* sphere)
 	auto center = sphere->GetPosition() + sphere->offset;
 	auto radius = sphere->radius;
 
-	for (int i = 0; i < model.meshes.size(); i++)
+	for (int i = 0; i < model->meshes.size(); i++)
 	{
-		auto mesh = &(model.meshes[i]);
+		auto mesh = &(model->meshes[i]);
 		
 		for (int j = 0; j < mesh->faces.size(); j++)
 		{
 			auto face = &(mesh->faces[j]);
+
+			auto face_aabb = face->aabb;
+			face_aabb.Scale(scale);
+			face_aabb.Translate(position_ + offset);
+
+			// AABB‚ªÕ“Ë‚µ‚Ä‚¢‚È‚¯‚ê‚Î–³Ž‹
+			if (!face_aabb.Intersects(sphere->GetAABB()))
+			{
+				continue;
+			}
 
 			int idx0 = face->indices[0];
 			int idx1 = face->indices[1];
@@ -48,13 +61,8 @@ bool MeshCollider::Intersects(SphereCollider* sphere)
 			// Õ“Ë
 			if (SphereIntersectsMesh(center, radius, *mesh, *face, normal, distance, collidedPoints))
 			{
-				hit_colliders.push_back(sphere);
-				hit_normals.push_back(-normal);
-				hit_depths.push_back(distance);
-
-				sphere->hit_colliders.push_back(this);
-				sphere->hit_normals.push_back(normal);
-				sphere->hit_depths.push_back(distance);
+				AddHit({ sphere, -normal, distance });
+				sphere->AddHit({ this, normal, distance });
 
 				res = true;
 			}
@@ -82,13 +90,23 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 	Vec3 A = base + lineEndOffset;
 	Vec3 B = tip - lineEndOffset;
 	
-	for (int i = 0; i < model.meshes.size(); i++)
+	for (int i = 0; i < model->meshes.size(); i++)
 	{
-		auto mesh = &(model.meshes[i]);
+		auto mesh = &(model->meshes[i]);
 
 		for (int j = 0; j < mesh->faces.size(); j++)
 		{
 			auto face = &(mesh->faces[j]);
+
+			auto face_aabb = face->aabb;
+			face_aabb.Scale(scale);
+			face_aabb.Translate(position_ + offset);
+
+			// AABB‚ªÕ“Ë‚µ‚Ä‚¢‚È‚¯‚ê‚Î–³Ž‹
+			if (!face_aabb.Intersects(capsule->GetAABB()))
+			{
+				continue;
+			}
 
 			int idx0 = face->indices[0];
 			int idx1 = face->indices[1];
@@ -97,9 +115,9 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 			auto p0 = Vec3(mesh->vertices[idx0].position);
 			auto p1 = Vec3(mesh->vertices[idx1].position);
 			auto p2 = Vec3(mesh->vertices[idx2].position);
-			p0 = Vec3::Scale(p0, scale_) + position_ + offset;
-			p1 = Vec3::Scale(p1, scale_) + position_ + offset;
-			p2 = Vec3::Scale(p2, scale_) + position_ + offset;
+			p0 = Vec3::Scale(p0, scale) + position_ + offset;
+			p1 = Vec3::Scale(p1, scale) + position_ + offset;
+			p2 = Vec3::Scale(p2, scale) + position_ + offset;
 
 			Vec3 N = face->normal;	// •½–Ê‚Ì–@ü
 
@@ -169,13 +187,8 @@ bool MeshCollider::Intersects(CapsuleCollider* capsule)
 			{
 				distance -= 0.0;
 
-				hit_colliders.push_back(capsule);
-				hit_normals.push_back(-normal);
-				hit_depths.push_back(distance);
-
-				capsule->hit_colliders.push_back(this);
-				capsule->hit_normals.push_back(normal);
-				capsule->hit_depths.push_back(distance);
+				AddHit({ capsule, -normal, distance });
+				capsule->AddHit({ this, normal, distance });
 
 				res = true;
 			}
@@ -197,9 +210,9 @@ bool MeshCollider::Intersects(Ray* ray)
 	auto rayDirection = ray->direction;
 	auto rayDistance = ray->distance;
 
-	for (int i = 0; i < model.meshes.size(); i++)
+	for (int i = 0; i < model->meshes.size(); i++)
 	{
-		auto mesh = &(model.meshes[i]);
+		auto mesh = &(model->meshes[i]);
 
 		for (int j = 0; j < mesh->faces.size(); j++)
 		{
@@ -212,9 +225,9 @@ bool MeshCollider::Intersects(Ray* ray)
 			auto p0 = Vec3(mesh->vertices[idx0].position);
 			auto p1 = Vec3(mesh->vertices[idx1].position);
 			auto p2 = Vec3(mesh->vertices[idx2].position);
-			p0 = Vec3::Scale(p0, scale_) + position_ + offset;
-			p1 = Vec3::Scale(p1, scale_) + position_ + offset;
-			p2 = Vec3::Scale(p2, scale_) + position_ + offset;
+			p0 = Vec3::Scale(p0, scale) + position_ + offset;
+			p1 = Vec3::Scale(p1, scale) + position_ + offset;
+			p2 = Vec3::Scale(p2, scale) + position_ + offset;
 
 			Vec3 N = face->normal;	// •½–Ê‚Ì–@ü
 
@@ -240,9 +253,7 @@ bool MeshCollider::Intersects(Ray* ray)
 
 			if (inside)
 			{
-				ray->hit_colliders.push_back(this);
-				ray->hit_normals.push_back(N);
-				ray->hit_depths.push_back(dist);
+				ray->AddHit({ this, N, rayDistance - dist });
 
 				res = true;
 			}
@@ -265,9 +276,9 @@ bool MeshCollider::SphereIntersectsMesh(
 	p[0] = Vec3(mesh.vertices[idx0].position);
 	p[1] = Vec3(mesh.vertices[idx1].position);
 	p[2] = Vec3(mesh.vertices[idx2].position);
-	p[0] = Vec3::Scale(p[0], scale_) + position_ + offset;
-	p[1] = Vec3::Scale(p[1], scale_) + position_ + offset;
-	p[2] = Vec3::Scale(p[2], scale_) + position_ + offset;
+	p[0] = Vec3::Scale(p[0], scale) + position_ + offset;
+	p[1] = Vec3::Scale(p[1], scale) + position_ + offset;
+	p[2] = Vec3::Scale(p[2], scale) + position_ + offset;
 
 	Vec3 N = face.normal;	// •½–Ê‚Ì–@ü
 	float dist = Vec3::Dot(center - p[0], N);	// ‹…‚Æ•½–Ê‚Ì‹——£
@@ -384,5 +395,10 @@ bool MeshCollider::SphereIntersectsMesh(
 	}
 
 	return false;
+}
+
+void MeshCollider::PrepareAABB()
+{
+	aabb_ = model->aabb;
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "math/vec.h"
+#include <string>
+#include <vector>
 
 class Collider;
 
@@ -15,6 +17,6 @@ struct RaycastHit
 class Physics
 {
 public:
-	static bool Raycast(const Vec3& origin, const Vec3& direction, const float& maxDistance,
-		RaycastHit& hit);
+	static bool Raycast(const Vec3& origin, const Vec3& direction, const float& max_distance,
+		RaycastHit& hit, const std::vector<std::string>& mask_tags = {});
 };

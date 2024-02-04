@@ -1,7 +1,7 @@
 #include "game/resource_manager.h"
-#include "game/resource.h"
-#include "game/model.h"
-#include "engine/texture2d.h"
+#include "game/resource/resource.h"
+#include "game/resource/model.h"
+#include "game/resource/texture2d.h"
 
 ResourceManager::ResourceManager()
 {

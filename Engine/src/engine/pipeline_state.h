@@ -22,6 +22,8 @@ public:
 	ID3D12PipelineState* Get();
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC* GetDesc();
 
+	ID3D12RootSignature* RootSignature();
+
 private:
 	bool is_valid_ = false;		// 生成に成功したかどうか
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_ = {};			// パイプラインステートの設定

@@ -1,7 +1,7 @@
 #include "game/component/mesh_renderer.h"
 #include "engine/constant_buffer.h"
 #include "engine/descriptor_heap.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "game/entity.h"
 #include "game/scene.h"
 #include "game/shadow_map.h"
@@ -9,6 +9,7 @@
 #include "engine/pipeline_state.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
+#include "engine/pipeline_state_manager.h"
 #include "game/component/camera.h"
 #include "game/bone.h"
 
@@ -61,21 +62,7 @@ bool MeshRenderer::Init()
 		materials_cb_.push_back(std::move(cb));
 	}
 
-	RootSignatureParameter params[] = {
-		RSConstantBuffer,
-		RSConstantBuffer,
-		RSConstantBuffer,
-		RSConstantBuffer,
-		RSTexture,
-		RSTexture,
-		RSTexture,
-	};
-	root_signature_ = std::make_unique<RootSignature>(_countof(params), params);
-	if (!root_signature_->IsValid())
-	{
-		printf("ルートシグネチャの生成に失敗\n");
-		return false;
-	}
+	pipeline_manager_ = Game::Get()->GetEngine()->GetPipelineStateManager();
 
 	if (!PreparePSO())
 	{
@@ -99,7 +86,7 @@ void MeshRenderer::Draw()
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto materialHeap = model_->descriptor_heap->GetHeap();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Opaque")->RootSignature());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, scene_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
@@ -126,7 +113,7 @@ void MeshRenderer::Draw()
 		case 1:
 			continue;
 		default:
-			pso = opaque_pso_->Get();
+			pso = pipeline_manager_->Get("Opaque")->Get();
 			break;
 		}
 
@@ -160,7 +147,7 @@ void MeshRenderer::Draw()
 
 		commandList->SetGraphicsRootConstantBufferView(3, materials_cb_[materialIndex]->GetAddress());
 
-		commandList->SetPipelineState(outline_pso_->Get());			// パイプラインステートをセット
+		commandList->SetPipelineState(pipeline_manager_->Get("Outline")->Get());			// パイプラインステートをセット
 		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
 		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
 		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU());	// ディスクリプタテーブルをセット
@@ -175,7 +162,7 @@ void MeshRenderer::DrawAlpha()
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto materialHeap = model_->descriptor_heap->GetHeap();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Alpha")->RootSignature());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, scene_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
@@ -200,7 +187,7 @@ void MeshRenderer::DrawAlpha()
 		switch (alphaMode)
 		{
 		case 1:
-			pso = alpha_pso_->Get();
+			pso = pipeline_manager_->Get("Alpha")->Get();
 			break;
 		default:
 			continue;
@@ -222,7 +209,7 @@ void MeshRenderer::DrawShadow()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto a = transform_cb_[currentIndex]->GetPtr<TransformParameter>();
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Shadow")->RootSignature());	// ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, scene_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
@@ -234,7 +221,7 @@ void MeshRenderer::DrawShadow()
 	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
 	//commandList->SetGraphicsRootDescriptorTable(3, m_pShadowHandle->HandleGPU());	// ディスクリプタテーブルをセット
 
-	commandList->SetPipelineState(shadow_pso_->Get());								// パイプラインステートをセット
+	commandList->SetPipelineState(pipeline_manager_->Get("Shadow")->Get());								// パイプラインステートをセット
 
 	// メッシュの描画
 	for (const auto& mesh : model_->meshes)
@@ -257,7 +244,7 @@ void MeshRenderer::DrawDepth()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get()); // ルートシグネチャをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Depth")->RootSignature()); // ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress()); // 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -266,7 +253,7 @@ void MeshRenderer::DrawDepth()
 	};
 	commandList->SetDescriptorHeaps(1, heaps); // ディスクリプタヒープをセット
 
-	commandList->SetPipelineState(depth_pso_->Get()); // パイプラインステートをセット
+	commandList->SetPipelineState(pipeline_manager_->Get("Depth")->Get()); // パイプラインステートをセット
 
 	// メッシュの描画
 	for (const auto& mesh : model_->meshes)
@@ -295,8 +282,8 @@ void MeshRenderer::DrawGBuffer()
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto materialHeap = model_->descriptor_heap->GetHeap();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
-	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("GBuffer")->RootSignature()); // ルートシグネチャをセット
+	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress()); // 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, scene_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -304,9 +291,9 @@ void MeshRenderer::DrawGBuffer()
 	ID3D12DescriptorHeap* heaps[] = {
 		model_->descriptor_heap->GetHeap(),
 	};
-	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetDescriptorHeaps(1, heaps); // ディスクリプタヒープをセット
 
-	commandList->SetPipelineState(gbuffer_pso_->Get());								// パイプラインステートをセット
+	commandList->SetPipelineState(pipeline_manager_->Get("GBuffer")->Get()); // パイプラインステートをセット
 
 	// メッシュの描画
 	for (const auto& mesh : model_->meshes)
@@ -322,9 +309,9 @@ void MeshRenderer::DrawGBuffer()
 
 		commandList->SetGraphicsRootConstantBufferView(3, materials_cb_[materialIndex]->GetAddress());
 
-		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
-		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセット
-		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->IASetVertexBuffers(0, 1, &vbView); // 頂点バッファをスロット0番を使って1個だけ設定する
+		commandList->IASetIndexBuffer(&ibView); // インデックスバッファをセット
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU()); // ディスクリプタテーブルをセット
 		commandList->SetGraphicsRootDescriptorTable(5, mat->pbr_handle.HandleGPU());
 		commandList->SetGraphicsRootDescriptorTable(6, mat->normal_handle.HandleGPU());
 
@@ -342,8 +329,8 @@ void MeshRenderer::DrawOutline()
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto materialHeap = model_->descriptor_heap->GetHeap();
 
-	commandList->SetGraphicsRootSignature(root_signature_->Get());	// ルートシグネチャをセット
-	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());	// 定数バッファをセット
+	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Outline")->RootSignature()); // ルートシグネチャをセット
+	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress()); // 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(1, scene_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -351,9 +338,9 @@ void MeshRenderer::DrawOutline()
 	ID3D12DescriptorHeap* heaps[] = {
 		model_->descriptor_heap->GetHeap(),
 	};
-	commandList->SetDescriptorHeaps(1, heaps);				// ディスクリプタヒープをセット
+	commandList->SetDescriptorHeaps(1, heaps); // ディスクリプタヒープをセット
 
-	commandList->SetPipelineState(outline_pso_->Get());			// パイプラインステートをセット
+	commandList->SetPipelineState(pipeline_manager_->Get("Outline")->Get()); // パイプラインステートをセット
 
 	for (const auto& mesh : model_->meshes)
 	{
@@ -368,9 +355,9 @@ void MeshRenderer::DrawOutline()
 
 		commandList->SetGraphicsRootConstantBufferView(3, materials_cb_[materialIndex]->GetAddress());
 
-		commandList->IASetVertexBuffers(0, 1, &vbView);					// 頂点バッファをスロット0番を使って1個だけ設定する
-		commandList->IASetIndexBuffer(&ibView);							// インデックスバッファをセットする 
-		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU());	// ディスクリプタテーブルをセット
+		commandList->IASetVertexBuffers(0, 1, &vbView); // 頂点バッファをスロット0番を使って1個だけ設定する
+		commandList->IASetIndexBuffer(&ibView); // インデックスバッファをセットする 
+		commandList->SetGraphicsRootDescriptorTable(4, mat->albedo_handle.HandleGPU()); // ディスクリプタテーブルをセット
 
 		commandList->DrawIndexedInstanced(mesh.indices.size(), 1, 0, 0, 0);
 	}
@@ -378,98 +365,7 @@ void MeshRenderer::DrawOutline()
 
 bool MeshRenderer::PreparePSO()
 {
-	opaque_pso_ = std::make_unique<PipelineState>();
-	opaque_pso_->SetInputLayout(Vertex::InputLayout);
-	opaque_pso_->SetRootSignature(root_signature_->Get());
-	opaque_pso_->SetVS(L"SimpleVS.cso");
-	opaque_pso_->SetPS(L"SimplePS.cso");
-	opaque_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
-	opaque_pso_->Create();
-	if (!opaque_pso_->IsValid())
-	{
-		return false;
-	}
-
-	alpha_pso_ = std::make_unique<PipelineState>();
-	alpha_pso_->SetInputLayout(Vertex::InputLayout);
-	alpha_pso_->SetRootSignature(root_signature_->Get());
-	alpha_pso_->SetVS(L"SimpleVS.cso");
-	alpha_pso_->SetPS(L"AlphaPS.cso");
-	alpha_pso_->SetCullMode(D3D12_CULL_MODE_NONE);
-	alpha_pso_->SetAlpha();
-	alpha_pso_->Create();
-	if (!alpha_pso_->IsValid())
-	{
-		return false;
-	}
-
-	outline_pso_ = std::make_unique<PipelineState>();
-	outline_pso_->SetInputLayout(Vertex::InputLayout);
-	outline_pso_->SetRootSignature(root_signature_->Get());
-	outline_pso_->SetVS(L"OutlineVS.cso");
-	outline_pso_->SetPS(L"OutlinePS.cso");
-	outline_pso_->SetCullMode(D3D12_CULL_MODE_BACK);
-	outline_pso_->Create();
-	if (!outline_pso_->IsValid())
-	{
-		return false;
-	}
-
-	shadow_pso_ = std::make_unique<PipelineState>();
-	shadow_pso_->SetInputLayout(Vertex::InputLayout);
-	shadow_pso_->SetRootSignature(root_signature_->Get());
-	shadow_pso_->SetVS(L"ShadowVS.cso");
-	shadow_pso_->SetPS(L"ShadowPS.cso");
-	shadow_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
-	shadow_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
-	shadow_pso_->Create();
-	if (!shadow_pso_->IsValid())
-	{
-		return false;
-	}
-
-	// Depthプリパス用
-	depth_pso_ = std::make_unique<PipelineState>();
-	depth_pso_->SetInputLayout(Vertex::InputLayout);
-	depth_pso_->SetRootSignature(root_signature_->Get());
-	depth_pso_->SetVS(L"SimpleVS.cso");
-	depth_pso_->SetPS(L"DepthPS.cso");
-	depth_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
-	depth_pso_->SetRTVFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
-
-	/*auto desc = m_pDepthPSO->GetDesc();
-	desc->NumRenderTargets = 0;
-	desc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;*/
-
-	depth_pso_->Create();
-	if (!depth_pso_->IsValid())
-	{
-		return false;
-	}
-	
-	// G-Buffer出力用
-	gbuffer_pso_ = std::make_unique<PipelineState>();
-	gbuffer_pso_->SetInputLayout(Vertex::InputLayout);
-	gbuffer_pso_->SetRootSignature(root_signature_->Get());
-	gbuffer_pso_->SetVS(L"SimpleVS.cso");
-	gbuffer_pso_->SetPS(L"GBufferPS.cso");
-	gbuffer_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
-
-	auto desc = gbuffer_pso_->GetDesc();
-	desc->NumRenderTargets = 5;
-	desc->RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Position
-	desc->RTVFormats[1] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Normal
-	desc->RTVFormats[2] = DXGI_FORMAT_R8G8B8A8_UNORM;		// Albedo
-	desc->RTVFormats[3] = DXGI_FORMAT_R8G8B8A8_UNORM;		// MetallicRoughness
-	desc->RTVFormats[4] = DXGI_FORMAT_R32G32B32A32_FLOAT;	// Depth
-	desc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;	// デプスバッファには書き込まない
-	desc->DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
-
-	gbuffer_pso_->Create();
-	if (!gbuffer_pso_->IsValid())
-	{
-		return false;
-	}
+	return true;
 }
 
 void MeshRenderer::UpdateBone()

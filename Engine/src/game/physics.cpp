@@ -4,35 +4,25 @@
 #include "game/collision_manager.h"
 #include "game/component/collider/ray.h"
 
-bool Physics::Raycast(const Vec3& origin, const Vec3& direction, const float& maxDistance, RaycastHit& hit)
+bool Physics::Raycast(const Vec3& origin, const Vec3& direction, const float& maxDistance, 
+    RaycastHit& hit, const std::vector<std::string>& mask_tags)
 {
-    auto collisionManager = Game::Get()->GetCurrentScene()->GetCollisionManager();
+    auto collision_manager = Game::Get()->GetCollisionManager();
     auto ray = Ray(origin, direction, maxDistance);
 
     // è’ìÀåüèo
-    collisionManager->Detect(&ray);
+    collision_manager->Detect(&ray, mask_tags);
 
     // è’ìÀÇ»Çµ
-    if (ray.hit_colliders.empty())
+    if (ray.GetHits().empty())
         return false;
 
-    // ç≈Ç‡ãﬂÇ¢è’ìÀÇíTÇ∑
-    auto minDistance = maxDistance;
-    auto index = 0;
-    for (int i = 0; i < ray.hit_colliders.size(); i++)
-    {
-        auto distance = ray.hit_depths[i];
-        if (distance < minDistance)
-        {
-            minDistance = distance;
-            index = i;
-        }
-    }
+    auto& nearest = ray.GetNearestHit();
 
-    hit.collider = ray.hit_colliders[index];
-    hit.distance = minDistance;
-    hit.point = origin + direction * minDistance;
-    hit.normal = ray.hit_normals[index];
+    hit.collider = nearest.collider;
+    hit.distance = maxDistance - nearest.depth;
+    hit.point = origin + direction * hit.distance;
+    hit.normal = nearest.normal;
 
     return true;
 }

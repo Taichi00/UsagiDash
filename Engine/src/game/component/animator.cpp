@@ -1,7 +1,7 @@
 #include "game/component/animator.h"
 #include "game/animation.h"
-#include "game/bone.h";
-#include "math/vec.h";
+#include "game/bone.h"
+#include "math/vec.h"
 #include "math/quaternion.h"
 #include "math/easing.h"
 #include "game/entity.h"
@@ -30,7 +30,7 @@ void Animator::Update()
 	if (!current_animation_)
 		return;
 	
-	transition_ratio_ += 0.2;
+	transition_ratio_ += 0.2f;
 	if (transition_ratio_ > 1) transition_ratio_ = 1;
 
 	float ticksPerSecond = current_animation_->GetTicksPerSecond();

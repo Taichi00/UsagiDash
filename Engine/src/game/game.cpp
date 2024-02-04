@@ -7,8 +7,8 @@
 #include "game/input.h"
 #include "game/scene.h"
 #include "game/resource_manager.h"
-#include "game/resource.h"
-
+#include "game/resource/resource.h"
+#include "game/collision_manager.h"
 
 Game::Game()
 {
@@ -43,6 +43,9 @@ void Game::Run(Scene* scene)
 
 			current_scene_->Update();
 			current_scene_->Draw();
+			current_scene_->AfterUpdate();
+
+			//window_->TimeAdjustment();
 		}
 	}
 
@@ -88,6 +91,11 @@ Vec2 Game::GetWindowSize()
 	return Vec2((float)window_->Width(), (float)window_->Height());
 }
 
+std::shared_ptr<CollisionManager> Game::GetCollisionManager()
+{
+	return collision_manager_;
+}
+
 void Game::Init()
 {
 	// ウィンドウの生成
@@ -105,6 +113,9 @@ void Game::Init()
 
 	// ResourceManagerの生成
 	resource_manager_ = std::make_unique<ResourceManager>();
+
+	// CollisionManagerの生成
+	collision_manager_ = std::make_unique<CollisionManager>();
 }
 
 void Game::Update()

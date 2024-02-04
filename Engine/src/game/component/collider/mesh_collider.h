@@ -1,23 +1,21 @@
 #pragma once
 
 #include "game/component/collider/collider.h"
+#include "game/resource/collision_model.h"
 #include "engine/shared_struct.h"
 #include <set>
 #include <vector>
+#include <memory>
 
 class SphereCollider;
 class CapsuleCollider;
+class PolygonCollider;
 class Ray;
-
-struct MeshColliderProperty
-{
-	CollisionModel model;
-};
 
 class MeshCollider : public Collider
 {
 public:
-	MeshCollider(MeshColliderProperty prop);
+	MeshCollider(std::shared_ptr<CollisionModel> model);
 	~MeshCollider();
 
 	bool Init();
@@ -32,6 +30,10 @@ private:
 		const CollisionMesh& mesh, const CollisionFace& face,
 		Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints);
 
+	void PrepareAABB() override;
+
 public:
-	CollisionModel model;
+	std::shared_ptr<CollisionModel> model;
+
+	std::vector<std::shared_ptr<PolygonCollider>> polygons;
 };

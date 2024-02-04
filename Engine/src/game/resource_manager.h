@@ -12,13 +12,17 @@ public:
 	ResourceManager();
 	~ResourceManager();
 
-	template<class T> std::shared_ptr<T> Load(const std::string& key) // リソースを読み込む
+	template<class T> std::shared_ptr<T> Load(const std::string& path) // リソースを読み込む
 	{
 		std::shared_ptr<T> resource;
 
+		// キーの先頭にリソースのtypenameを付与
+		// 同名のファイルでもtypeが異なっていれば違うリソースとして認識させるため
+		auto key = std::string(typeid(T).name()) + ":" + path;
+
 		if (resource_map_.find(key) == resource_map_.end())	// 見つからなかった場合
 		{
-			resource = T::Load(key);
+			resource = T::Load(path);
 
 			// 読み込み失敗
 			if (!resource)
@@ -37,8 +41,10 @@ public:
 		return resource;
 	}
 
-	template<class T> std::shared_ptr<T> Get(const std::string& key) // リソースを取得する
+	template<class T> std::shared_ptr<T> Get(const std::string& path) // リソースを取得する
 	{
+		auto key = std::string(typeid(T).name()) + ":" + path;
+
 		if (resource_map_.find(key) == resource_map_.end())	// 見つからなかった場合
 		{
 			return nullptr;

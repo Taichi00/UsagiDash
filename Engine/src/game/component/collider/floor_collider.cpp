@@ -24,3 +24,7 @@ bool FloorCollider::Intersects(FloorCollider* floor)
 {
 	return false;
 }
+
+void FloorCollider::PrepareAABB()
+{
+}

@@ -5,6 +5,8 @@
 
 class Entity;
 class Transform;
+class Scene;
+class Collider;
 
 class Component
 {
@@ -17,6 +19,9 @@ public:
 	virtual void CameraUpdate();
 	virtual void Update();
 	virtual void PhysicsUpdate();
+
+	virtual void OnCollisionEnter(Collider* collider);
+
 	virtual void Draw();
 	virtual void DrawAlpha();
 	virtual void DrawShadow();
@@ -33,6 +38,7 @@ public:
 	}*/
 
 	Entity* GetEntity();
+	Scene* GetScene();
 
 public:
 	Transform* transform;

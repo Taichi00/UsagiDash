@@ -7,7 +7,7 @@ struct VSOutput
 #define PI 3.14159265359
 #define E 2.71828182846
 
-static int SAMPLES = 8;
+static int SAMPLES = 16;
 static float BlurSize = 0.002;
 static float StandardDeviation = 0.5;
 

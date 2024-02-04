@@ -77,6 +77,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)src/</IncludePath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)src/</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -112,6 +115,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,8 +126,7 @@
       <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <PostBuildEvent>
-      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT
-IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
+      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT</Command>
       <Message>Assets以下の変更されたファイルをコピーする</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -135,6 +138,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,9 +146,20 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <FxCompile>
+      <ShaderModel>5.0</ShaderModel>
+      <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
+    </FxCompile>
+    <PostBuildEvent>
+      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT</Command>
+      <Message>Assets以下の変更されたファイルをコピーする</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\app\component\coin_script.cpp" />
+    <ClCompile Include="src\app\entity\coin.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
+    <ClCompile Include="src\engine\pipeline_state_manager.cpp" />
     <ClCompile Include="src\game\animation.cpp" />
     <ClCompile Include="src\game\component\animator.cpp" />
     <ClCompile Include="src\app\app.cpp" />
@@ -176,7 +191,8 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\collider\mesh_collider.cpp" />
     <ClCompile Include="src\game\component\mesh_renderer.cpp" />
     <ClCompile Include="src\game\label.cpp" />
-    <ClCompile Include="src\game\model.cpp" />
+    <ClCompile Include="src\game\resource\collision_model.cpp" />
+    <ClCompile Include="src\game\resource\model.cpp" />
     <ClCompile Include="src\game\particle.cpp" />
     <ClCompile Include="src\game\component\particle_emitter.cpp" />
     <ClCompile Include="src\game\physics.cpp" />
@@ -185,24 +201,31 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\collider\ray.cpp" />
     <ClCompile Include="src\game\component\rigidbody.cpp" />
     <ClCompile Include="src\engine\root_signature.cpp" />
-    <ClCompile Include="src\game\resource.cpp" />
+    <ClCompile Include="src\game\resource\resource.cpp" />
     <ClCompile Include="src\game\resource_manager.cpp" />
     <ClCompile Include="src\game\scene.cpp" />
     <ClCompile Include="src\game\shadow_map.cpp" />
     <ClCompile Include="src\engine\shared_struct.cpp" />
     <ClCompile Include="src\game\component\collider\sphere_collider.cpp" />
     <ClCompile Include="src\game\component\sphere_mesh.cpp" />
-    <ClCompile Include="src\engine\texture2d.cpp" />
+    <ClCompile Include="src\game\resource\texture2d.cpp" />
     <ClCompile Include="src\game\component\transform.cpp" />
     <ClCompile Include="src\engine\vertex_buffer.cpp" />
     <ClCompile Include="src\engine\window.cpp" />
+    <ClCompile Include="src\game\tag_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\app\component\coin_script.h" />
+    <ClInclude Include="src\app\entity\coin.h" />
     <ClInclude Include="src\engine\d3dx12.h" />
+    <ClInclude Include="src\engine\pipeline_state_manager.h" />
+    <ClInclude Include="src\game\resource\collision_model.h" />
+    <ClInclude Include="src\game\tag_manager.h" />
+    <ClInclude Include="src\math\aabb.h" />
     <ClInclude Include="src\math\color.h" />
     <ClInclude Include="src\game\label.h" />
     <ClInclude Include="src\engine\engine2d.h" />
-    <ClInclude Include="src\game\model.h" />
+    <ClInclude Include="src\game\resource\model.h" />
     <ClInclude Include="src\game\animation.h" />
     <ClInclude Include="src\game\component\animator.h" />
     <ClInclude Include="src\app\app.h" />
@@ -243,7 +266,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\collider\ray.h" />
     <ClInclude Include="src\game\component\rigidbody.h" />
     <ClInclude Include="src\engine\root_signature.h" />
-    <ClInclude Include="src\game\resource.h" />
+    <ClInclude Include="src\game\resource\resource.h" />
     <ClInclude Include="src\game\resource_manager.h" />
     <ClInclude Include="src\game\scene.h" />
     <ClInclude Include="src\game\shadow_map.h" />
@@ -251,7 +274,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\collider\sphere_collider.h" />
     <ClInclude Include="src\game\component\sphere_mesh.h" />
     <ClInclude Include="src\engine\streamreader.h" />
-    <ClInclude Include="src\engine\texture2d.h" />
+    <ClInclude Include="src\game\resource\texture2d.h" />
     <ClInclude Include="src\game\component\transform.h" />
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\engine\vertex_buffer.h" />
@@ -273,26 +296,32 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <FxCompile Include="Shaders\DeferredPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\DepthPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\FXAA.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\GaussianBlurHorizontal.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\GaussianBlurVertical.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\GBufferPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\OutlinePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -311,26 +340,32 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <FxCompile Include="Shaders\ParticleShadowVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\ParticleVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\PBR.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\PBR2.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\PostProcessPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\ScreenVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\ShadowPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -350,7 +385,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pixel</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="Shaders\SimpleVS.hlsl">
@@ -364,10 +399,12 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <FxCompile Include="Shaders\SkyboxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\SkyboxVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\SoftPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
@@ -378,6 +415,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <FxCompile Include="Shaders\SSAO.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

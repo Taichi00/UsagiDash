@@ -11,19 +11,29 @@
 
 class Scene;
 class Transform;
+class Collider;
 
 class Entity
 {
 public:
 	Entity();
-	Entity(std::string name);
+	Entity(const std::string& name, const std::string& tag = "untagged");
 	~Entity();
+
+	void Destroy();
 	
 	Component* AddComponent(Component* component);
 
-	template<class T> T* GetComponent()
+	template<class T>
+	T* GetComponent()
 	{
-		return (T*)component_map_[typeid(T).name()];
+		auto& components = component_map_[typeid(T).name()];
+		if (components.empty())
+		{
+			return nullptr;
+		}
+
+		return (T*)components[0].get();
 	}
 
 	void RegisterScene(Scene* scene);
@@ -34,6 +44,9 @@ public:
 	void CameraUpdate();
 	void Update();
 	void PhysicsUpdate();
+
+	void OnCollisionEnter(Collider* collider);
+
 	void DrawShadow();
 	void Draw();
 	void DrawAlpha();
@@ -44,10 +57,11 @@ public:
 
 	void SetParent(Entity* parent);
 	Entity* GetParent();
-	Entity* GetChild(std::string name);
+	Entity* GetChild(const std::string& name);
 
 public:
 	Transform* transform;
+	std::string tag;
 
 protected:
 	Scene* scene_;
@@ -56,9 +70,7 @@ protected:
 	std::vector<Entity*> children_;					// 子Entity
 	std::map<std::string, Entity*> children_map_;	// 子Entityの名前マップ
 	
-	std::vector<std::unique_ptr<Component>> components_;
-	std::map<std::string, Component*> component_map_;
+	std::map<std::string, std::vector<std::unique_ptr<Component>>> component_map_;
 
 	std::string name_;
-
 };

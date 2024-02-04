@@ -15,6 +15,7 @@ class Scene;
 class ResourceManager;
 class Resource;
 class Engine;
+class CollisionManager;
 
 
 class Game
@@ -44,10 +45,12 @@ public:
 
 	Vec2 GetWindowSize();
 
-	template<class T> std::shared_ptr<T> LoadResource(std::string path)	// リソースを読み込む
+	template<class T> std::shared_ptr<T> LoadResource(const std::string& path)	// リソースを読み込む
 	{
 		return resource_manager_->Load<T>(path);
 	}
+
+	std::shared_ptr<CollisionManager> GetCollisionManager();
 	
 	/*DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetProjMatrix();*/
@@ -68,4 +71,7 @@ private:
 	std::unique_ptr<Scene> current_scene_; // 現在のシーンへのポインタ
 
 	std::unique_ptr<ResourceManager> resource_manager_; // ResourceManagerへのポインタ
+
+	std::shared_ptr<CollisionManager> collision_manager_;
+
 };

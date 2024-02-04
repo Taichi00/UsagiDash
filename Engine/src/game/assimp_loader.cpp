@@ -1,7 +1,7 @@
 #include "game/assimp_loader.h"
 #include "engine/engine.h"
 #include "engine/shared_struct.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
 #include "engine/pipeline_state.h"
@@ -12,7 +12,10 @@
 #include "game/animation.h"
 #include "math/vec.h"
 #include "math/quaternion.h"
-#include "game/model.h"
+#include "game/resource/model.h"
+#include "game/resource/collision_model.h"
+#include "game/string_methods.h"
+#include "math/aabb.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -31,63 +34,14 @@ namespace fs = std::filesystem;
 
 std::wstring directoryPath;
 
-std::wstring GetDirectoryPath(const std::wstring& origin)
-{
-    fs::path p = origin.c_str();
-    return p.remove_filename().c_str();
-}
-
-std::string ToUTF8(const std::wstring& value)
-{
-    auto length = WideCharToMultiByte(CP_UTF8, 0U, value.data(), -1, nullptr, 0, nullptr, nullptr);
-    auto buffer = new char[length];
-
-    WideCharToMultiByte(CP_UTF8, 0U, value.data(), -1, buffer, length, nullptr, nullptr);
-
-    std::string result(buffer);
-    delete[] buffer;
-    buffer = nullptr;
-
-    return result;
-}
-
-// std::string（マルチバイト文字列）からstd::wstring（ワイド文字列）を得る
-std::wstring ToWideString(const std::string& str)
-{
-    auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
-
-    if (num1 == 0)
-    {
-        return L"";
-    }
-
-    std::wstring wstr;
-    wstr.resize(num1 - 1);  // ヌル文字をつけない
-
-    auto num2 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num1);
-
-    assert(num1 == num2);
-    return wstr;
-}
-
-AssimpLoader::AssimpLoader()
-{
-
-}
-
 std::unique_ptr<Model> AssimpLoader::Load(const std::string& filename)
 {
-    return Load(ToWideString(filename).c_str());
-}
-
-std::unique_ptr<Model> AssimpLoader::Load(const wchar_t* filename)
-{
-    if (filename == nullptr)
+    if (filename.empty())
     {
         return nullptr;
     }
     
-    directoryPath = GetDirectoryPath(filename);
+    directoryPath = StringMethods::GetDirectoryPath(StringMethods::GetWideString(filename));
 
     auto model = std::make_unique<Model>();
 
@@ -96,7 +50,7 @@ std::unique_ptr<Model> AssimpLoader::Load(const wchar_t* filename)
     auto& bones = model->bones;
     auto& animations = model->animations;
 
-    auto path = ToUTF8(filename);
+    auto& path = filename;
 
     Assimp::Importer importer;
     int flag = 0;
@@ -183,6 +137,17 @@ std::unique_ptr<Model> AssimpLoader::Load(const wchar_t* filename)
         Game::Get()->GetEngine()->CreateShaderResourceView(*mat.normal_texture, mat.normal_handle);
     }
 
+    // AABBの設定
+    if (!meshes.empty())
+    {
+        model->aabb = meshes[0].aabb;
+    }
+    for (auto i = 1; i < meshes.size(); i++)
+    {
+        model->aabb.max = Vec3::Max(model->aabb.max, meshes[i].aabb.max);
+        model->aabb.min = Vec3::Min(model->aabb.min, meshes[i].aabb.min);
+    }
+
     // ボーン情報の表示
     /*for (int i = 0; i < bones.Size(); i++)
     {
@@ -193,16 +158,16 @@ std::unique_ptr<Model> AssimpLoader::Load(const wchar_t* filename)
     return std::move(model);
 }
 
-bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
+std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::string& filename)
 {
-    if (filename == nullptr)
+    if (filename.empty())
     {
-        return false;
+        return nullptr;
     }
 
-    directoryPath = GetDirectoryPath(filename);
+    directoryPath = StringMethods::GetDirectoryPath(StringMethods::GetWideString(filename));
 
-    auto path = ToUTF8(filename);
+    auto& path = filename;
 
     Assimp::Importer importer;
     int flag = 0;
@@ -216,20 +181,23 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
         // もし読み込みエラーが出たら表示する
         printf(importer.GetErrorString());
         printf("\n");
-        return false;
+        return nullptr;
     }
 
-    auto& meshes = model.meshes;
+    auto model = std::make_unique<CollisionModel>();
+
+    auto& meshes = model->meshes;
     meshes.clear();
     meshes.resize(pScene->mNumMeshes);
 
     for (auto i = 0; i < pScene->mNumMeshes; i++)
     {
         const auto pMesh = pScene->mMeshes[i];
+        auto& mesh = model->meshes[i];
 
         std::map<std::set<uint32_t>, std::vector<CollisionFace*>> edgeMap;  // エッジから接続しているポリゴンを検索するマップ
 
-        model.meshes[i].vertices.resize(pMesh->mNumVertices);
+        mesh.vertices.resize(pMesh->mNumVertices);
         for (auto j = 0; j < pMesh->mNumVertices; j++)
         {
             auto position = &(pMesh->mVertices[j]);
@@ -239,10 +207,10 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
             vertex.position = Vec3(position->x, position->y, position->z);
             vertex.normal = Vec3(normal->x, normal->y, normal->z);
 
-            model.meshes[i].vertices[j] = vertex;
+            mesh.vertices[j] = vertex;
         }
 
-        model.meshes[i].faces.resize(pMesh->mNumFaces);
+        mesh.faces.resize(pMesh->mNumFaces);
         for (auto j = 0; j < pMesh->mNumFaces; j++)
         {
             const auto& aiface = pMesh->mFaces[j];
@@ -250,9 +218,12 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
             auto id0 = aiface.mIndices[0];
             auto id1 = aiface.mIndices[1];
             auto id2 = aiface.mIndices[2];
-            auto n0 = model.meshes[i].vertices[id0].normal;
-            auto n1 = model.meshes[i].vertices[id1].normal;
-            auto n2 = model.meshes[i].vertices[id2].normal;
+            auto n0 = mesh.vertices[id0].normal;
+            auto n1 = mesh.vertices[id1].normal;
+            auto n2 = mesh.vertices[id2].normal;
+            auto p0 = mesh.vertices[id0].position;
+            auto p1 = mesh.vertices[id1].position;
+            auto p2 = mesh.vertices[id2].position;
 
             CollisionFace face = {};
             face.indices[0] = id0;
@@ -264,56 +235,83 @@ bool AssimpLoader::LoadCollision(const wchar_t* filename, CollisionModel& model)
             face.edges[1] = { 1, 2 };
             face.edges[2] = { 2, 0 };
 
-            model.meshes[i].faces[j] = face;
+            mesh.faces[j] = face;
 
             // edgeMapにこのFaceを追加
-            edgeMap[{id0, id1}].push_back(&(model.meshes[i].faces[j]));
-            edgeMap[{id1, id2}].push_back(&(model.meshes[i].faces[j]));
-            edgeMap[{id2, id0}].push_back(&(model.meshes[i].faces[j]));
+            edgeMap[{id0, id1}].push_back(&(mesh.faces[j]));
+            edgeMap[{id1, id2}].push_back(&(mesh.faces[j]));
+            edgeMap[{id2, id0}].push_back(&(mesh.faces[j]));
+
+            // AABBを設定
+            mesh.faces[j].aabb = AABB{};
+            mesh.faces[j].aabb.max = Vec3::Max(Vec3::Max(p0, p1), p2);
+            mesh.faces[j].aabb.min = Vec3::Min(Vec3::Min(p0, p1), p2);
         }
 
-        for (const auto& [edge, faces] : edgeMap)
+        //for (const auto& [edge, faces] : edgeMap)
+        //{
+        //    // 共有していないエッジは無視しない
+        //    if (faces.size() != 2) continue;
+
+        //    // 法線が異なれば無視しない
+        //    if (faces[0]->normal != faces[1]->normal) continue;
+        //    
+        //    // 無視するエッジを削除
+        //    auto& edges0 = faces[0]->edges;
+        //    auto& edges1 = faces[1]->edges;
+        //    auto& indices0 = faces[0]->indices;
+        //    auto& indices1 = faces[1]->indices;
+
+        //    for (auto j = 0; j < edges0.size(); j++)
+        //    {
+        //        if (edge == std::set<uint32_t>{indices0[edges0[j].first], indices0[edges0[j].second]})
+        //        {
+        //            edges0.erase(edges0.begin() + j);
+        //            break;
+        //        }
+        //    }
+
+        //    for (auto j = 0; j < edges1.size(); j++)
+        //    {
+        //        if (edge == std::set<uint32_t>{indices1[edges1[j].first], indices1[edges1[j].second]})
+        //        {
+        //            edges1.erase(edges1.begin() + j);
+        //            break;
+        //        }
+        //    }
+        //}
+
+        // meshのAABBを設定
+        if (!mesh.faces.empty())
         {
-            // 共有していないエッジは無視しない
-            if (faces.size() != 2) continue;
-
-            // 法線が異なれば無視しない
-            if (faces[0]->normal != faces[1]->normal) continue;
-            
-            // 無視するエッジを削除
-            auto& edges0 = faces[0]->edges;
-            auto& edges1 = faces[1]->edges;
-            auto& indices0 = faces[0]->indices;
-            auto& indices1 = faces[1]->indices;
-
-            for (auto j = 0; j < edges0.size(); j++)
-            {
-                if (edge == std::set<uint32_t>{indices0[edges0[j].first], indices0[edges0[j].second]})
-                {
-                    edges0.erase(edges0.begin() + j);
-                    break;
-                }
-            }
-
-            for (auto j = 0; j < edges1.size(); j++)
-            {
-                if (edge == std::set<uint32_t>{indices1[edges1[j].first], indices1[edges1[j].second]})
-                {
-                    edges1.erase(edges1.begin() + j);
-                    break;
-                }
-            }
+            mesh.aabb = mesh.faces[0].aabb;
+        }
+        for (auto j = 1; j < mesh.faces.size(); j++)
+        {
+            mesh.aabb.max = Vec3::Max(mesh.aabb.max, mesh.faces[j].aabb.max);
+            mesh.aabb.min = Vec3::Min(mesh.aabb.min, mesh.faces[j].aabb.min);
         }
     }
 
+    // // modelのAABBを設定
+    if (!meshes.empty())
+    {
+        model->aabb = meshes[0].aabb;
+    }
+    for (auto i = 1; i < meshes.size(); i++)
+    {
+        model->aabb.max = Vec3::Max(model->aabb.max, meshes[i].aabb.max);
+        model->aabb.min = Vec3::Min(model->aabb.min, meshes[i].aabb.min);
+    }
+
     pScene = nullptr;
-    return true;
+    return std::move(model);
 }
 
 void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 {
     auto& meshes = model.meshes;
-    auto& bones = model.bones;
+    auto& bones = model.bones; 
 
     for (UINT i = 0; i < node->mNumMeshes; i++)
     {
@@ -335,12 +333,15 @@ void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 
 void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
 {
+    auto pos_max = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    auto pos_min = Vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    
     aiVector3D zero3D(0.0f, 0.0f, 0.0f);
     aiVector3D zeroTangent(1.0f, 0.0f, 0.0f);
     aiColor4D zeroColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+    // 頂点データの読み込み
     dst.vertices.resize(src->mNumVertices);
-
     for (auto i = 0u; i < src->mNumVertices; ++i)
     {
         auto position = &(src->mVertices[i]);
@@ -357,10 +358,21 @@ void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
         vertex.color = DirectX::XMFLOAT4(color->r, color->g, color->b, color->a);
 
         dst.vertices[i] = vertex;
+
+        pos_max.x = std::max(pos_max.x, position->x);
+        pos_max.y = std::max(pos_max.y, position->y);
+        pos_max.z = std::max(pos_max.z, position->z);
+
+        pos_min.x = std::min(pos_min.x, position->x);
+        pos_min.y = std::min(pos_min.y, position->y);
+        pos_min.z = std::min(pos_min.z, position->z);
     }
 
-    dst.indices.resize(src->mNumFaces * 3);
+    // AABBの設定
+    dst.aabb = AABB{ pos_max, pos_min };
     
+    // インデックスデータの読み込み
+    dst.indices.resize(src->mNumFaces * 3);
     for (auto i = 0u; i < src->mNumFaces; ++i)
     {
         const auto& face = src->mFaces[i];
@@ -526,7 +538,7 @@ std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(aiString path, const aiMate
     {
         // テクスチャパスは相対パスで入っているので、ファイルの場所とくっつける
         auto file = std::string(path.C_Str());
-        auto texturePath = directoryPath + ToWideString(file);
+        auto texturePath = directoryPath + StringMethods::GetWideString(file);
 
         //dst.DiffuseMap = dir + ToWideString(file);
         return Texture2D::Load(texturePath);

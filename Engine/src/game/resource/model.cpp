@@ -1,4 +1,4 @@
-#include "game/model.h"
+#include "game/resource/model.h"
 #include "game/assimp_loader.h"
 
 Model::Model()

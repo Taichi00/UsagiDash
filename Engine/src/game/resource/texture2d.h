@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/d3dx12.h"
 #include "engine/comptr.h"
-#include "game/resource.h"
+#include "game/resource/resource.h"
 #include <DirectXTex.h>
 #include <memory>
 #include <string>

@@ -41,4 +41,7 @@ private:
 
 	Animator* animator_;
 	Rigidbody* rigidbody_;
+	ParticleEmitter* run_smoke_emitter_;
+	ParticleEmitter* jump_smoke_emitter_;
+	ParticleEmitter* circle_smoke_emitter_;
 };

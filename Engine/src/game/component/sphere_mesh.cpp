@@ -3,9 +3,9 @@
 #include "engine/shared_struct.h"
 #include "engine/vertex_buffer.h"
 #include "engine/index_buffer.h"
-#include "engine/texture2d.h"
+#include "game/resource/texture2d.h"
 #include "game/game.h"
-#include "game/model.h"
+#include "game/resource/model.h"
 #include <DirectXMath.h>
 #include <vector>
 

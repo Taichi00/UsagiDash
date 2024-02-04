@@ -2,8 +2,9 @@
 
 #include "game/bone_list.h"
 #include "engine/descriptor_heap.h"
-#include "game/resource.h"
+#include "game/resource/resource.h"
 #include "engine/shared_struct.h"
+#include "math/aabb.h"
 #include <DirectXMath.h>
 #include <memory>
 #include <string>
@@ -21,6 +22,7 @@ struct Mesh
 	std::shared_ptr<VertexBuffer> vertex_buffer;		// 頂点バッファへのポインタ
 	std::shared_ptr<IndexBuffer> index_buffer;		// インデックスバッファへのポインタ
 	int material_index;				// マテリアルのインデックス
+	AABB aabb;
 };
 
 struct Material
@@ -50,4 +52,5 @@ public:
 	std::vector<std::shared_ptr<Animation>> animations;
 	BoneList bones;
 	std::shared_ptr<DescriptorHeap> descriptor_heap;
+	AABB aabb;
 };

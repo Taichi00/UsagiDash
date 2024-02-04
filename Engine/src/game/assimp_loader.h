@@ -9,7 +9,7 @@
 struct Mesh;
 struct Material;
 struct Vertex;
-struct CollisionModel;
+class CollisionModel;
 class Bone;
 class BoneList;
 class Animation;
@@ -30,11 +30,10 @@ class PipelineState;
 class AssimpLoader
 {
 public:
-	AssimpLoader();
+	AssimpLoader() = default;
 
 	static std::unique_ptr<Model> Load(const std::string& filename);
-	static std::unique_ptr<Model> Load(const wchar_t* filename);	// モデルをロードする
-	static bool LoadCollision(const wchar_t* filename, CollisionModel& model);	// コリジョンをロード
+	static std::unique_ptr<CollisionModel> LoadCollision(const std::string& filename);
 
 private:
 	static void ProcessNode(Model& model, aiNode* node, const aiScene* scene);
