@@ -25,13 +25,20 @@ bool Animator::Init()
 	return true;
 }
 
-void Animator::Update()
+void Animator::Update(const float delta_time)
 {
 	if (!current_animation_)
 		return;
 	
-	transition_ratio_ += 0.2f;
-	if (transition_ratio_ > 1) transition_ratio_ = 1;
+	if (blend_time_ > 0)
+	{
+		transition_ratio_ += 1.f / blend_time_ * delta_time;
+		if (transition_ratio_ > 1) transition_ratio_ = 1;
+	}
+	else
+	{
+		transition_ratio_ = 1;
+	}
 
 	float ticksPerSecond = current_animation_->GetTicksPerSecond();
 	ticksPerSecond != 0 ? ticksPerSecond : 25.0f;
@@ -73,7 +80,7 @@ void Animator::Update()
 		bone->SetScale(currentScale);
 	}
 	
-	current_time_ += 1.0 / 100.0 * speed_;
+	current_time_ += 60.0 / 100.0 * speed_ * delta_time;
 }
 
 void Animator::RegisterAnimation(const std::shared_ptr<Animation>& animation)
@@ -90,8 +97,15 @@ void Animator::RegisterAnimations(const std::vector<std::shared_ptr<Animation>>&
 	}
 }
 
-void Animator::Play(std::string name, float speed, bool loop)
+void Animator::Play(std::string name, float speed, bool loop, float blend_speed)
 {
+	auto animation = animation_map_[name];
+
+	if (animation == current_animation_)
+	{
+		return;
+	}
+	
 	if (animation_map_.find(name) == animation_map_.end())
 	{
 		current_animation_ = nullptr;
@@ -105,10 +119,11 @@ void Animator::Play(std::string name, float speed, bool loop)
 	current_time_ = 0;
 	speed_ = speed;
 	loop_ = loop;
+	blend_time_ = blend_speed;
 	transition_ratio_ = 0;
 }
 
-void Animator::Push(std::string name, float speed, bool loop)
+void Animator::Push(std::string name, float speed, bool loop, float blend_speed)
 {
 	if (animation_map_.find(name) == animation_map_.end())
 	{
@@ -119,6 +134,7 @@ void Animator::Push(std::string name, float speed, bool loop)
 	anim.name = name;
 	anim.speed = speed;
 	anim.loop = loop;
+	anim.blend_time = blend_speed;
 
 	animation_queue_.push(anim);
 }
@@ -135,7 +151,7 @@ void Animator::SetSpeed(float speed)
 
 void Animator::Play(AnimationArgs anim)
 {
-	Play(anim.name, anim.speed, anim.loop);
+	Play(anim.name, anim.speed, anim.loop, anim.blend_time);
 }
 
 Vec3 Animator::CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTime, Bone* bone)

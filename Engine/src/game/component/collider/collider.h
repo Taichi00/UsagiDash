@@ -10,7 +10,7 @@ class Rigidbody;
 class SphereCollider;
 class CapsuleCollider;
 class FloorCollider;
-class MeshCollider;
+class PolygonCollider;
 class Ray;
 class CollisionManager;
 
@@ -19,13 +19,13 @@ class Collider : public Component
 public:
 	struct HitInfo
 	{
-		Collider* collider;
+		Collider* collider = nullptr;
 		Vec3 normal;
-		float depth;
+		float depth = 0.f;
 	};
 
 	Collider() = default;
-	~Collider();
+	virtual ~Collider();
 
 	bool Init();
 
@@ -45,7 +45,7 @@ public:
 	virtual bool Intersects(SphereCollider* sphere);
 	virtual bool Intersects(CapsuleCollider* sphere);
 	virtual bool Intersects(FloorCollider* floor);
-	virtual bool Intersects(MeshCollider* collider);
+	virtual bool Intersects(PolygonCollider* collider);
 	virtual bool Intersects(Ray* ray);
 
 	static Vec3 ClosestPointOnLineSegment(const Vec3& a, const Vec3& b, const Vec3& point);

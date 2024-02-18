@@ -12,8 +12,8 @@ float4 main(VSOutput input) : SV_TARGET
     float3 envColor = gSkybox.SampleLevel(gSampler, normalize(input.worldPos.xyz), 0).rgb;
     
     // ÉKÉìÉ}ï‚ê≥
-    envColor = envColor / (envColor + 1.0);
-    envColor = pow(envColor, 1.0 / 2.2);
+    //envColor = envColor / (envColor + 1.0);
+    //envColor = pow(envColor, 1.0 / 2.2);
     
     return float4(envColor, 1.0);
 }

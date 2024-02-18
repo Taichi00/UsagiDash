@@ -327,7 +327,7 @@ void Engine::EndRenderD3D()
 	queue_->ExecuteCommandLists(1, ppCmdLists);
 
 	// 描画完了を待つ
-	WaitGPU();
+	//WaitGPU();
 }
 
 void Engine::BeginDeferredRender()
@@ -357,13 +357,21 @@ void Engine::BeginDeferredRender()
 	const float depthFloat[] = { 10000.0f, 0.0f, 0.0f, 0.0f };
 	const float zeroAlbedo[] = { 0, 0, 0, 1 };	// Aはアウトラインマスクなので１で初期化
 	command_list_->ClearRenderTargetView(currentRtvHandle, clearColor, 0, nullptr);
-	command_list_->ClearRenderTargetView(buffer_manager_->Get("Position")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	/*command_list_->ClearRenderTargetView(buffer_manager_->Get("Position")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Normal")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Albedo")->RtvHandle().HandleCPU(), zeroAlbedo, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("MetallicRoughness")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Depth")->RtvHandle().HandleCPU(), depthFloat, 0, nullptr);
 	command_list_->ClearRenderTargetView(buffer_manager_->Get("Lighting")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
-	command_list_->ClearRenderTargetView(buffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);
+	command_list_->ClearRenderTargetView(buffer_manager_->Get("PostProcess")->RtvHandle().HandleCPU(), zeroFloat, 0, nullptr);*/
+
+	buffer_manager_->Get("Position")->Clear();
+	buffer_manager_->Get("Normal")->Clear();
+	buffer_manager_->Get("Albedo")->Clear();
+	buffer_manager_->Get("MetallicRoughness")->Clear();
+	buffer_manager_->Get("Depth")->Clear();
+	buffer_manager_->Get("Lighting")->Clear();
+	buffer_manager_->Get("PostProcess")->Clear();
 
 	// 深度ステンシルビューをクリア
 	command_list_->ClearDepthStencilView(currentDsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
@@ -379,6 +387,8 @@ void Engine::DepthPrePath()
 
 	// レンダーターゲットを設定
 	command_list_->OMSetRenderTargets(1, &currentRtvHandle, FALSE, &currentDsvHandle);
+
+	command_list_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 void Engine::GBufferPath()
@@ -1155,8 +1165,8 @@ bool Engine::CreateGBuffer()
 	bm->CreateGBuffer("Normal"           , float_format, { 0, 0, 0, 0 });
 	bm->CreateGBuffer("Albedo"           , color_format, { 0, 0, 0, 1 });
 	bm->CreateGBuffer("MetallicRoughness", color_format, { 0, 0, 0, 0 });
-	bm->CreateGBuffer("Depth"            , float_format, { 1, 1, 1, 1 });
-	bm->CreateGBuffer("Lighting"         , color_format, { 0, 0, 0, 0 });
+	bm->CreateGBuffer("Depth"            , float_format, { 10000, 0, 0, 0 });
+	bm->CreateGBuffer("Lighting"         , float_format, { 0, 0, 0, 0 });
 	bm->CreateGBuffer("SSAO"             , color_format, { 0, 0, 0, 0 });
 	bm->CreateGBuffer("BlurredSSAO1"     , color_format, { 0, 0, 0, 0 });
 	bm->CreateGBuffer("BlurredSSAO2"     , color_format, { 0, 0, 0, 0 });
@@ -1238,53 +1248,40 @@ bool Engine::CreateDescriptorHeap()
 void Engine::WaitGPU()
 {
 	// 描画終了待ち
-	const UINT64 fenceValue = fence_value_[current_back_buffer_index_];
-	queue_->Signal(fence_.Get(), fenceValue);
-	fence_value_[current_back_buffer_index_]++;
+	//const UINT64 fenceValue = fence_value_[0];
+	//queue_->Signal(fence_.Get(), fenceValue);
+	//fence_value_[0]++;
 
-	// 次のフレームの描画準備がまだであれば待機する
-	if (fence_->GetCompletedValue() < fenceValue)
+	//// 次のフレームの描画準備がまだであれば待機する
+	//if (fence_->GetCompletedValue() < fenceValue)
+	//{
+	//	// 完了時にイベントを設定
+	//	auto hr = fence_->SetEventOnCompletion(fenceValue, fence_event_);
+	//	if (FAILED(hr))
+	//	{
+	//		return;
+	//	}
+
+	//	// 待機処理
+	//	if (WAIT_OBJECT_0 != WaitForSingleObjectEx(fence_event_, INFINITE, FALSE))
+	//	{
+	//		return;
+	//	}
+	//}
+
+	ComPtr<ID3D12Fence1> fence;
+	const UINT64 expect_value = 1;
+	device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+	queue_->Signal(fence.Get(), expect_value);
+	if (fence->GetCompletedValue() != expect_value)
 	{
-		// 完了時にイベントを設定
-		auto hr = fence_->SetEventOnCompletion(fenceValue, fence_event_);
-		if (FAILED(hr))
-		{
-			return;
-		}
-
-		// 待機処理
-		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(fence_event_, INFINITE, FALSE))
-		{
-			return;
-		}
+		fence->SetEventOnCompletion(expect_value, fence_event_);
+		WaitForSingleObject(fence_event_, INFINITE);
 	}
 }
 
 void Engine::FlushGPU()
 {
-	//for (auto i = 0; i < FRAME_BUFFER_COUNT; i++)
-	//{
-	//	const UINT64 fenceValue = fence_value_[i];
-	//	queue_->Signal(fence_.Get(), fenceValue);
-	//	fence_value_[i]++;
-
-	//	// 次のフレームの描画準備がまだであれば待機する
-	//	if (fence_->GetCompletedValue() < fenceValue)
-	//	{
-	//		// 完了時にイベントを設定
-	//		auto hr = fence_->SetEventOnCompletion(fenceValue, fence_event_);
-	//		if (FAILED(hr))
-	//		{
-	//			return;
-	//		}
-
-	//		// 待機処理
-	//		if (WAIT_OBJECT_0 != WaitForSingleObjectEx(fence_event_, INFINITE, FALSE))
-	//		{
-	//			return;
-	//		}
-	//	}
-	//}
 	ComPtr<ID3D12Fence1> fence;
 	const UINT64 expect_value = 1;
 	device_->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));

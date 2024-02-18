@@ -16,24 +16,25 @@ class MeshCollider : public Collider
 {
 public:
 	MeshCollider(std::shared_ptr<CollisionModel> model);
-	~MeshCollider();
+	~MeshCollider() override;
 
 	bool Init();
 
-	bool Intersects(SphereCollider* sphere);
+	/*bool Intersects(SphereCollider* sphere);
 	bool Intersects(CapsuleCollider* capsule);
-	bool Intersects(Ray* ray);
+	bool Intersects(Ray* ray);*/
 
 private:
-	bool SphereIntersectsMesh(
+	/*bool SphereIntersectsMesh(
 		const Vec3& center, const float radius,
 		const CollisionMesh& mesh, const CollisionFace& face,
-		Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints);
+		Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints);*/
 
 	void PrepareAABB() override;
 
 public:
 	std::shared_ptr<CollisionModel> model;
 
-	std::vector<std::shared_ptr<PolygonCollider>> polygons;
+private:
+	std::vector<std::shared_ptr<PolygonCollider>> polygons_;
 };

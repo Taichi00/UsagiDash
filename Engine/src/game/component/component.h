@@ -15,10 +15,11 @@ public:
 	virtual ~Component();
 
 	virtual bool Init();
-	virtual void BeforeCameraUpdate();
-	virtual void CameraUpdate();
-	virtual void Update();
-	virtual void PhysicsUpdate();
+
+	virtual void BeforeCameraUpdate(const float delta_time);
+	virtual void CameraUpdate(const float delta_time);
+	virtual void Update(const float delta_time);
+	virtual void PhysicsUpdate(const float delta_time);
 
 	virtual void OnCollisionEnter(Collider* collider);
 

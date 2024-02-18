@@ -7,13 +7,12 @@
 #include <math.h>
 #include <game/game.h>
 
-Rigidbody::Rigidbody(RigidbodyProperty prop)
+Rigidbody::Rigidbody(float mass, bool use_gravity, bool is_static, float friction)
 {
-	collider = prop.collider;
-	mass = prop.mass;
-	use_gravity = prop.use_gravity;
-	is_static = prop.is_static;
-	friction = prop.friction;
+	this->mass = mass;
+	this->use_gravity = use_gravity;
+	this->is_static = is_static;
+	this->friction = friction;
 }
 
 Rigidbody::~Rigidbody()
@@ -23,13 +22,15 @@ Rigidbody::~Rigidbody()
 
 bool Rigidbody::Init()
 {
+	collider = GetEntity()->GetComponent<Collider>();
+
 	collision_manager_ = Game::Get()->GetCollisionManager();
 	collision_manager_->Add(this);
 	
 	return true;
 }
 
-void Rigidbody::Prepare()
+void Rigidbody::Prepare(const float delta_time)
 {
 	position = transform->position + velocity;
 	position_prev = transform->position;
@@ -37,8 +38,11 @@ void Rigidbody::Prepare()
 
 	is_grounded = false;
 	floor_rigidbody = nullptr;
-	floor_normal = Vec3(0, 1, 0);
+	floor_normal = Vec3::Zero();
 	floor_velocity = Vec3::Zero();
+
+	is_touching_wall = false;
+	wall_normal = Vec3::Zero();
 }
 
 void Rigidbody::Resolve()
@@ -51,31 +55,10 @@ void Rigidbody::Resolve()
 	Vec3 gnormal = Vec3(0, 1, 0);	// 重力の方向
 
 	auto& hit = collider->GetNearestHit();
-	/*int idx = 0;
-	for (auto i = 0; i < collider->hit_colliders.size(); i++)
-	{
-		auto hitRigidbody = collider->hit_colliders[i]->GetRigidbody();
-
-		if (hitRigidbody == nullptr)
-			continue;
-
-		auto distance = collider->hit_depths[i];
-		if (distance > maxDistance)
-		{
-			maxDistance = distance;
-			hitCollider = collider->hit_colliders[i];
-			idx = i;
-		}
-	}*/
 	
-	//for (auto i = 0; i < collider->hitColliders.size(); i++)
 	if (hit.collider != nullptr)
 	{
-		//auto hitCollider = collider->hitColliders[i];
 		auto hitRigidbody = hit.collider->GetRigidbody();
-
-		//if (hitRigidbody == nullptr)
-		//	continue;
 
 		auto normal = hit.normal;
 		auto depth = hit.depth;
@@ -97,20 +80,25 @@ void Rigidbody::Resolve()
 		// 接触面から離れる方向に動いている場合は無視
 		if (Vec3::Dot(v, normal) <= 0.2)
 		{
+			auto angle = Vec3::Angle(normal, Vec3(0, 1, 0));
+
 			// 地面なら
-			if (Vec3::Angle(normal, Vec3(0, 1, 0)) < 0.9)
+			if (angle < 0.9 && angle >= 0.0)
 			{
 				is_grounded |= true;
 				floor_rigidbody = hitRigidbody;
 				floor_normal = normal;
 				floor_velocity = hitRigidbody->velocity;
 			}
-
+			else if (angle >= 0.9 && angle < 2.7)
+			{
+				is_touching_wall |= true;
+				wall_normal = normal;
+			}
+			
 			if (hitRigidbody->is_static)
 			{
 				// 不動オブジェクトと衝突した場合
-				//tangent = -(velocity - normal * Vec3::Dot(normal, velocity)).Normalized();
-
 				J = -Vec3::Dot(v, normal) * (1.0 + e) / (1.0 / mass);	// 撃力
 				B = -Vec3::Dot(v, tangent) / (1.0 / mass);
 
@@ -123,11 +111,7 @@ void Rigidbody::Resolve()
 			else
 			{
 				// 不動でないオブジェクトと衝突した場合
-				//tangent = -(v - normal * Vec3::Dot(normal, v)).Normalized();
-
 				J = -Vec3::Dot(v, normal) * (1.0 + e) / (1.0 / mass + 1.0 / hitMass);	// 撃力
-				//B = std::min(friction, hitFriction) * J;	// 摩擦力
-
 				B = -Vec3::Dot(v, tangent) / (1.0 / mass + 1.0 / hitMass);
 
 				if (hitFriction < std::abs(B / J)) B = std::min(friction, hitFriction) * B;
@@ -142,7 +126,6 @@ void Rigidbody::Resolve()
 			velocity += normal * depth * k;*/
 
 			position += dp + tangent * B / mass;
-			//velocity = Vec3::Zero();
 		}
 	}
 

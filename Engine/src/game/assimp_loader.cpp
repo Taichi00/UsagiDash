@@ -34,14 +34,14 @@ namespace fs = std::filesystem;
 
 std::wstring directoryPath;
 
-std::unique_ptr<Model> AssimpLoader::Load(const std::string& filename)
+std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& filename)
 {
     if (filename.empty())
     {
         return nullptr;
     }
     
-    directoryPath = StringMethods::GetDirectoryPath(StringMethods::GetWideString(filename));
+    directoryPath = StringMethods::GetDirectoryPath(filename);
 
     auto model = std::make_unique<Model>();
 
@@ -50,7 +50,7 @@ std::unique_ptr<Model> AssimpLoader::Load(const std::string& filename)
     auto& bones = model->bones;
     auto& animations = model->animations;
 
-    auto& path = filename;
+    auto path = StringMethods::GetString(filename);
 
     Assimp::Importer importer;
     int flag = 0;
@@ -158,16 +158,16 @@ std::unique_ptr<Model> AssimpLoader::Load(const std::string& filename)
     return std::move(model);
 }
 
-std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::string& filename)
+std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& filename)
 {
     if (filename.empty())
     {
         return nullptr;
     }
 
-    directoryPath = StringMethods::GetDirectoryPath(StringMethods::GetWideString(filename));
+    directoryPath = StringMethods::GetDirectoryPath(filename);
 
-    auto& path = filename;
+    auto path = StringMethods::GetString(filename);
 
     Assimp::Importer importer;
     int flag = 0;
@@ -195,22 +195,22 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::string& f
         const auto pMesh = pScene->mMeshes[i];
         auto& mesh = model->meshes[i];
 
-        std::map<std::set<uint32_t>, std::vector<CollisionFace*>> edgeMap;  // エッジから接続しているポリゴンを検索するマップ
+        //std::map<std::set<uint32_t>, std::vector<CollisionFace*>> edgeMap;  // エッジから接続しているポリゴンを検索するマップ
 
-        mesh.vertices.resize(pMesh->mNumVertices);
+        // 頂点情報の読み込み
+        std::vector<CollisionVertex> vertices(pMesh->mNumVertices);
         for (auto j = 0; j < pMesh->mNumVertices; j++)
         {
             auto position = &(pMesh->mVertices[j]);
             auto normal = &(pMesh->mNormals[j]);
 
-            CollisionVertex vertex = {};
+            auto& vertex = vertices[j];
             vertex.position = Vec3(position->x, position->y, position->z);
             vertex.normal = Vec3(normal->x, normal->y, normal->z);
-
-            mesh.vertices[j] = vertex;
         }
 
-        mesh.faces.resize(pMesh->mNumFaces);
+        // ポリゴン情報の読み込み
+        mesh.polygons.resize(pMesh->mNumFaces);
         for (auto j = 0; j < pMesh->mNumFaces; j++)
         {
             const auto& aiface = pMesh->mFaces[j];
@@ -218,34 +218,24 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::string& f
             auto id0 = aiface.mIndices[0];
             auto id1 = aiface.mIndices[1];
             auto id2 = aiface.mIndices[2];
-            auto n0 = mesh.vertices[id0].normal;
-            auto n1 = mesh.vertices[id1].normal;
-            auto n2 = mesh.vertices[id2].normal;
-            auto p0 = mesh.vertices[id0].position;
-            auto p1 = mesh.vertices[id1].position;
-            auto p2 = mesh.vertices[id2].position;
 
-            CollisionFace face = {};
-            face.indices[0] = id0;
-            face.indices[1] = id1;
-            face.indices[2] = id2;
-            face.normal = (n0 + n1 + n2).Normalized();
-            face.edges.resize(3);
-            face.edges[0] = { 0, 1 };
-            face.edges[1] = { 1, 2 };
-            face.edges[2] = { 2, 0 };
+            auto p0 = vertices[id0].position;
+            auto p1 = vertices[id1].position;
+            auto p2 = vertices[id2].position;
 
-            mesh.faces[j] = face;
+            auto n0 = vertices[id0].normal;
+            auto n1 = vertices[id1].normal;
+            auto n2 = vertices[id2].normal;
 
-            // edgeMapにこのFaceを追加
-            edgeMap[{id0, id1}].push_back(&(mesh.faces[j]));
-            edgeMap[{id1, id2}].push_back(&(mesh.faces[j]));
-            edgeMap[{id2, id0}].push_back(&(mesh.faces[j]));
-
+            auto& polygon = mesh.polygons[j];
+            polygon.vertices[0] = vertices[id0];
+            polygon.vertices[1] = vertices[id1];
+            polygon.vertices[2] = vertices[id2];
+            polygon.normal = (n0 + n1 + n2).Normalized();
+            
             // AABBを設定
-            mesh.faces[j].aabb = AABB{};
-            mesh.faces[j].aabb.max = Vec3::Max(Vec3::Max(p0, p1), p2);
-            mesh.faces[j].aabb.min = Vec3::Min(Vec3::Min(p0, p1), p2);
+            polygon.aabb.max = Vec3::Max(Vec3::Max(p0, p1), p2);
+            polygon.aabb.min = Vec3::Min(Vec3::Min(p0, p1), p2);
         }
 
         //for (const auto& [edge, faces] : edgeMap)
@@ -282,14 +272,14 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::string& f
         //}
 
         // meshのAABBを設定
-        if (!mesh.faces.empty())
+        if (!mesh.polygons.empty())
         {
-            mesh.aabb = mesh.faces[0].aabb;
+            mesh.aabb = mesh.polygons[0].aabb;
         }
-        for (auto j = 1; j < mesh.faces.size(); j++)
+        for (auto j = 1; j < mesh.polygons.size(); j++)
         {
-            mesh.aabb.max = Vec3::Max(mesh.aabb.max, mesh.faces[j].aabb.max);
-            mesh.aabb.min = Vec3::Min(mesh.aabb.min, mesh.faces[j].aabb.min);
+            mesh.aabb.max = Vec3::Max(mesh.aabb.max, mesh.polygons[j].aabb.max);
+            mesh.aabb.min = Vec3::Min(mesh.aabb.min, mesh.polygons[j].aabb.min);
         }
     }
 
@@ -333,8 +323,8 @@ void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
 
 void AssimpLoader::LoadMesh(Mesh& dst, const aiMesh* src)
 {
-    auto pos_max = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    auto pos_min = Vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    auto pos_max = Vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    auto pos_min = Vec3(FLT_MAX, FLT_MAX, FLT_MAX);
     
     aiVector3D zero3D(0.0f, 0.0f, 0.0f);
     aiVector3D zeroTangent(1.0f, 0.0f, 0.0f);

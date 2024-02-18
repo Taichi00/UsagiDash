@@ -11,13 +11,13 @@ using namespace DirectX;
 
 float Texture2D::default_color_[4] = { 1, 1, 1, 1 };
 
-std::unique_ptr<Texture2D> Texture2D::Load(std::string path)
+std::unique_ptr<Texture2D> Texture2D::Load(const std::string& path)
 {
 	auto wpath = StringMethods::GetWideString(path);
     return Load(wpath);
 }
 
-std::unique_ptr<Texture2D> Texture2D::Load(std::wstring path)
+std::unique_ptr<Texture2D> Texture2D::Load(const std::wstring& path)
 {
 	auto tex = std::make_unique<Texture2D>(path);
 	if (!tex->IsValid())
@@ -114,6 +114,7 @@ DXGI_FORMAT Texture2D::Format() const
 
 DirectX::TexMetadata Texture2D::Metadata() const
 {
+	
 	return metadata_;
 }
 

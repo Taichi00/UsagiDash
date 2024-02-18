@@ -67,6 +67,8 @@ void BoneList::Append(Bone* bone)
 
     bones_.push_back(bone);
     bone_map_[bone->GetName()] = index;
+
+    if (!bone->GetParent()) root_bones_.push_back(bone);
 }
 
 Bone* BoneList::Find(const std::string& name)
@@ -88,6 +90,7 @@ void BoneList::Clear()
 {
     bones_.clear();
     bone_map_.clear();
+    root_bones_.clear();
 }
 
 void BoneList::SaveBuffer()
@@ -96,4 +99,9 @@ void BoneList::SaveBuffer()
     {
         bone->SaveBuffer();
     }
+}
+
+const std::vector<Bone*>& BoneList::RootBones()
+{
+    return root_bones_;
 }

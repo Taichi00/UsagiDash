@@ -18,8 +18,8 @@ public:
 	FloatingPlayer(FloatingPlayerProperty prop);
 	~FloatingPlayer();
 
-	bool Init();
-	void Update();
+	bool Init() override;
+	void Update(const float delta_time) override;
 
 private:
 	void Move();

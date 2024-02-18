@@ -34,9 +34,75 @@ public:
 		return Vec2(x / n, y / n);
 	}
 
+	const Vec2 operator -() const
+	{
+		return Vec2(-x, -y);
+	}
+
+	Vec2& operator +=(const Vec2& v)
+	{
+		x += v.x;
+		y += v.y;
+		return *this;
+	}
+
+	Vec2& operator -=(const Vec2& v)
+	{
+		x -= v.x;
+		y -= v.y;
+		return *this;
+	}
+
+	Vec2& operator *=(const float n)
+	{
+		x *= n;
+		y *= n;
+		return *this;
+	}
+
 	operator DirectX::XMFLOAT2() const
 	{
 		return DirectX::XMFLOAT2(x, y);
+	}
+
+	operator DirectX::XMVECTOR() const
+	{
+		return { x, y };
+	}
+
+	bool operator ==(const Vec2& v) const
+	{
+		return (x == v.x) && (y == v.y);
+	}
+
+	bool operator !=(const Vec2& v) const
+	{
+		return !(*this == v);
+	}
+
+	bool operator >(const Vec2& v) const
+	{
+		return x > v.x && y > v.y;
+	}
+
+	bool operator >=(const Vec2& v) const
+	{
+		return x >= v.x && y >= v.y;
+	}
+
+	bool operator <(const Vec2& v) const
+	{
+		return x < v.x && y < v.y;
+	}
+
+	bool operator <=(const Vec2& v) const
+	{
+		return x <= v.x && y <= v.y;
+	}
+
+	static Vec2 Zero()
+	{
+		return Vec2(0, 0);
 	}
 
 	float Length() const
@@ -63,7 +129,7 @@ public:
 		std::string sx = std::to_string(x);
 		std::string sy = std::to_string(y);
 
-		return std::string("Vec3(" + sx + ", " + sy + ")");
+		return std::string("Vec2(" + sx + ", " + sy + ")");
 	}
 
 public:
@@ -103,6 +169,16 @@ public:
 	const Vec3 operator -() const
 	{
 		return Vec3(-x, -y, -z);
+	}
+
+	float& operator [](int n)
+	{
+		return *(&x + n);
+	}
+
+	const float& operator [](int n) const
+	{
+		return *(&x + n);
 	}
 
 	Vec3& operator +=(const Vec3& v)

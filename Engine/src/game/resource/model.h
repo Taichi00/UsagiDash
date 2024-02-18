@@ -43,7 +43,7 @@ public:
 	Model();
 	~Model();
 
-	static std::unique_ptr<Model> Load(const std::string& key);
+	static std::unique_ptr<Model> Load(const std::wstring& key);
 	bool Release() override;
 
 public:

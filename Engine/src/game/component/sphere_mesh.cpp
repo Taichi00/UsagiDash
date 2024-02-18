@@ -6,6 +6,7 @@
 #include "game/resource/texture2d.h"
 #include "game/game.h"
 #include "game/resource/model.h"
+#include "math/aabb.h"
 #include <DirectXMath.h>
 #include <vector>
 
@@ -15,8 +16,8 @@ using namespace DirectX;
 
 std::unique_ptr<Model> SphereMesh::Load(float radius, float r, float g, float b)
 {
-    int sliceNum = 40;
-    int stackNum = 20;
+    int sliceNum = 20;
+    int stackNum = 10;
 
     auto model = std::make_unique<Model>();
 
@@ -110,6 +111,8 @@ std::unique_ptr<Model> SphereMesh::Load(float radius, float r, float g, float b)
 
     auto& materials = model->materials;
     materials.push_back(material);
+
+    model->aabb = { Vec3(radius, radius, radius), Vec3(-radius, -radius, -radius) };
 
     // 頂点バッファ・インデックスバッファの生成
     for (size_t i = 0; i < meshes.size(); i++)

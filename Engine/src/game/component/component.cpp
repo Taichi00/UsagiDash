@@ -17,19 +17,19 @@ bool Component::Init()
 	return true;
 }
 
-void Component::BeforeCameraUpdate()
+void Component::BeforeCameraUpdate(const float delta_time)
 {
 }
 
-void Component::CameraUpdate()
+void Component::CameraUpdate(const float delta_time)
 {
 }
 
-void Component::Update()
+void Component::Update(const float delta_time)
 {
 }
 
-void Component::PhysicsUpdate()
+void Component::PhysicsUpdate(const float delta_time)
 {
 }
 

@@ -19,8 +19,8 @@ public:
 	Texture2D(const void* pSource, size_t size);
 	Texture2D(ID3D12Resource* buffer);
 
-	static std::unique_ptr<Texture2D> Load(std::string path);	// stringで受け取ったパスからテクスチャを読み込む
-	static std::unique_ptr<Texture2D> Load(std::wstring path);	// wstringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(const std::string& path);	// stringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(const std::wstring& path);	// wstringで受け取ったパスからテクスチャを読み込む
 	static std::unique_ptr<Texture2D> Load(const void* pSource, size_t size);	// バイナリデータから読み込む
 
 	static std::unique_ptr<Texture2D> GetMono(const float color[4]);	// 単色テクスチャを生成する

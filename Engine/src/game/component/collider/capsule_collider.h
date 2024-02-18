@@ -3,7 +3,7 @@
 #include "game/component/collider/collider.h"
 
 class FloorCollider;
-class MeshCollider;
+class PolygonCollider;
 class SphereCollider;
 
 struct CapsuleColliderProperty
@@ -23,7 +23,7 @@ public:
 	bool Intersects(SphereCollider* sphere);
 	bool Intersects(CapsuleCollider* capsule);
 	bool Intersects(FloorCollider* floor);
-	bool Intersects(MeshCollider* collider);
+	bool Intersects(PolygonCollider* collider);
 
 private:
 	void PrepareAABB() override;

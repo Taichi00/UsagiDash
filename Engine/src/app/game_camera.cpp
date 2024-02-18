@@ -22,22 +22,22 @@ bool GameCamera::Init()
 	return true;
 }
 
-void GameCamera::BeforeCameraUpdate()
+void GameCamera::BeforeCameraUpdate(const float delta_time)
 {
-	Move();
+	Move(delta_time);
 }
 
-void GameCamera::Move()
+void GameCamera::Move(const float delta_time)
 {
 	float rate = 0.05;
 
 	if (Input::GetKey(DIK_A))
 	{
-		angle_velocity_.y += -0.002;
+		angle_velocity_.y += -0.12;
 	}
 	else if (Input::GetKey(DIK_D))
 	{
-		angle_velocity_.y += 0.002;
+		angle_velocity_.y += 0.12;
 	}
 	else
 	{
@@ -46,20 +46,20 @@ void GameCamera::Move()
 
 	if (Input::GetKey(DIK_W))
 	{
-		angle_velocity_.x += -0.002;
+		angle_velocity_.x += -0.12;
 	}
 	else if (Input::GetKey(DIK_S))
 	{
-		angle_velocity_.x += 0.002;
+		angle_velocity_.x += 0.12;
 	}
 	else
 	{
 		angle_velocity_.x *= 0.92;
 	}
 
-	angle_velocity_.y = min(max(angle_velocity_.y, -0.04), 0.04);
-	angle_velocity_.x = min(max(angle_velocity_.x, -0.04), 0.04);
-	angle_ += angle_velocity_;
+	angle_velocity_.y = min(max(angle_velocity_.y, -2.4), 2.4);
+	angle_velocity_.x = min(max(angle_velocity_.x, -2.4), 2.4);
+	angle_ += angle_velocity_ * delta_time;
 
 	if (angle_.x < -1.5)
 	{
@@ -91,7 +91,7 @@ void GameCamera::Move()
 	auto drate = 0.15;
 	if (distance - current_distance_ > 0) drate = 0.02;
 
-	distance = current_distance_ + (distance - current_distance_) * drate;
+	distance = current_distance_ + (distance - current_distance_) * pow(drate, delta_time * 60);
 	
 	transform->position = Vec3(origin + direction * distance);
 	camera_->SetFocusPosition(origin);

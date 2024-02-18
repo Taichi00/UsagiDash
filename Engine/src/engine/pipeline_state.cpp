@@ -11,9 +11,9 @@ PipelineState::PipelineState()
 	// パイプラインステートの設定
 	desc_.RasterizerState			= CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);		// ラスタライザーはデフォルト
 	desc_.RasterizerState.CullMode	= D3D12_CULL_MODE_NONE;							// カリング
-	desc_.BlendState					= CD3DX12_BLEND_DESC(D3D12_DEFAULT);			// ブレンドステートもデフォルト
+	desc_.BlendState				= CD3DX12_BLEND_DESC(D3D12_DEFAULT);			// ブレンドステートもデフォルト
 	desc_.DepthStencilState			= CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);	// 深度ステンシルはデフォルトを使う
-	desc_.SampleMask					= UINT_MAX;
+	desc_.SampleMask				= UINT_MAX;
 	desc_.PrimitiveTopologyType		= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;		// 三角形を描画
 	desc_.NumRenderTargets			= 1;											// 描画対象は1
 	desc_.RTVFormats[0]				= DXGI_FORMAT_R8G8B8A8_UNORM;

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -126,7 +126,8 @@
       <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <PostBuildEvent>
-      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT</Command>
+      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT
+IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <Message>Assets以下の変更されたファイルをコピーする</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -151,18 +152,21 @@
       <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <PostBuildEvent>
-      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT</Command>
+      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT
+IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <Message>Assets以下の変更されたファイルをコピーする</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\app\component\game_manager.cpp" />
     <ClCompile Include="src\app\component\coin_script.cpp" />
+    <ClCompile Include="src\app\component\map_loader.cpp" />
     <ClCompile Include="src\app\entity\coin.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
     <ClCompile Include="src\engine\pipeline_state_manager.cpp" />
     <ClCompile Include="src\game\animation.cpp" />
+    <ClCompile Include="src\game\audio.cpp" />
     <ClCompile Include="src\game\component\animator.cpp" />
-    <ClCompile Include="src\app\app.cpp" />
     <ClCompile Include="src\game\assimp_loader.cpp" />
     <ClCompile Include="src\game\component\billboard_renderer.cpp" />
     <ClCompile Include="src\game\bone.cpp" />
@@ -173,10 +177,13 @@
     <ClCompile Include="src\game\component\collider\collider.cpp" />
     <ClCompile Include="src\game\collision_manager.cpp" />
     <ClCompile Include="src\app\collision_test_scene.cpp" />
+    <ClCompile Include="src\game\component\collider\polygon_collider.cpp" />
     <ClCompile Include="src\game\component\component.cpp" />
     <ClCompile Include="src\engine\constant_buffer.cpp" />
     <ClCompile Include="src\engine\descriptor_heap.cpp" />
     <ClCompile Include="src\engine\engine.cpp" />
+    <ClCompile Include="src\game\component\gui\control.cpp" />
+    <ClCompile Include="src\game\component\gui\panel.cpp" />
     <ClCompile Include="src\game\entity.cpp" />
     <ClCompile Include="src\app\floating_player.cpp" />
     <ClCompile Include="src\game\component\collider\floor_collider.cpp" />
@@ -190,7 +197,8 @@
     <ClCompile Include="src\app\main_scene.cpp" />
     <ClCompile Include="src\game\component\collider\mesh_collider.cpp" />
     <ClCompile Include="src\game\component\mesh_renderer.cpp" />
-    <ClCompile Include="src\game\label.cpp" />
+    <ClCompile Include="src\game\component\gui\label.cpp" />
+    <ClCompile Include="src\app\map_file_parser.cpp" />
     <ClCompile Include="src\game\resource\collision_model.cpp" />
     <ClCompile Include="src\game\resource\model.cpp" />
     <ClCompile Include="src\game\particle.cpp" />
@@ -215,20 +223,30 @@
     <ClCompile Include="src\game\tag_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\app\component\game_manager.h" />
     <ClInclude Include="src\app\component\coin_script.h" />
+    <ClInclude Include="src\app\component\map_loader.h" />
     <ClInclude Include="src\app\entity\coin.h" />
     <ClInclude Include="src\engine\d3dx12.h" />
+    <ClInclude Include="src\engine\font_collection.h" />
     <ClInclude Include="src\engine\pipeline_state_manager.h" />
+    <ClInclude Include="src\game\audio.h" />
+    <ClInclude Include="src\game\component\collider\polygon_collider.h" />
+    <ClInclude Include="src\game\component\gui\control.h" />
+    <ClInclude Include="src\game\component\gui\panel.h" />
+    <ClInclude Include="src\game\game_settings.h" />
+    <ClInclude Include="src\app\map_file_parser.h" />
+    <ClInclude Include="src\game\parser.h" />
     <ClInclude Include="src\game\resource\collision_model.h" />
+    <ClInclude Include="src\game\resource\font.h" />
     <ClInclude Include="src\game\tag_manager.h" />
     <ClInclude Include="src\math\aabb.h" />
     <ClInclude Include="src\math\color.h" />
-    <ClInclude Include="src\game\label.h" />
+    <ClInclude Include="src\game\component\gui\label.h" />
     <ClInclude Include="src\engine\engine2d.h" />
     <ClInclude Include="src\game\resource\model.h" />
     <ClInclude Include="src\game\animation.h" />
     <ClInclude Include="src\game\component\animator.h" />
-    <ClInclude Include="src\app\app.h" />
     <ClInclude Include="src\game\assimp_loader.h" />
     <ClInclude Include="src\game\component\billboard_renderer.h" />
     <ClInclude Include="src\game\bone.h" />
@@ -261,6 +279,8 @@
     <ClInclude Include="src\game\component\particle_emitter.h" />
     <ClInclude Include="src\engine\pipeline_state.h" />
     <ClInclude Include="src\app\player.h" />
+    <ClInclude Include="src\math\matrix3x2.h" />
+    <ClInclude Include="src\math\octree.h" />
     <ClInclude Include="src\math\quaternion.h" />
     <ClInclude Include="src\game\physics.h" />
     <ClInclude Include="src\game\component\collider\ray.h" />
@@ -276,6 +296,7 @@
     <ClInclude Include="src\engine\streamreader.h" />
     <ClInclude Include="src\game\resource\texture2d.h" />
     <ClInclude Include="src\game\component\transform.h" />
+    <ClInclude Include="src\math\rect.h" />
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\engine\vertex_buffer.h" />
     <ClInclude Include="src\engine\window.h" />
@@ -348,11 +369,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\PBR.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-    </FxCompile>
-    <FxCompile Include="Shaders\PBR2.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>

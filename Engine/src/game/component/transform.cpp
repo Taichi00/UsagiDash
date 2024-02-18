@@ -3,11 +3,15 @@
 #include "game/scene.h"
 #include "game/component/camera.h"
 
-bool Transform::Init()
+Transform::Transform()
 {
 	position = Vec3::Zero();
 	scale = Vec3(1, 1, 1);
 	rotation = Quaternion::Identity();
+}
+
+bool Transform::Init()
+{
 	return true;
 }
 
@@ -57,7 +61,7 @@ Quaternion Transform::GetWorldRotation()
 void Transform::MulParentWorld(XMMATRIX& world)
 {
 	Entity* parent = GetEntity()->GetParent();
-	while (parent != nullptr)
+	while (parent)
 	{
 		world *= XMMatrixScalingFromVector(parent->transform->scale);
 		world *= XMMatrixRotationQuaternion(parent->transform->rotation);
@@ -66,3 +70,4 @@ void Transform::MulParentWorld(XMMATRIX& world)
 		parent = parent->GetParent();
 	}
 }
+

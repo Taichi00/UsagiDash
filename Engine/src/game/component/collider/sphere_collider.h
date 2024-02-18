@@ -3,7 +3,7 @@
 #include "game/component/collider/collider.h"
 
 class FloorCollider;
-class MeshCollider;
+class PolygonCollider;
 class CapsuleCollider;
 class Ray;
 
@@ -18,7 +18,7 @@ public:
 	bool Intersects(SphereCollider* sphere);
 	bool Intersects(CapsuleCollider* capsule);
 	bool Intersects(FloorCollider* floor);
-	bool Intersects(MeshCollider* collider);
+	bool Intersects(PolygonCollider* collider);
 	bool Intersects(Ray* ray);
 
 private:

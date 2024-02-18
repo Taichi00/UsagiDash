@@ -9,8 +9,8 @@
 #include "game/resource/model.h"
 #include "game/resource/collision_model.h"
 #include "game/game.h"
+#include "game/entity.h"
 
-class Entity;
 class Camera;
 class ShadowMap;
 class CollisionManager;
@@ -29,7 +29,7 @@ public:
 	~Scene();
 
 	virtual bool Init();
-	virtual void Update();
+	virtual void Update(const float delta_time);
 	virtual void AfterUpdate();
 	virtual void Draw();
 
@@ -46,6 +46,8 @@ public:
 
 	Entity* FindEntityWithTag(const std::string& tag);
 
+	Entity* RootEntity();
+
 	void SetMainCamera(Entity* camera);
 	Camera* GetMainCamera();
 
@@ -53,9 +55,9 @@ public:
 
 	//CollisionManager* GetCollisionManager();
 
-	void SetSkybox(const std::string path);
+	void SetSkybox(const std::wstring& path);
 
-	template<class T> std::shared_ptr<T> LoadResource(const std::string& path)	// リソースを読み込む
+	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	// リソースを読み込む
 	{
 		return Game::Get()->LoadResource<T>(path);
 	}
@@ -64,12 +66,21 @@ public:
 private:
 	bool PreparePSO();
 	void UpdateCB();
+	void UpdateEntityList();
 
 	void DestroyEntities();
 
+	// 指定したメソッドを再帰的に実行する
+	template<typename Func>
+	void ExecuteOnAllEntities(Func func)
+	{
+		root_entity_->ExecuteOnAllChildren(func);
+	}
+
 private:
-	std::vector<std::unique_ptr<Entity>> entities_;
+	std::unique_ptr<Entity> root_entity_;
 	std::vector<Entity*> destroy_entities_;
+	std::vector<Entity*> entity_list_;
 
 	Camera* main_camera_ = nullptr;
 	//std::unique_ptr<ShadowMap> m_pShadowMap;
@@ -83,8 +94,6 @@ private:
 	PipelineState* blur_vertical_pso_;		// ブラー（垂直）用PSO
 	PipelineState* postprocess_pso_;		// ポストプロセス用PSO
 	PipelineState* fxaa_pso_;				// FXAA用PSO
-	PipelineState* opaque_pso_;
-	PipelineState* alpha_pso_;
 	PipelineState* outline_pso_;
 	PipelineState* shadow_pso_;
 	PipelineState* depth_pso_;

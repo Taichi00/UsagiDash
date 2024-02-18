@@ -5,6 +5,6 @@
 class CollisionTestScene : public Scene
 {
 public:
-	bool Init();
-	void Update();
+	bool Init() override;
+	void Update(const float delta_time) override;
 };

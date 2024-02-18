@@ -55,7 +55,7 @@ struct AABB
 		return (min <= b.max) && (max >= b.min);
 	}
 
-	void Print()
+	void Print() const
 	{
 		printf("AABB\n");
 		printf("\tmax(% .2f, % .2f, % .2f)\n", max.x, max.y, max.z);

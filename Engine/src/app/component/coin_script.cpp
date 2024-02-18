@@ -9,7 +9,7 @@
 CoinScript::CoinScript()
 {
     angle_ = 0;
-    angle_speed_ = 0.02;
+    angle_speed_ = 1.2;
     effect_time_ = 0;
 }
 
@@ -20,16 +20,16 @@ bool CoinScript::Init()
     return true;
 }
 
-void CoinScript::Update()
+void CoinScript::Update(const float delta_time)
 {
     if (destroy_flag_)
     {
-        float t = (float)effect_time_ / 20;
+        float t = effect_time_ / 20;
 
         transform->scale = Vec3(1, 1, 1) * (1.0 - Easing::InBack(t));
         transform->position = Vec3(0, 2, 0) + Vec3(0, 2.5, 0) * Easing::OutBack(t);
 
-        effect_time_ += 1;
+        effect_time_ += 60.0 * delta_time;
 
         if (effect_time_ > 20)
         {
@@ -37,7 +37,7 @@ void CoinScript::Update()
         }
     }
 
-    angle_ += angle_speed_;
+    angle_ += angle_speed_ * delta_time;
     transform->rotation = Quaternion::FromEuler(0, angle_, 0);
 }
 
@@ -49,7 +49,7 @@ void CoinScript::OnCollisionEnter(Collider* collider)
     {
         GetEntity()->SetParent(collider->GetEntity());
         transform->position = Vec3(0, 2, 0);
-        angle_speed_ = 0.3;
+        angle_speed_ = 18;
 
         destroy_flag_ = true;
     }

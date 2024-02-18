@@ -25,9 +25,9 @@ bool MainScene::Init()
 	std::shared_ptr<Model> model;
 	std::vector<Animation*> animations;
 
-	SetSkybox("Assets/grass2");
+	SetSkybox(L"Assets/grass2");
 
-	auto playerModel = LoadResource<Model>("Assets/PlatformerPack/Character.gltf");
+	auto playerModel = LoadResource<Model>(L"Assets/PlatformerPack/Character.gltf");
 
 	float pbrColor[4] = { 0, 1, 0, 1 };
 	std::shared_ptr smokeAlbedo = Texture2D::Load("Assets/smoke2_albedo.png");
@@ -109,7 +109,7 @@ bool MainScene::Init()
 	auto player = new Entity("Player");
 	player->AddComponent(new MeshRenderer(playerModel));
 	auto collider = (Collider*)player->AddComponent(new CapsuleCollider({ 1, 1 }));
-	player->AddComponent(new Rigidbody({ collider, 1, true, false, 0.1 }));
+	player->AddComponent(new Rigidbody(1, true, false, 0.1));
 	player->AddComponent(new Animator());
 	player->AddComponent(new Player({ 0.27, 0.02 }));
 	CreateEntity(player);
@@ -135,9 +135,9 @@ bool MainScene::Init()
 
 
 	auto plane = new Entity();
-	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Cube_Grass_Single.gltf")));
-	collider = (Collider*)plane->AddComponent(new MeshCollider(LoadResource<CollisionModel>("Assets/PlatformerPack/Cube_Grass_Single.gltf")));
-	plane->AddComponent(new Rigidbody({ collider, 1000, false, true, 0.5 }));
+	plane->AddComponent(new MeshRenderer(LoadResource<Model>(L"Assets/PlatformerPack/Cube_Grass_Single.gltf")));
+	collider = (Collider*)plane->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"Assets/PlatformerPack/Cube_Grass_Single.gltf")));
+	plane->AddComponent(new Rigidbody(1000, false, true, 0.5));
 	CreateEntity(plane);
 
 	plane->transform->scale = Vec3(2, 2, 2);

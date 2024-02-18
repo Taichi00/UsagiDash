@@ -66,8 +66,10 @@ void ShadowMap::BeginRender()
 
 	// レンダーターゲットをクリア
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_0")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);
-	commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_1")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);
+	bm->Get("ShadowMapColor_0")->Clear();
+	bm->Get("ShadowMapColor_1")->Clear();
+	/*commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_0")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);
+	commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_1")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);*/
 
 	// 深度ステンシルビューをクリア
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);

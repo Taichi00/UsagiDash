@@ -25,6 +25,8 @@ public:
 	Buffer(const std::string& name, const BufferProperty& prop);
 	~Buffer();
 
+	void Clear();
+
 	ID3D12Resource* Resource();
 	const DescriptorHandle& SrvHandle() const;
 	const DescriptorHandle& RtvHandle() const;

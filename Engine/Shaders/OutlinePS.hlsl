@@ -74,11 +74,16 @@ float4 main(VSOutput input) : SV_TARGET
     DitherClip(screenPos, DitherLevel, 2);
     
     // ÉJÉâÅ[ÉäÉìÉO
-    float outlinePower = 1 - (dot(normalize(input.normal), LightDir) * 0.5 + 0.5);
-    outlinePower = inverseLerp(0.6, 1, outlinePower);
-    float3 outlineColor = lerp(diffuse.rgb * 0.3, lerp(diffuse.rgb, 1.0, 0.5), outlinePower);
+    //float outlinePower = 1 - (dot(normalize(input.normal), LightDir) * 0.5 + 0.5);
+    //outlinePower = inverseLerp(0.6, 1, outlinePower);
+    //float3 outlineColor = lerp(diffuse.rgb * 0.3, lerp(diffuse.rgb, 1.0, 0.5), outlinePower);
+    float3 color = diffuse.rgb * 0.1;
     
-    float4 result = float4(outlineColor, 1.0f);
+    // fog
+    float depth = -input.viewPos.z;
+    float fog = inverseLerp(30, 80, depth);
+    float3 fogColor = float3(0.1, 0.1, 0.1);
+    color += lerp(0, fogColor, fog);
     
-    return result;
+    return float4(color, 1);
 }

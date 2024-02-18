@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <memory>
 #include "game/resource_manager.h"
+#include "game/game_settings.h"
 #include "math/vec.h"
 
 class Window;
@@ -16,6 +17,7 @@ class ResourceManager;
 class Resource;
 class Engine;
 class CollisionManager;
+class Audio;
 
 
 class Game
@@ -31,7 +33,7 @@ public:
 		return &instance;
 	}
 
-	void Run(Scene* scene);
+	void Run(Scene* scene, const GameSettings& settings);
 
 	Engine* GetEngine();
 
@@ -45,18 +47,20 @@ public:
 
 	Vec2 GetWindowSize();
 
-	template<class T> std::shared_ptr<T> LoadResource(const std::string& path)	// リソースを読み込む
+	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	// リソースを読み込む
 	{
 		return resource_manager_->Load<T>(path);
 	}
 
 	std::shared_ptr<CollisionManager> GetCollisionManager();
+
+	double DeltaTime() const;
 	
 	/*DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetProjMatrix();*/
 
 protected:
-	virtual void Init();
+	virtual void Init(const GameSettings& settings);
 	virtual void Update();
 	virtual void End();
 
@@ -74,4 +78,7 @@ private:
 
 	std::shared_ptr<CollisionManager> collision_manager_;
 
+	std::shared_ptr<Audio> audio_;
+
+	float delta_time_ = 0.0001;
 };

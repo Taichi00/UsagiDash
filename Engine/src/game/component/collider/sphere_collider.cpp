@@ -2,7 +2,7 @@
 #include "game/component/transform.h"
 #include "game/component/rigidbody.h"
 #include "game/component/collider/floor_collider.h"
-#include "game/component/collider/mesh_collider.h"
+#include "game/component/collider/polygon_collider.h"
 #include "game/component/collider/capsule_collider.h"
 #include "game/component/collider/ray.h"
 #include "math/aabb.h"
@@ -74,7 +74,7 @@ bool SphereCollider::Intersects(FloorCollider* floor)
 	return false;
 }
 
-bool SphereCollider::Intersects(MeshCollider* collider)
+bool SphereCollider::Intersects(PolygonCollider* collider)
 {
 	return collider->Intersects(this);
 }

@@ -12,11 +12,11 @@ public:
 	GameCamera(Entity* target);
 	~GameCamera();
 
-	bool Init();
-	void BeforeCameraUpdate();
+	bool Init() override;
+	void BeforeCameraUpdate(const float delta_time) override;
 
 private:
-	void Move();
+	void Move(const float delta_time);
 
 private:
 	Entity* target_;

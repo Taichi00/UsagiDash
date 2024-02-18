@@ -20,7 +20,7 @@ public:
 	bool Intersects(SphereCollider* sphere);
 	bool Intersects(CapsuleCollider* sphere);
 	bool Intersects(FloorCollider* floor);
-	bool Intersects(MeshCollider* collider);
+	bool Intersects(PolygonCollider* collider);
 
 	AABB GetAABB();
 

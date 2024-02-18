@@ -68,46 +68,46 @@ bool Entity::Init()
 	return true;
 }
 
-void Entity::BeforeCameraUpdate()
+void Entity::BeforeCameraUpdate(const float delta_time)
 {
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
 		{
-			component->BeforeCameraUpdate();
+			component->BeforeCameraUpdate(delta_time);
 		}
 	}
 }
 
-void Entity::CameraUpdate()
+void Entity::CameraUpdate(const float delta_time)
 {
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
 		{
-			component->CameraUpdate();
+			component->CameraUpdate(delta_time);
 		}
 	}
 }
 
-void Entity::Update()
+void Entity::Update(const float delta_time)
 {
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
 		{
-			component->Update();
+			component->Update(delta_time);
 		}
 	}
 }
 
-void Entity::PhysicsUpdate()
+void Entity::PhysicsUpdate(const float delta_time)
 {
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
 		{
-			component->PhysicsUpdate();
+			component->PhysicsUpdate(delta_time);
 		}
 	}
 }
@@ -169,9 +169,22 @@ void Entity::Draw2D()
 
 void Entity::SetParent(Entity* parent)
 {
-	parent_ = parent;
-	parent->children_.push_back(this);
-	parent->children_map_[name_] = this;
+	if (!parent)
+	{
+		parent = scene_->RootEntity();
+	}
+
+	if (parent_)
+	{
+		// Œ³‚Ìe‚©‚çƒƒ‚ƒŠ‚ð•ÛŽ‚µ‚ÄˆÚ“®‚·‚é
+		auto ptr = parent_->MoveChild(this);
+		parent_->RemoveChild(this);
+		parent->AddChild(std::move(ptr));
+	}
+	else
+	{
+		parent->AddChild(this);
+	}
 }
 
 Entity* Entity::GetParent()
@@ -179,9 +192,88 @@ Entity* Entity::GetParent()
 	return parent_;
 }
 
-Entity* Entity::GetChild(const std::string& name)
+void Entity::AddChild(Entity* child)
 {
-	return children_map_[name];
+	child->parent_ = this;
+	children_.push_back(std::unique_ptr<Entity>(child));
+}
+
+void Entity::AddChild(std::unique_ptr<Entity> child)
+{
+	child->parent_ = this;
+	children_.push_back(std::move(child));
+}
+
+void Entity::RemoveChild(Entity* child)
+{
+	children_.erase(
+		std::remove_if(children_.begin(), children_.end(), [&child](const std::unique_ptr<Entity>& e) {
+			return e.get() == child;
+			}),
+		children_.end()
+	);
+}
+
+std::unique_ptr<Entity> Entity::MoveChild(Entity* child)
+{
+	std::unique_ptr<Entity> entity = nullptr;
+
+	auto it = std::find_if(children_.begin(), children_.end(),
+		[child](const std::unique_ptr<Entity>& ptr) {
+			return ptr.get() == child;
+		});
+
+	if (it != children_.end())
+	{
+		auto ptr = std::move(*it);
+		children_.erase(it);
+
+		return ptr;
+	}
+
+	return nullptr;
+}
+
+Entity* Entity::GetChild(const std::string& name) const
+{
+	for (const auto& child : children_)
+	{
+		if (child->name_ == name)
+			return child.get();
+	}
+
+	return nullptr;
+}
+
+std::vector<Entity*> Entity::GetChildren() const
+{
+	std::vector<Entity*> children;
+
+	for (const auto& child : children_)
+	{
+		children.push_back(child.get());
+	}
+
+	return children;
+}
+
+std::vector<Entity*> Entity::GetAllChildren() const
+{
+	std::vector<Entity*> children;
+
+	RecursiveGetChildren(this, children);
+
+	return children;
+}
+
+void Entity::RecursiveGetChildren(const Entity* entity, std::vector<Entity*>& list) const
+{
+	auto children = entity->GetChildren();
+	for (const auto& child : children)
+	{
+		list.push_back(child);
+		RecursiveGetChildren(child, list);
+	}
 }
 
 void Entity::Draw()

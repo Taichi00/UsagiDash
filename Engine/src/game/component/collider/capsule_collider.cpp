@@ -1,5 +1,5 @@
 #include "game/component/collider/capsule_collider.h"
-#include "game/component/collider/mesh_collider.h"
+#include "game/component/collider/polygon_collider.h"
 #include "game/component/collider/sphere_collider.h"
 
 CapsuleCollider::CapsuleCollider(CapsuleColliderProperty prop)
@@ -107,7 +107,7 @@ bool CapsuleCollider::Intersects(FloorCollider* floor)
 	return false;
 }
 
-bool CapsuleCollider::Intersects(MeshCollider* collider)
+bool CapsuleCollider::Intersects(PolygonCollider* collider)
 {
 	return collider->Intersects(this);
 }

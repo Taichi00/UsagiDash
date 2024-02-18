@@ -26,7 +26,7 @@ public:
 
 private:
 	bool Init() override;
-	void CameraUpdate() override;
+	void CameraUpdate(const float delta_time) override;
 
 private:
 	XMMATRIX mtx_view_;

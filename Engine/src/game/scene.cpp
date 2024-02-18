@@ -20,6 +20,7 @@
 #include "game/game.h"
 #include "game/resource_manager.h"
 #include "engine/engine2d.h"
+#include <chrono>
 
 Scene::Scene()
 {
@@ -37,11 +38,8 @@ Scene::~Scene()
 
 bool Scene::Init()
 {
-	// エンティティのクリア
-	entities_.clear();
-
-	// シャドウマップの生成
-	//m_pShadowMap = std::make_unique<ShadowMap>();
+	// ルートエンティティを設定
+	root_entity_ = std::make_unique<Entity>("Root");
 
 	rtv_heap_ = Game::Get()->GetEngine()->RtvHeap();
 	dsv_heap_ = Game::Get()->GetEngine()->DsvHeap();
@@ -137,20 +135,22 @@ bool Scene::Init()
     return true;
 }
 
-void Scene::Update()
+void Scene::Update(const float delta_time)
 {
+	UpdateEntityList();
+
 	// Cameraの更新
-	for (auto& entity : entities_) entity->BeforeCameraUpdate();
-	for (auto& entity : entities_) entity->CameraUpdate();
+	for (auto& entity : entity_list_) { entity->BeforeCameraUpdate(delta_time); };
+	for (auto& entity : entity_list_) { entity->CameraUpdate(delta_time); };
 
 	// エンティティの更新
-	for (auto& entity : entities_) entity->Update();
+	for (auto& entity : entity_list_) { entity->Update(delta_time); };
 
 	// 物理の更新
-	for (auto& entity : entities_) entity->PhysicsUpdate();
+	for (auto& entity : entity_list_) { entity->PhysicsUpdate(delta_time); };
 
 	// 衝突判定
-	Game::Get()->GetCollisionManager()->Update();
+	Game::Get()->GetCollisionManager()->Update(delta_time);
 
 	// 定数バッファの更新
 	UpdateCB();
@@ -164,69 +164,68 @@ void Scene::AfterUpdate()
 
 void Scene::Draw()
 {
+	auto engine = Game::Get()->GetEngine();
+
 	// レンダリングの準備
-	Game::Get()->GetEngine()->InitRender();
+	engine->InitRender();
 
 	// シャドウマップの描画
-	Game::Get()->GetEngine()->GetShadowMap()->BeginRender();
-	for (auto& entity : entities_) entity->DrawShadow();
-	Game::Get()->GetEngine()->GetShadowMap()->EndRender();
-
-	/*Game::Get()->GetEngine()->BeginRenderMSAA();
-
-	for (auto entity : m_pEntities) entity->Draw();
-	for (auto entity : m_pEntities) entity->DrawAlpha();
-
-	Game::Get()->GetEngine()->EndRenderMSAA();*/
-
+	/*auto start = std::chrono::system_clock::now();*/
+	engine->GetShadowMap()->BeginRender();
+	for (auto& entity : entity_list_) { entity->DrawShadow(); };
+	engine->GetShadowMap()->EndRender();
+	
 	// レンダリングの開始
-	Game::Get()->GetEngine()->BeginDeferredRender();
+	engine->BeginDeferredRender();
 
 	// デプスプリパス
-	Game::Get()->GetEngine()->DepthPrePath();
-	for (auto& entity : entities_) entity->DrawDepth();
+	engine->DepthPrePath();
+	for (auto& entity : entity_list_) { entity->DrawDepth(); };
 
 	// G-Bufferへの書き込み
-	Game::Get()->GetEngine()->GBufferPath();
-	for (auto& entity : entities_) entity->DrawGBuffer();
+	engine->GBufferPath();
+	for (auto& entity : entity_list_) { entity->DrawGBuffer(); };
 
 	// ライティングパス
-	Game::Get()->GetEngine()->LightingPath();
+	engine->LightingPath();
 	DrawLighting();
 
 	// Skybox描画（フォワードレンダリング）
 	DrawSkybox();
 
 	//// SSAO
-	//Game::Get()->GetEngine()->SSAOPath();
+	//engine->SSAOPath();
 	//DrawSSAO();
 
 	//// ぼかし
-	//Game::Get()->GetEngine()->BlurHorizontalPath();
+	//engine->BlurHorizontalPath();
 	//DrawBlurHorizontal();
-	//Game::Get()->GetEngine()->BlurVerticalPath();
+	//engine->BlurVerticalPath();
 	//DrawBlurVertical();
+	
+	// アウトライン描画（フォワードレンダリング）
+	for (auto& entity : entity_list_) { entity->DrawOutline(); };
 
 	// ポストプロセス
-	Game::Get()->GetEngine()->PostProcessPath();
+	engine->PostProcessPath();
 	DrawPostProcess();
 
-	// アウトライン描画（フォワードレンダリング）
-	//for (auto entity : m_pEntities) entity->DrawOutline();
-
 	// FXAA
-	Game::Get()->GetEngine()->FXAAPath();
+	engine->FXAAPath();
 	DrawFXAA();
-
-	Game::Get()->GetEngine()->EndRenderD3D();
+	
+	engine->EndRenderD3D();
+	/*auto end = std::chrono::system_clock::now();
+	double time = (double)(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0);
+	printf("Draw3D:\t%lf[ms]\n", time);*/
 
 	// 2D描画
-	Game::Get()->GetEngine()->GetEngine2D()->BeginRenderD2D();
-	for (auto& entity : entities_) entity->Draw2D();
-	Game::Get()->GetEngine()->GetEngine2D()->EndRenderD2D();
+	engine->GetEngine2D()->BeginRenderD2D();
+	for (auto& entity : entity_list_) { entity->Draw2D(); };
+	engine->GetEngine2D()->EndRenderD2D();
 
 	// レンダリングの終了
-	Game::Get()->GetEngine()->EndDeferredRender();
+	engine->EndDeferredRender();
 }
 
 void Scene::DrawLighting()
@@ -404,12 +403,12 @@ void Scene::DrawFXAA()
 
 Entity* Scene::CreateEntity(Entity* entity)
 {
-	std::unique_ptr<Entity> uentity;
-	uentity.reset(entity);
-	entities_.push_back(std::move(uentity));
+	root_entity_->AddChild(entity);
 
-	entity->RegisterScene(this);
-	entity->Init();
+	entity->ExecuteOnAllChildrenBack([this](Entity& e) {
+		e.RegisterScene(this);
+		e.Init();
+		});
 
 	return entity;
 }
@@ -421,15 +420,14 @@ void Scene::AddDestroyEntity(Entity* entity)
 
 Entity* Scene::FindEntityWithTag(const std::string& tag)
 {
-	for (auto& entity : entities_)
-	{
-		if (entity->tag == tag)
-		{
-			return entity.get();
-		}
-	}
+	return root_entity_->FindEntityIf([&tag](Entity& entity) {
+		return entity.tag == tag;
+	});
+}
 
-	return nullptr;
+Entity* Scene::RootEntity()
+{
+	return root_entity_.get();
 }
 
 void Scene::SetMainCamera(Entity* camera)
@@ -452,11 +450,11 @@ Camera* Scene::GetMainCamera()
 //	return collision_manager_.get();
 //}
 
-void Scene::SetSkybox(const std::string path)
+void Scene::SetSkybox(const std::wstring& path)
 {
 	auto device = Game::Get()->GetEngine()->Device();
 
-	skybox_tex_ = Texture2D::Load(path + "EnvHDR.dds");
+	skybox_tex_ = Texture2D::Load(path + L"EnvHDR.dds");
 
 	// SRVを作成
 	D3D12_SHADER_RESOURCE_VIEW_DESC skyboxDesc{};
@@ -471,7 +469,7 @@ void Scene::SetSkybox(const std::string path)
 	device->CreateShaderResourceView(skybox_tex_->Resource(), &skyboxDesc, skybox_handle_.HandleCPU());	// シェーダーリソースビュー作成
 
 	// DiffuseMap
-	diffusemap_tex_ = Texture2D::Load(path + "DiffuseHDR.dds");
+	diffusemap_tex_ = Texture2D::Load(path + L"DiffuseHDR.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC diffuseDesc{};
 	diffuseDesc.Format = diffusemap_tex_->Format();
@@ -485,7 +483,7 @@ void Scene::SetSkybox(const std::string path)
 	device->CreateShaderResourceView(diffusemap_tex_->Resource(), &diffuseDesc, diffusemap_handle_.HandleCPU());
 
 	// SpecularMap
-	specularmap_tex_ = Texture2D::Load(path + "SpecularHDR.dds");
+	specularmap_tex_ = Texture2D::Load(path + L"SpecularHDR.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC specularDesc{};
 	specularDesc.Format = specularmap_tex_->Format();
@@ -499,7 +497,7 @@ void Scene::SetSkybox(const std::string path)
 	device->CreateShaderResourceView(specularmap_tex_->Resource(), &specularDesc, specularmap_handle_.HandleCPU());
 
 	// brdfLUT
-	brdf_tex_ = Texture2D::Load(path + "Brdf.dds");
+	brdf_tex_ = Texture2D::Load(path + L"Brdf.dds");
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC brdfDesc{};
 	brdfDesc.Format = brdf_tex_->Format();
@@ -568,8 +566,9 @@ bool Scene::PreparePSO()
 	lighting_pso_->SetInputLayout({nullptr, 0});
 	lighting_pso_->SetRootSignature(root_signature_->Get());
 	lighting_pso_->SetVS(L"ScreenVS.cso");
-	lighting_pso_->SetPS(L"PBR2.cso");
+	lighting_pso_->SetPS(L"PBR.cso");
 	lighting_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+	lighting_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	auto desc = lighting_pso_->GetDesc();
 	desc->DepthStencilState.DepthEnable = FALSE;
@@ -672,6 +671,7 @@ bool Scene::PreparePSO()
 	skybox_pso_->SetVS(L"SkyboxVS.cso");
 	skybox_pso_->SetPS(L"SkyboxPS.cso");
 	skybox_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
+	skybox_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
 	desc = skybox_pso_->GetDesc();
 	desc->DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;	// デプスバッファには書き込まない
@@ -683,37 +683,13 @@ bool Scene::PreparePSO()
 		return false;
 	}
 
-	opaque_pso_ = pm->Create("Opaque");
-	opaque_pso_->SetInputLayout(Vertex::InputLayout);
-	opaque_pso_->SetRootSignature(mesh_root_signature_->Get());
-	opaque_pso_->SetVS(L"SimpleVS.cso");
-	opaque_pso_->SetPS(L"SimplePS.cso");
-	opaque_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
-	opaque_pso_->Create();
-	if (!opaque_pso_->IsValid())
-	{
-		return false;
-	}
-
-	alpha_pso_ = pm->Create("Alpha");
-	alpha_pso_->SetInputLayout(Vertex::InputLayout);
-	alpha_pso_->SetRootSignature(mesh_root_signature_->Get());
-	alpha_pso_->SetVS(L"SimpleVS.cso");
-	alpha_pso_->SetPS(L"AlphaPS.cso");
-	alpha_pso_->SetCullMode(D3D12_CULL_MODE_NONE);
-	alpha_pso_->SetAlpha();
-	alpha_pso_->Create();
-	if (!alpha_pso_->IsValid())
-	{
-		return false;
-	}
-
 	outline_pso_ = pm->Create("Outline");
 	outline_pso_->SetInputLayout(Vertex::InputLayout);
 	outline_pso_->SetRootSignature(mesh_root_signature_->Get());
 	outline_pso_->SetVS(L"OutlineVS.cso");
 	outline_pso_->SetPS(L"OutlinePS.cso");
 	outline_pso_->SetCullMode(D3D12_CULL_MODE_BACK);
+	outline_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	outline_pso_->Create();
 	if (!outline_pso_->IsValid())
 	{
@@ -791,7 +767,6 @@ void Scene::UpdateCB()
 	auto world = XMMatrixIdentity();
 
 	// view行列
-	//auto view = XMMatrixRotationQuaternion(camera->transform->rotation);
 	auto view = camera->GetViewMatrix();
 
 	// proj行列
@@ -811,7 +786,12 @@ void Scene::UpdateCB()
 	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
 	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
 	currentScene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
-	currentScene->light_color = { 15, 15, 15 };
+	currentScene->light_color = Vec3(1, 1, 1) * 10;
+}
+
+void Scene::UpdateEntityList()
+{
+	entity_list_ = root_entity_->GetAllChildren();
 }
 
 void Scene::DestroyEntities()
@@ -825,12 +805,11 @@ void Scene::DestroyEntities()
 
 	for (auto& entity : destroy_entities_)
 	{
-		entities_.erase(
-			std::remove_if(entities_.begin(), entities_.end(), [&entity](const std::unique_ptr<Entity>& e) {
-				return e.get() == entity;
-				}),
-			entities_.end()
-		);
+		auto destroy_entity = root_entity_->FindEntityIf([&entity](Entity& e) {
+			return &e == entity;
+			});
+
+		destroy_entity->GetParent()->RemoveChild(destroy_entity);
 	}
 
 	destroy_entities_.clear();

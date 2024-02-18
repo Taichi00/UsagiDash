@@ -107,9 +107,6 @@ VSOutput main(VSInput input)
     float3 projNormal = mul((float3x3) Proj, normalize(viewNormal));
     float2 offset = projNormal.xy;
     
-    //float outlinePower = lerp(0.6, 1, dot(normalize(worldNormal), LightDir) * 0.5 + 0.5);
-    //float outlineWidth = OutlineWidth * outlinePower;
-    
     output.svpos = projPos;
     output.svpos.xy += projNormal.xy * OutlineWidth * projPos.w;
     

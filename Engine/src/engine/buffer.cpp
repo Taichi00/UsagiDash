@@ -17,6 +17,12 @@ Buffer::~Buffer()
 	printf("Delete GBuffer[%s]\n", name_.c_str());
 }
 
+void Buffer::Clear()
+{
+	auto command_list = Game::Get()->GetEngine()->CommandList();
+	command_list->ClearRenderTargetView(rtv_handle_.HandleCPU(), prop_.clear_value.Color, 0, nullptr);
+}
+
 ID3D12Resource* Buffer::Resource()
 {
 	return resource_.Get();
@@ -92,8 +98,8 @@ bool Buffer::CreateResource()
 	);
 
 	// clear value
-	D3D12_CLEAR_VALUE clear{};
-	clear.Format = prop_.format;
+	/*D3D12_CLEAR_VALUE clear{};
+	clear.Format = prop_.format;*/
 
 	auto device = Game::Get()->GetEngine()->Device();
 
@@ -104,7 +110,7 @@ bool Buffer::CreateResource()
 		D3D12_HEAP_FLAG_NONE,
 		&desc,
 		prop_.states,
-		&clear,
+		&prop_.clear_value,
 		IID_PPV_ARGS(resource_.ReleaseAndGetAddressOf())
 	);
 	if (FAILED(hr))

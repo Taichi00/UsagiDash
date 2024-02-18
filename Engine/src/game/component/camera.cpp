@@ -61,7 +61,7 @@ bool Camera::Init()
     return true;
 }
 
-void Camera::CameraUpdate()
+void Camera::CameraUpdate(const float delta_time)
 {
     auto pos = XMFLOAT3(transform->position);
     auto fov = XMConvertToRadians(fov_);

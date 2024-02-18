@@ -32,8 +32,8 @@ class AssimpLoader
 public:
 	AssimpLoader() = default;
 
-	static std::unique_ptr<Model> Load(const std::string& filename);
-	static std::unique_ptr<CollisionModel> LoadCollision(const std::string& filename);
+	static std::unique_ptr<Model> Load(const std::wstring& filename);
+	static std::unique_ptr<CollisionModel> LoadCollision(const std::wstring& filename);
 
 private:
 	static void ProcessNode(Model& model, aiNode* node, const aiScene* scene);

@@ -20,6 +20,7 @@ struct AnimationArgs
 	std::string name;
 	float speed;
 	bool loop;
+	float blend_time;
 };
 
 class Animator : public Component
@@ -27,13 +28,13 @@ class Animator : public Component
 public:
 	Animator();
 
-	bool Init();
-	void Update();
+	bool Init() override;
+	void Update(const float delta_time) override;
 
 	void RegisterAnimation(const std::shared_ptr<Animation>& animation);
 	void RegisterAnimations(const std::vector<std::shared_ptr<Animation>>& animations);
-	void Play(std::string name, float speed = 1.0f, bool loop = true);
-	void Push(std::string name, float speed = 1.0f, bool loop = true);
+	void Play(std::string name, float speed = 1.0f, bool loop = true, float blend_time = 0.08f);
+	void Push(std::string name, float speed = 1.0f, bool loop = true, float blend_time = 0.08f);
 	void Stop();
 	void SetSpeed(float speed);
 
@@ -54,6 +55,7 @@ private:
 	float speed_;
 	bool loop_;
 	float transition_ratio_;
+	float blend_time_;
 
 	MeshRenderer* mesh_renderer_;
 };

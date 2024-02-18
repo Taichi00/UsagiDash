@@ -164,7 +164,7 @@ public:
 	~ParticleEmitter();
 
 	bool Init() override;
-	void Update() override;
+	void Update(const float delta_time) override;
 
 	void DrawShadow() override;
 	void DrawDepth() override;
@@ -180,7 +180,7 @@ private:
 	bool PrepareRootSignature();	// RootSignatureの生成
 	bool PreparePSO();		// PipelineStateObjectの生成
 
-	void SpawnParticles();	// パーティクルの生成
+	void SpawnParticles(const float delta_time);	// パーティクルの生成
 	
 	void InitPosition(Particle& particle, const ParticleEmitterProperty& prop);	// 初期位置の設定
 	void InitPosition(Particle& particle, const ParticleEmitterPositionPropertyPVA& prop);
@@ -202,7 +202,7 @@ private:
 
 	void InitSprite(Particle& particle, const ParticleEmitterSpriteProperty& prop); // 画像の設定
 
-	void UpdateTimer();	// タイマーの更新
+	void UpdateTimer(const float delta_time);	// タイマーの更新
 
 	void UpdatePosition(const ParticleEmitterProperty& prop);	// 位置の更新
 	void UpdatePosition(const ParticleEmitterPositionPropertyPVA& prop);

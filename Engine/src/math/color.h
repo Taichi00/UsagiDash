@@ -19,10 +19,11 @@ struct Color
 		auto sr = std::to_string(r);
 		auto sg = std::to_string(g);
 		auto sb = std::to_string(b);
-		auto sa = std::to_string(b);
+		auto sa = std::to_string(a);
 
 		return "Color(" + sr + ", " + sg + ", " + sb + ", " + sa + ")";
 	}
 
-	float r, g, b, a;
+	float r = 0.0f, g = 0.0f, b = 0.0f;
+	float a = 1.0f;
 };

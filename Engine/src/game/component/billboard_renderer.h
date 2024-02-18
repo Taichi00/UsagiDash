@@ -11,7 +11,7 @@ public:
 	BillboardRenderer(std::shared_ptr<Texture2D> albedoTexture, std::shared_ptr<Texture2D> normalTexture);
 	~BillboardRenderer();
 
-	void Update() override;
+	void Update(const float delta_time) override;
 	
 private:
 	void UpdateCB();

@@ -42,10 +42,10 @@ bool ParticleEmitter::Init()
 	return true;
 }
 
-void ParticleEmitter::Update()
+void ParticleEmitter::Update(const float delta_time)
 {
-	SpawnParticles();
-	UpdateTimer();
+	SpawnParticles(delta_time);
+	UpdateTimer(delta_time);
 	UpdatePosition(prop_);
 	UpdateRotation(prop_);
 	UpdateScale(prop_);
@@ -102,8 +102,6 @@ void ParticleEmitter::DrawDepth()
 	// 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, particle_cb_[currentIndex]->GetAddress());
-
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// パイプラインステートをセット
 	commandList->SetPipelineState(depth_pso_->Get());
@@ -380,7 +378,7 @@ bool ParticleEmitter::PreparePSO()
 	return true;
 }
 
-void ParticleEmitter::SpawnParticles()
+void ParticleEmitter::SpawnParticles(const float delta_time)
 {
 	if (!is_active_)
 		return;
@@ -398,7 +396,7 @@ void ParticleEmitter::SpawnParticles()
 	std::uniform_real_distribution<float> frand(-1, 1);
 
 	// タイマーの更新
-	spawn_timer_ += 1;
+	spawn_timer_ += 60 * delta_time;
 	
 	// 1個発生させるのにかかる時間（frame / 個)
 	auto spawnInterval = 1.0 / (prop_.spawn_rate + frand(rand_) * prop_.spawn_rate_range);
@@ -610,11 +608,11 @@ ParticleEmitterProperty& ParticleEmitter::GetProperety()
 	return prop_;
 }
 
-void ParticleEmitter::UpdateTimer()
+void ParticleEmitter::UpdateTimer(const float delta_time)
 {
 	for (auto& particle : particles_)
 	{
-		particle.time += 1;
+		particle.time += 60 * delta_time;
 	}
 
 	// timeToLiveを過ぎたら消去

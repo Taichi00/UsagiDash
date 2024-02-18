@@ -11,7 +11,7 @@ public:
 	~CoinScript() = default;
 
 	bool Init() override;
-	void Update() override;
+	void Update(const float delta_time) override;
 
 	void OnCollisionEnter(Collider* collider) override;
 
@@ -20,6 +20,6 @@ private:
 	Collider* player_collider_ = nullptr;
 	float angle_;
 	float angle_speed_;
-	unsigned int effect_time_;
+	float effect_time_;
 	bool destroy_flag_ = false;
 };

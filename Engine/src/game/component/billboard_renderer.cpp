@@ -106,7 +106,7 @@ BillboardRenderer::~BillboardRenderer()
 {
 }
 
-void BillboardRenderer::Update()
+void BillboardRenderer::Update(const float delta_time)
 {
 	UpdateCB();
 }

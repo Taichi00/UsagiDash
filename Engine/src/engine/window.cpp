@@ -25,6 +25,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 
 Window::Window(const TCHAR* title, const UINT width, const UINT height)
 {
+#if !_DEBUG
+	// コンソールを非表示
+	FreeConsole();
+#endif
+
 	hinstance_ = GetModuleHandle(nullptr);
 	if (hinstance_ == nullptr)
 	{
@@ -117,9 +122,6 @@ float Window::AspectRate()
 
 double Window::TimeAdjustment()
 {
-	// 現在の時間を取得
-	QueryPerformanceCounter(&time_end_);
-
 	double frame_time = static_cast<double>(time_end_.QuadPart - time_start_.QuadPart) / static_cast<double>(time_freq_.QuadPart);
 	double fps = 0.0;
 
@@ -131,11 +133,23 @@ double Window::TimeAdjustment()
 		timeBeginPeriod(1);
 		Sleep(sleep_time);
 		timeEndPeriod(1);
-		return 0;
+		//return 0;
 	}
 
 	fps = 1.0 / frame_time;
-	time_start_ = time_end_;
 	printf("%f\n", fps);
 	return fps;
+}
+
+void Window::TickTime()
+{
+	/*QueryPerformanceCounter(&time_end_);
+
+	TimeAdjustment();*/
+
+	QueryPerformanceCounter(&time_end_);
+	delta_time_ = (double)(time_end_.QuadPart - time_start_.QuadPart) / (double)(time_freq_.QuadPart);
+	delta_time_ = std::min(std::max(delta_time_, 0.00001f), 0.05f);
+
+	QueryPerformanceCounter(&time_start_);
 }

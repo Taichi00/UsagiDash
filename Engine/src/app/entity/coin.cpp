@@ -9,7 +9,7 @@ Coin::Coin(const std::string& name) : Entity(name, "coin")
 {
 	auto game = Game::Get();
 
-	auto model = game->LoadResource<Model>("Assets/PlatformerPack/Coin.gltf");
+	auto model = game->LoadResource<Model>(L"Assets/PlatformerPack/Coin.gltf");
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(1.5));

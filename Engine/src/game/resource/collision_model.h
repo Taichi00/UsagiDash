@@ -14,18 +14,26 @@ struct CollisionVertex
 	Vec3 normal;	// ñ@ê¸
 };
 
-struct CollisionFace
+//struct CollisionFace
+//{
+//	uint32_t indices[3];
+//	Vec3 normal;
+//	std::vector<std::pair<uint32_t, uint32_t>> edges;
+//	AABB aabb;
+//};
+
+struct CollisionPolygon
 {
-	uint32_t indices[3];
+	CollisionVertex vertices[3];
 	Vec3 normal;
-	std::vector<std::pair<uint32_t, uint32_t>> edges;
 	AABB aabb;
 };
 
 struct CollisionMesh
 {
-	std::vector<CollisionVertex> vertices;
-	std::vector<CollisionFace> faces;
+	//std::vector<CollisionVertex> vertices;
+	//std::vector<CollisionFace> faces;
+	std::vector<CollisionPolygon> polygons;
 	AABB aabb;
 };
 
@@ -35,7 +43,7 @@ public:
 	CollisionModel() = default;
 	~CollisionModel() = default;
 
-	static std::unique_ptr<CollisionModel> Load(const std::string& key);
+	static std::unique_ptr<CollisionModel> Load(const std::wstring& key);
 	bool Release() override;
 
 public:

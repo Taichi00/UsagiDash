@@ -22,7 +22,7 @@ public:
 	void SetOutlineWidth(float width);
 
 	bool Init() override;
-	void Update() override;
+	void Update(const float delta_time) override;
 	void Draw() override;
 	void DrawAlpha() override;
 	void DrawShadow() override;

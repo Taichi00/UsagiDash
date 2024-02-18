@@ -32,14 +32,17 @@ bool Engine2D::Init()
 		return false;
 	}
 
+	if (!CreateFontSetBuilder())
+	{
+		printf("FontSetBuilderの生成に失敗\n");
+		return false;
+	}
+
 	if (!CreateD2DRenderTarget())
 	{
 		printf("D2dRenderTargetの生成に失敗\n");
 		return false;
 	}
-
-	//RegisterTextFormat("normal", L"MS ゴシック", 24);
-	//RegisterSolidColorBrush("white", D2D1::ColorF::White);
 
 	printf("2D描画エンジンの初期化に成功\n");
 	return true;
@@ -69,55 +72,125 @@ void Engine2D::EndRenderD2D() const
 	d3d11_device_context_->Flush();
 }
 
-void Engine2D::RegisterSolidColorBrush(const std::string& key, const D2D1::ColorF color) noexcept
+bool Engine2D::LoadCustomFonts(const std::vector<std::wstring>& fonts)
 {
-	if (solid_color_brush_map_.contains(key))
+	for (const auto& path : fonts)
 	{
-		return;
+		// フォントファイルの追加
+		IDWriteFontFile* font_file;
+		auto hr = dwrite_factory_->CreateFontFileReference(path.c_str(), nullptr, &font_file);
+		if (SUCCEEDED(hr))
+		{
+			font_set_builder_->AddFontFile(font_file);
+		}
 	}
-
-	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
-	d2d_device_context_->CreateSolidColorBrush(
-		D2D1::ColorF(color),
-		brush.GetAddressOf()
-	);
-
-	solid_color_brush_map_[key] = brush;
+	
+	// フォントセットの生成
+	IDWriteFontSet* font_set;
+	auto hr = font_set_builder_->CreateFontSet(&font_set);
+	if (FAILED(hr))
+	{
+		return false;
+	}
+	
+	// フォントコレクションの生成
+	hr = dwrite_factory_->CreateFontCollectionFromFontSet(font_set, &font_collection_);
+	if (FAILED(hr))
+	{
+		return false;
+	}
 }
 
-void Engine2D::RegisterTextFormat(const std::string& key, const std::wstring& fontName, const FLOAT fontSize) noexcept
+Vec2 Engine2D::GetTextSize(const std::wstring& text, const std::wstring& font, const float size, const unsigned int weight)
 {
-	if (text_format_map_.contains(key))
-	{
-		return;
-	}
+	const auto& text_format = CreateTextFormat(font, size, weight);
 
-	ComPtr<IDWriteTextFormat> textFormat = nullptr;
-	dwrite_factory_->CreateTextFormat(
-		fontName.c_str(),
-		nullptr,
-		DWRITE_FONT_WEIGHT_NORMAL,
-		DWRITE_FONT_STYLE_NORMAL,
-		DWRITE_FONT_STRETCH_NORMAL,
-		fontSize,
-		L"ja-jp",
-		textFormat.GetAddressOf()
-	);
+	IDWriteTextLayout* text_layout = NULL;
+	dwrite_factory_->CreateTextLayout(text.c_str(), text.size(), text_format.Get(), 10000, 0, &text_layout);
 
-	text_format_map_[key] = textFormat;
+	DWRITE_TEXT_METRICS text_metrics;
+	text_layout->GetMetrics(&text_metrics);
+
+	text_layout->Release();
+
+	return Vec2(text_metrics.width, text_metrics.height);
 }
 
-void Engine2D::DrawText(const std::string& textFormatKey, const std::string& solidColorBrushKey, const std::wstring& text, const D2D1_RECT_F& rect) const noexcept
+void Engine2D::SetTransform(const Vec2& position, const float rotation, const Vec2& scale)
 {
-	const auto& textFormat = text_format_map_.at(textFormatKey);
-	const auto& solidColorBrush = solid_color_brush_map_.at(solidColorBrushKey);
+	auto mat = D2D1::Matrix3x2F::Scale(scale.x, scale.y)
+		* D2D1::Matrix3x2F::Rotation(rotation)
+		* D2D1::Matrix3x2F::Translation(position.x, position.y);
 
+	d2d_device_context_->SetTransform(mat);
+}
+
+void Engine2D::SetTransform(const Matrix3x2& matrix)
+{
+	D2D1::Matrix3x2F mat;
+	mat.m11 = matrix.m11; mat.m12 = matrix.m12;
+	mat.m21 = matrix.m21; mat.m22 = matrix.m22;
+	mat.dx = matrix.m31; mat.dy = matrix.m32;
+
+	d2d_device_context_->SetTransform(mat);
+}
+
+void Engine2D::DrawText(const std::wstring& text, const Rect2& rect, const std::wstring& font, const float size, const unsigned int weight, const Color& color) const
+{
+	const auto& text_format = CreateTextFormat(font, size, weight);
+	const auto& brush = CreateSolidColorBrush(color);
+	
+	/*IDWriteTextLayout* layout;
+	dwrite_factory_->CreateTextLayout(
+		text.c_str(),
+		text.size(),
+		text_format.Get(),
+		rect.Width(),
+		rect.Height(),
+		&layout
+	);
+
+	ComPtr<ID2D1Effect> effect;
+	d2d_device_context_->CreateEffect(CLSID_D2D1GaussianBlur, &effect);
+	effect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 3.0f);
+
+	layout->SetDrawingEffect(effect.Get(), { 0, (unsigned int)text.size() });*/
+
+	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
+	
 	d2d_device_context_->DrawTextW(
 		text.c_str(),
 		static_cast<UINT32>(text.length()),
-		textFormat.Get(),
-		&rect,
-		solidColorBrush.Get()
+		text_format.Get(),
+		&rectf,
+		brush.Get()
+	);
+	/*d2d_device_context_->DrawTextLayout(
+		{ rect.left, rect.top },
+		layout,
+		brush.Get()
+	);
+
+	layout->Release();*/
+}
+
+void Engine2D::DrawRectangle(const Rect2& rect, const Color& color) const
+{
+	const auto& brush = CreateSolidColorBrush(color);
+
+	d2d_device_context_->DrawRectangle(
+		{ rect.left, rect.top, rect.right, rect.bottom },
+		brush.Get()
+	);
+}
+
+void Engine2D::DrawFillRectangle(const Rect2& rect, const Color& color) const
+{
+	const auto& brush = CreateSolidColorBrush(color);
+
+	d2d_device_context_->FillRectangle(
+		{ rect.left, rect.top, rect.right, rect.bottom },
+		brush.Get()
 	);
 }
 
@@ -131,6 +204,11 @@ void Engine2D::ResetRenderTargets()
 	d2d_device_context_->SetTarget(nullptr);
 	//d2d_device_context_->Flush();
 	d3d11_device_context_->Flush();
+}
+
+Vec2 Engine2D::RenderTargetSize()
+{
+	return Vec2(render_target_width_, render_target_height_);
 }
 
 bool Engine2D::CreateD3D11Device()
@@ -219,10 +297,45 @@ bool Engine2D::CreateDWriteFactory()
 	// テキストフォーマットを生成するためのファクトリであるIDWriteFactoryを生成
 	auto hr = DWriteCreateFactory(
 		DWRITE_FACTORY_TYPE_SHARED,
-		__uuidof(IDWriteFactory), &dwrite_factory_
+		__uuidof(IDWriteFactory5), &dwrite_factory_
 	);
 
 	return SUCCEEDED(hr);
+}
+
+bool Engine2D::CreateFontSetBuilder()
+{
+	auto hr = dwrite_factory_->CreateFontSetBuilder(&font_set_builder_);
+
+	return SUCCEEDED(hr);
+}
+
+ComPtr<ID2D1SolidColorBrush> Engine2D::CreateSolidColorBrush(const Color& color) const
+{
+	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
+	d2d_device_context_->CreateSolidColorBrush(
+		{ color.r, color.g, color.b, color.a },
+		brush.GetAddressOf()
+	);
+
+	return brush;
+}
+
+ComPtr<IDWriteTextFormat> Engine2D::CreateTextFormat(const std::wstring& font_name, const float font_size, const unsigned int font_weight) const
+{
+	ComPtr<IDWriteTextFormat> text_format = nullptr;
+	dwrite_factory_->CreateTextFormat(
+		font_name.c_str(),
+		font_collection_.Get(),
+		(DWRITE_FONT_WEIGHT)font_weight,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		font_size,
+		L"ja-jp",
+		text_format.GetAddressOf()
+	);
+
+	return text_format;
 }
 
 bool Engine2D::CreateD2DRenderTarget()
@@ -232,6 +345,7 @@ bool Engine2D::CreateD2DRenderTarget()
 	D3D11_RESOURCE_FLAGS flags = { D3D11_BIND_RENDER_TARGET };
 
 	float dpi = (float)GetDpiForWindow(Game::Get()->GetEngine()->GetWindow()->HWnd());
+
 	D2D1_BITMAP_PROPERTIES1 bitmapProperties = D2D1::BitmapProperties1(
 		D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW,
 		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED),
@@ -287,6 +401,10 @@ bool Engine2D::CreateD2DRenderTarget()
 		wrapped_back_buffers_[i] = wrappedBackBuffer;
 		d2d_render_targets_[i] = d2dRenderTarget;
 	}
+
+	auto size = d2d_render_targets_[0]->GetSize();
+	render_target_width_ = size.width;
+	render_target_height_ = size.height;
 
 	return true;
 }

@@ -16,7 +16,7 @@
 
 MeshRenderer::MeshRenderer()
 {
-	outline_width_ = 0.003;
+	outline_width_ = 0.002;
 }
 
 MeshRenderer::MeshRenderer(std::shared_ptr<Model> model) : MeshRenderer()
@@ -33,12 +33,6 @@ MeshRenderer::~MeshRenderer()
 void MeshRenderer::SetOutlineWidth(float width)
 {
 	outline_width_ = width;
-
-	for (size_t i = 0; i < model_->materials.size(); i++)
-	{
-		auto ptr = materials_cb_[i]->GetPtr<MaterialParameter>();
-		ptr->outline_width = outline_width_;
-	}
 }
 
 bool MeshRenderer::Init()
@@ -74,7 +68,7 @@ bool MeshRenderer::Init()
 	return true;
 }
 
-void MeshRenderer::Update()
+void MeshRenderer::Update(const float delta_time)
 {
 	UpdateBone();
 	UpdateCB();
@@ -247,7 +241,6 @@ void MeshRenderer::DrawDepth()
 	commandList->SetGraphicsRootSignature(pipeline_manager_->Get("Depth")->RootSignature()); // ルートシグネチャをセット
 	commandList->SetGraphicsRootConstantBufferView(0, transform_cb_[currentIndex]->GetAddress()); // 定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(2, bone_cb_[currentIndex]->GetAddress());
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ID3D12DescriptorHeap* heaps[] = {
 		model_->descriptor_heap->GetHeap(),
 	};
@@ -371,13 +364,8 @@ bool MeshRenderer::PreparePSO()
 void MeshRenderer::UpdateBone()
 {
 	// 行列の更新
-	for (auto b : bones_)
+	for (auto& b : bones_.RootBones())
 	{
-		if (b->GetParent())
-		{
-			continue;
-		}
-
 		b->UpdateMatrices();
 	}
 }
@@ -387,12 +375,19 @@ void MeshRenderer::UpdateCB()
 	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto camera = GetEntity()->GetScene()->GetMainCamera();
 
+	auto aabb = model_->aabb;
+	aabb.Scale(transform->scale);
+	aabb.Translate(transform->position);
+
+	auto center = aabb.Center();
+	float radius = aabb.Size().Length() / 2;
+
 	// Transform
 	auto currentTransform = transform_cb_[currentIndex]->GetPtr<TransformParameter>();
 	auto world = transform->GetWorldMatrix();
 	auto view = camera->GetViewMatrix();
 	auto proj = camera->GetProjMatrix();
-	auto ditherLevel = (1.0 - ((transform->position - camera->transform->position).Length() - 3) / 3.0) * 16;
+	auto ditherLevel = (1.0 - std::max((center - camera->transform->position).Length() - radius, 0.f) / 3.0) * 16;
 
 	currentTransform->world = world;
 	currentTransform->view = view;
@@ -408,6 +403,13 @@ void MeshRenderer::UpdateCB()
 		auto mtx = bone->GetWorldMatrix() * bone->GetInvBindMatrix();
 		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
 		XMStoreFloat4x4(&(currentBone->bone_normal[i]), XMMatrixInverse(nullptr, mtx));	// 法線は逆行列の転置で変換
+	}
+
+	// Material
+	for (size_t i = 0; i < model_->materials.size(); i++)
+	{
+		auto ptr = materials_cb_[i]->GetPtr<MaterialParameter>();
+		ptr->outline_width = outline_width_;
 	}
 
 	// SceneParameter

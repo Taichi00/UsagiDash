@@ -23,7 +23,7 @@ bool FloatingPlayer::Init()
 	return true;
 }
 
-void FloatingPlayer::Update()
+void FloatingPlayer::Update(const float delta_time)
 {
 	Move();
 	Animate();

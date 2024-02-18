@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/octree.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -14,7 +15,9 @@ class Entity;
 class CollisionManager
 {
 public:
-	void Update();
+	CollisionManager();
+
+	void Update(const float delta_time);
 
 	void Add(Collider* collider);
 	void Add(Rigidbody* rigidbody);
@@ -26,7 +29,6 @@ public:
 
 	void SetNonCollisionTags(const std::string& tag1, const std::string& tag2);
 
-
 private:
 	std::vector<Collider*> colliders_;
 	std::vector<Rigidbody*> rigidbodies_;
@@ -34,4 +36,7 @@ private:
 	std::vector<std::pair<std::string, std::string>> non_collision_tags_;
 
 	std::set<std::pair<Entity*, Collider*>> collided_entities_;
+
+	std::unique_ptr<Octree<Collider>> octree_;
+	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
 };

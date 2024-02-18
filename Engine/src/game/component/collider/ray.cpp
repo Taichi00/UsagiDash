@@ -1,5 +1,5 @@
 #include "game/component/collider/ray.h"
-#include "game/component/collider/mesh_collider.h"
+#include "game/component/collider/polygon_collider.h"
 #include "game/component/collider/sphere_collider.h"
 
 Ray::Ray(Vec3 origin, Vec3 direction, float distance)
@@ -35,7 +35,7 @@ bool Ray::Intersects(FloorCollider* floor)
 	return false;
 }
 
-bool Ray::Intersects(MeshCollider* collider)
+bool Ray::Intersects(PolygonCollider* collider)
 {
 	return collider->Intersects(this);
 }

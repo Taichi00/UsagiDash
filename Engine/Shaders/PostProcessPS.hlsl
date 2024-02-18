@@ -82,12 +82,6 @@ float3 LaplacianSampleNormal(Texture2D t, SamplerState s, float2 uv, float3 offs
     off[7] = float2( 0.0,  1.0) * offset.xy;
     off[8] = float2( 1.0,  1.0) * offset.xy;
     
-    //float coef[9] =
-    //{
-    //    1.0, 1.0, 1.0,
-    //    1.0, -8.0, 1.0,
-    //    1.0, 1.0, 1.0
-    //};
     float coef[9] =
     {
         0.0, 1.0, 0.0,
@@ -122,12 +116,6 @@ float3 LaplacianSampleDepth(Texture2D t, SamplerState s, float2 uv, float3 offse
     off[7] = float2(0.0, 1.0) * offset.xy;
     off[8] = float2(1.0, 1.0) * offset.xy;
     
-    //float coef[9] =
-    //{
-    //    1.0, 1.0, 1.0,
-    //    1.0, -8.0, 1.0,
-    //    1.0, 1.0, 1.0
-    //};
     float coef[9] =
     {
         0.0, 1.0, 0.0,
@@ -176,29 +164,31 @@ float4 main(VSOutput input) : SV_TARGET
     float3 offset = float3(1.0 / screenSize.x, 1.0 / screenSize.y, 0) * outlineNormalWidth;
     float3 outlineNormal = LaplacianSampleNormal(gNormal, gSampler, uv, offset).rgb;
     float sobelNormal = saturate(outlineNormal.x + outlineNormal.y + outlineNormal.z);
-    //sobelNormal = pow(sobelNormal, 2);
     sobelNormal = step(0.8, sobelNormal);
-    //sobelNormal = inverseLerp(0.5, 1, sobelNormal);
-    float3 outlineColor = lerp(1, 0.5, sobelNormal * outlineMask);
+    float3 outlineColor = lerp(1, 0.2, sobelNormal * outlineMask);
     
     float outlineDepthWidth = 0.5;
     offset = float3(1.0 / screenSize.x, 1.0 / screenSize.y, 0) * outlineDepthWidth;
     float outlineDepth = LaplacianSampleDepth(gDepth, gSampler, uv, offset);
     float sobelDepth = saturate(outlineDepth * 0.3);
     sobelDepth = pow(sobelDepth, 2);
-    //sobelDepth = step(0.999, sobelDepth);
-    //sobelDepth = inverseLerp(0.5, 1, sobelDepth);
     outlineColor *= lerp(1, 0, sobelDepth * outlineMask);
     
     outlineColor = lerp(0, 1, outlineColor);
     
-    float outlinePower = lerp(0.3, 0.8, inverseLerp(30, 80, depth));
-    //color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
+    float outlinePower = lerp(0.3, 0.6, inverseLerp(60, 100, depth));
+    color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
     
     // SSAO
     //float ssao = gSSAO.Sample(gSampler, uv).r;
     //color.rgb *= saturate(ssao);
     
+    // ÉKÉìÉ}ï‚ê≥
+    const float gamma = 2.2;
+    const float exposure = 1;
+  
+    float3 mapped = 1.0 - exp(-color * exposure);
+    mapped = pow(mapped, 1.0 / gamma);
     
-    return color;
+    return float4(mapped, 1);
 }

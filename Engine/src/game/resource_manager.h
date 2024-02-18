@@ -2,6 +2,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <typeindex>
 
 class Resource;
 class Texture2D;
@@ -12,54 +13,59 @@ public:
 	ResourceManager();
 	~ResourceManager();
 
-	template<class T> std::shared_ptr<T> Load(const std::string& path) // リソースを読み込む
+	template<class T>
+	std::shared_ptr<T> Load(const std::wstring& path) // リソースを読み込む
 	{
 		std::shared_ptr<T> resource;
 
-		// キーの先頭にリソースのtypenameを付与
-		// 同名のファイルでもtypeが異なっていれば違うリソースとして認識させるため
-		auto key = std::string(typeid(T).name()) + ":" + path;
-
-		if (resource_map_.find(key) == resource_map_.end())	// 見つからなかった場合
+		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
 		{
 			resource = T::Load(path);
 
 			// 読み込み失敗
 			if (!resource)
 			{
-				printf("Resource [%s] の読み込みに失敗\n", key.c_str());
+				printf("Resource [%ls] の読み込みに失敗\n", path.c_str());
 				return nullptr;
 			}
 
-			resource_map_[key] = resource;
+			resource_map_[typeid(T)][path] = resource;
 		}
 		else // 見つかった場合
 		{
-			resource = std::static_pointer_cast<T>(resource_map_[key]);
+			resource = std::static_pointer_cast<T>(resource_map_[typeid(T)][path]);
 		}
 
 		return resource;
 	}
 
-	template<class T> std::shared_ptr<T> Get(const std::string& path) // リソースを取得する
+	template<class T>
+	std::shared_ptr<T> Get(const std::wstring& path) // リソースを取得する
 	{
-		auto key = std::string(typeid(T).name()) + ":" + path;
-
-		if (resource_map_.find(key) == resource_map_.end())	// 見つからなかった場合
+		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
 		{
 			return nullptr;
 		}
 
-		return std::static_pointer_cast<T>(resource_map_[key]);
+		return std::static_pointer_cast<T>(resource_map_[typeid(T)][path]);
 	}
 
-	bool Release(const std::string& key);	// リソースを開放する
+	template<class T>
+	bool Release(const std::wstring& path)	// リソースを開放する
+	{
+		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
+		{
+			return false;
+		}
+
+		resource_map_[typeid(T)][path]->Release();
+		resource_map_[typeid(T)].erase(path);
+
+		return true;
+	}
 
 	void AddResource(std::shared_ptr<Resource> resource);	// リソースを追加する
 
 private:
-	std::string GetExtension(const std::string& path);	// 拡張子を取得する
-
-private:
-	std::map<std::string, std::shared_ptr<Resource>> resource_map_;	// リソースマップ
+	std::map<std::type_index, std::map<std::wstring, std::shared_ptr<Resource>>> resource_map_;	// リソースマップ
 };

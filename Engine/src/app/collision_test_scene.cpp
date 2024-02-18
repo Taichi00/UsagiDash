@@ -5,9 +5,9 @@
 #include "app/main_scene.h"
 #include "app/player.h"
 #include "engine/shared_struct.h"
-#include "game/resource/texture2d.h"
 #include "game/animation.h"
 #include "game/assimp_loader.h"
+#include "game/collision_manager.h"
 #include "game/component/animator.h"
 #include "game/component/billboard_renderer.h"
 #include "game/component/camera.h"
@@ -16,6 +16,9 @@
 #include "game/component/collider/floor_collider.h"
 #include "game/component/collider/mesh_collider.h"
 #include "game/component/collider/sphere_collider.h"
+#include "game/component/gui/control.h"
+#include "game/component/gui/label.h"
+#include "game/component/gui/panel.h"
 #include "game/component/mesh_renderer.h"
 #include "game/component/particle_emitter.h"
 #include "game/component/rigidbody.h"
@@ -23,14 +26,15 @@
 #include "game/entity.h"
 #include "game/game.h"
 #include "game/input.h"
-#include "game/label.h"
 #include "game/physics.h"
-#include "game/collision_manager.h"
+#include "game/resource/texture2d.h"
 #include "math/quaternion.h"
+#include "math/rect.h"
+#include "app/component/map_loader.h"
 #include <memory>
 #include <random>
 
-Entity* enemy, *testSphere, *movingObj;
+Entity* player, *enemy, *testSphere, *movingObj;
 float angle = 0;
 Vec3 direction = Vec3(1, 0, 0);
 
@@ -38,16 +42,17 @@ bool CollisionTestScene::Init()
 {
 	Scene::Init();
 
-	std::shared_ptr<Model> model;
-	CollisionModel collisionModel;
-	std::vector<Animation*> animations;
-	Collider* collider;
+	SetSkybox(L"Assets/skybox/puresky/");
 
-	auto playerModel = LoadResource<Model>("Assets/PlatformerPack/Character.gltf");
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<float> frand(-1, 1);
+
+	auto playerModel = LoadResource<Model>(L"Assets/PlatformerPack/Character2.glb");
 
 	float pbrColor[4] = { 0, 1, 0, 1 };
-	std::shared_ptr smokeAlbedo = Texture2D::Load("Assets/smoke2_albedo.png");
-	std::shared_ptr smokeNormal = Texture2D::Load("Assets/smoke2_normal.png");
+	std::shared_ptr smokeAlbedo = Texture2D::Load(L"Assets/smoke2_albedo.png");
+	std::shared_ptr smokeNormal = Texture2D::Load(L"Assets/smoke2_normal.png");
 	std::shared_ptr smokePbr = Texture2D::GetMono(pbrColor);
 
 	auto runSmokeProp = ParticleEmitterProperty{};
@@ -119,146 +124,30 @@ bool CollisionTestScene::Init()
 	circleSmokeProp.sprite.pbr_texture = smokePbr;
 
 
-	auto player = new Entity("Player", "player");
+	player = new Entity("Player", "player");
 	player->AddComponent(new MeshRenderer(playerModel));
-	collider = (Collider*)player->AddComponent(new CapsuleCollider({ 1, 1 }));
-	player->AddComponent(new Rigidbody({ collider, 1, true, false, 0 }));
+	player->AddComponent(new CapsuleCollider({ 1, 1 }));
+	player->AddComponent(new Rigidbody(1, true, false, 0));
 	player->AddComponent(new Animator());
-	player->AddComponent(new Player({ 0.27, 0.02 }));
+	player->AddComponent(new Player(18, 1.2));
 
 	player->GetComponent<Animator>()->Play("Idle", 2.0f);
-	collider->offset = Vec3(0, 1.5, 0);
+	player->GetComponent<Collider>()->offset = Vec3(0, 1.5, 0);
 	player->GetComponent<MeshRenderer>()->is_shadow_from_above = true;
 
 	auto runSmokeEmitter = new Entity("Run Smoke Emitter");
 	runSmokeEmitter->AddComponent(new ParticleEmitter(runSmokeProp));
-	runSmokeEmitter->SetParent(player);
-	CreateEntity(runSmokeEmitter);
 
 	auto jumpSmokeEmitter = new Entity("Jump Smoke Emitter");
 	jumpSmokeEmitter->AddComponent(new ParticleEmitter(jumpSmokeProp));
-	jumpSmokeEmitter->SetParent(player);
-	CreateEntity(jumpSmokeEmitter);
 
 	auto circleSmokeEmitter = new Entity("Circle Smoke Emitter");
 	circleSmokeEmitter->AddComponent(new ParticleEmitter(circleSmokeProp));
-	circleSmokeEmitter->SetParent(player);
-	CreateEntity(circleSmokeEmitter);
 
+	player->AddChild(runSmokeEmitter);
+	player->AddChild(jumpSmokeEmitter);
+	player->AddChild(circleSmokeEmitter);
 	CreateEntity(player);
-
-
-	std::vector<Entity*> objects;
-	std::shared_ptr sphereModel = SphereMesh::Load(5, 0.72, 0, 0);
-	std::shared_ptr capsuleModel = CapsuleMesh::Load(2, 2, 0.72, 0, 0);
-
-	for (int i = 0; i < 1; i++)
-	{
-		auto object = new Entity("Object " + std::to_string(i + 1));
-		
-		if (i % 2 == 1)
-		{
-			collider = (Collider*)object->AddComponent(new CapsuleCollider({ 2, 2 }));
-			model = capsuleModel;
-		}
-		else
-		{
-			collider = (Collider*)object->AddComponent(new SphereCollider(5));
-			model = sphereModel;
-		}
-		
-		object->AddComponent(new MeshRenderer(model));
-		object->AddComponent(new Rigidbody({ collider, 1.5, true, false, 0.1 }));
-		CreateEntity(object);
-		objects.push_back(object);
-
-		object->transform->position = Vec3(10 * (i + 1), 10, 0);
-	}
-
-	//sphereModel = SphereMesh::Load(10, 0.72, 0, 0);
-	movingObj = new Entity("Rift");
-	movingObj->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/rift.obj")));
-	collider = (Collider*)movingObj->AddComponent(new MeshCollider(LoadResource<CollisionModel>("Assets/rift.obj")));
-	movingObj->AddComponent(new Rigidbody({ collider, 5, false, true, 0.1 }));
-	CreateEntity(movingObj);
-	movingObj->transform->position = Vec3(0, -10, -60);
-	movingObj->transform->scale = Vec3(10, 10, 10);
-	collider->scale = movingObj->transform->scale;
-
-
-	enemy = new Entity("Enemy");
-	enemy->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Enemy.gltf")));
-	collider = (Collider*)enemy->AddComponent(new SphereCollider(1.5));
-	enemy->AddComponent(new Rigidbody({ collider, 1, true, false, 0.01 }));
-	enemy->AddComponent(new Animator());
-	CreateEntity(enemy);
-
-	enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
-	collider->offset = Vec3(0, 1.5, 0);
-	enemy->transform->position = Vec3(0, 0, 5);
-	enemy->transform->scale = Vec3(2, 2, 2);
-
-
-	testSphere = new Entity("Star");
-	testSphere->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/PlatformerPack/Star.gltf")));
-	CreateEntity(testSphere);
-	//testSphere->transform->scale = Vec3(0.3, 0.3, 0.3);
-
-
-	auto pbrEntity = new Entity("PBR Entity");
-	pbrEntity->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/DamagedHelmet.glb")));
-	CreateEntity(pbrEntity);
-	pbrEntity->transform->position = Vec3(0, -3, -13);
-	pbrEntity->transform->scale = Vec3(5, 5, 5);
-
-
-	std::random_device rd;
-	std::mt19937 mt(rd());
-	std::uniform_real_distribution<float> frand(-1, 1);
-	for (int i = 0; i < 30; i++)
-	{
-		auto pos = Vec3(frand(mt) * 20, -6, frand(mt) * 20);
-		CreateEntity(new Coin("Coin" + std::to_string(i)))->transform->position = pos;
-	}
-	
-
-	/*auto billboard = new Entity("Billboard");
-	billboard->AddComponent(new BillboardRenderer(albedo, normal));
-	CreateEntity(billboard);
-
-	billboard->transform->position = Vec3(0, -4, 0);
-	billboard->transform->scale = Vec3(0.6, 0.6, 0.6);*/
-
-
-	/*auto smokeProp = ParticleEmitterProperty{};
-	smokeProp.spawnRate = 1;
-	smokeProp.positionPVA.velocityRange = Vec3(0.3, 0.3, 0.3);
-	smokeProp.rotationPVA.velocityRange = Vec3(0, 0, 0.1);
-	smokeProp.scalePVA.velocity = Vec3(-0.01, -0.01, -0.01);
-	smokeProp.sprite.albedoTexture = smokeAlbedo;
-	smokeProp.sprite.normalTexture = smokeNormal;
-	smokeProp.sprite.pbrTexture = smokePbr;
-
-	auto smokeEmitter = new Entity("Smoke Emitter");
-	smokeEmitter->AddComponent(new ParticleEmitter(smokeProp));
-	CreateEntity(smokeEmitter);*/
-
-
-	auto plane = new Entity("Map", "map");
-	plane->AddComponent(new MeshRenderer(LoadResource<Model>("Assets/Map/CollisionTest.obj")));
-	collider = (Collider*)plane->AddComponent(new MeshCollider(LoadResource<CollisionModel>("Assets/Map/CollisionTest.obj")));
-	plane->AddComponent(new Rigidbody({ collider, 1, false, true, 0.1 }));
-	CreateEntity(plane);
-
-	plane->transform->scale = Vec3(0.1, 0.1, 0.1);
-	plane->transform->position = Vec3(0, -10, 0);
-	collider->scale = plane->transform->scale;
-	plane->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
-
-
-	auto label = new Entity("Label");
-	label->AddComponent(new Label("•¶Žš—ñ‚Ì•\Ž¦", "Source Han Sans VF", 32));
-	CreateEntity(label);
 
 
 	auto camera = new Entity("Camera");
@@ -267,14 +156,122 @@ bool CollisionTestScene::Init()
 	CreateEntity(camera);
 	SetMainCamera(camera);
 
-	SetSkybox("Assets/skybox/puresky/");
 
+	std::vector<Entity*> objects;
+	std::shared_ptr sphereModel = SphereMesh::Load(1, 0.72, 0, 0);
+	std::shared_ptr capsuleModel = CapsuleMesh::Load(2, 2, 0.72, 0, 0);
+
+	for (int i = 0; i < 20; i++)
+	{
+		std::shared_ptr<Model> model;
+		auto object = new Entity("Object " + std::to_string(i + 1));
+		/*
+		if (i % 2 == 1)
+		{
+			object->AddComponent(new CapsuleCollider({ 2, 2 }));
+			model = capsuleModel;
+		}
+		else
+		{*/
+			object->AddComponent(new SphereCollider(1));
+			model = sphereModel;
+		//}
+		
+		object->AddComponent(new MeshRenderer(model));
+		object->AddComponent(new Rigidbody(0.5, true, false, 0.1));
+		CreateEntity(object);
+		objects.push_back(object);
+
+		auto pos = Vec3(frand(mt) * 20, frand(mt) * 10 + 10, frand(mt) * 20);
+		//object->transform->position = Vec3(10 * (i + 1), 10, 0);
+		object->transform->position = pos;
+	}
+
+
+	movingObj = new Entity("Rift");
+	movingObj->AddComponent(new MeshRenderer(LoadResource<Model>(L"Assets/rift.obj")));
+	movingObj->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"Assets/rift.obj")));
+	movingObj->AddComponent(new Rigidbody(5, false, true, 0.1));
+
+	movingObj->transform->position = Vec3(0, -10, 25);
+	movingObj->transform->scale = Vec3(10, 10, 10);
+	movingObj->GetComponent<Collider>()->scale = movingObj->transform->scale;
+	CreateEntity(movingObj);
+
+
+	enemy = new Entity("Enemy");
+	enemy->AddComponent(new MeshRenderer(LoadResource<Model>(L"Assets/PlatformerPack/Enemy.gltf")));
+	enemy->AddComponent(new SphereCollider(1.5));
+	enemy->AddComponent(new Rigidbody(0.5, true, false, 0.1));
+	enemy->AddComponent(new Animator());
+
+	enemy->GetComponent<Collider>()->offset = Vec3(0, 1.5, 0);
+	enemy->transform->position = Vec3(0, 0, 5);
+	enemy->transform->scale = Vec3(2, 2, 2);
+	CreateEntity(enemy);
+	enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
+
+
+	/*auto pbrEntity = new Entity("PBR Entity");
+	pbrEntity->AddComponent(new MeshRenderer(LoadResource<Model>(L"Assets/DamagedHelmet.glb")));
+	pbrEntity->transform->position = Vec3(0, -3, -13);
+	pbrEntity->transform->scale = Vec3(5, 5, 5);
+	CreateEntity(pbrEntity);*/
+
+
+	for (int i = 0; i < 0; i++)
+	{
+		auto pos = Vec3(frand(mt) * 20, -6, frand(mt) * 20);
+		CreateEntity(new Coin("Coin" + std::to_string(i)))->transform->position = pos;
+	}
+	
+
+	auto map = new Entity("Map", "map");
+	map->AddComponent(new MeshRenderer(LoadResource<Model>(L"Assets/Map/level1.obj")));
+	map->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"Assets/Map/level1.obj")));
+	map->AddComponent(new Rigidbody(1, false, true, 0.1));
+
+	map->transform->scale = Vec3(0.1, 0.1, 0.1);
+	map->transform->position = Vec3(0, -10, 0);
+	map->GetComponent<Collider>()->scale = map->transform->scale;
+	map->GetComponent<MeshRenderer>()->SetOutlineWidth(0);
+	CreateEntity(map);
+
+
+	auto map_loader = new Entity("Map Loader");
+	map_loader->AddComponent(new MapLoader(L"Assets/Map/level1.map"));
+
+	map_loader->transform->scale = Vec3(0.1, 0.1, 0.1);
+	map_loader->transform->position = Vec3(0, -10, 0);
+	CreateEntity(map_loader);
+
+
+	{
+		Control* control;
+
+		auto panel = new Entity();
+		panel->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 10), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.5)));
+		control = panel->GetComponent<Control>();
+		control->SetRotation(4);
+		
+		{
+			auto coin_label = new Entity("Coin Label");
+			coin_label->AddComponent(new Label("023", "Koruri", 34, Label::FontWeight::EXTRA_BOLD, Color(1, 1, 1)));
+			control = coin_label->GetComponent<Control>();
+			control->SetTransform(Vec2(50, 0), Vec2(100, 50), Vec2(0.5, 1), Vec2(0.5, 0.5));
+
+			coin_label->SetParent(panel);
+		}
+
+		CreateEntity(panel);
+	}
+	
 	return true;
 }
 
-void CollisionTestScene::Update()
+void CollisionTestScene::Update(const float delta_time)
 {
-	Scene::Update();
+	Scene::Update(delta_time);
 
 	/*auto rigidbody = enemy->GetComponent<Rigidbody>();
 
@@ -295,44 +292,30 @@ void CollisionTestScene::Update()
 	
 	//rigidbody->velocity.x = sin(angle) * 20 - rigidbody->transform->position.x;
 	//rigidbody->velocity.y = cos(angle) * 20 - rigidbody->transform->position.y;
-	if (rigidbody->transform->position.y < -10)
+	if (rigidbody->transform->position.y < -13)
 	{
-		rigidbody->velocity.y *= -1;
-		rigidbody->transform->position.y = -10;
+		rigidbody->velocity.y *= -60 * delta_time;
+		rigidbody->transform->position.y = -13;
 	}
-	if (rigidbody->transform->position.y > 10)
+	if (rigidbody->transform->position.y > 7)
 	{
-		rigidbody->velocity.y *= -1;
-		rigidbody->transform->position.y = 10;
+		rigidbody->velocity.y *= -60 * delta_time;
+		rigidbody->transform->position.y = 7;
 	}
 	if (rigidbody->velocity.y >= 0)
 	{
-		rigidbody->velocity.y += 0.02;
+		rigidbody->velocity.y += 1.2 * delta_time;
 	}
 	else
 	{
-		rigidbody->velocity.y = -0.1;
+		rigidbody->velocity.y = -6.0 * delta_time;
 	}
-	rigidbody->velocity.x += (0 - movingObj->transform->position.x) * 0.03;
+	//rigidbody->velocity.x += (0 - movingObj->transform->position.x) * 1.8 * delta_time;
 	//rigidbody->velocity.y += (-10 - movingObj->transform->position.y) * 0.03;
-	rigidbody->velocity.z += (-60 - movingObj->transform->position.z) * 0.03;
+	//rigidbody->velocity.z += (25 - movingObj->transform->position.z) * 1.8 * delta_time;
 
-	auto origin = Vec3(-10, -6, 10);
-	auto direction = Quaternion::FromEuler(0, angle, 0) * Vec3(1, 0, 0);
-	float distance = 10;
-	RaycastHit hit;
 
-	if (Physics::Raycast(origin, direction, distance, hit))
-	{
-		distance = hit.distance;
-	}
-
-	testSphere->transform->position = origin + direction * distance;
-	testSphere->transform->rotation = Quaternion::FromEuler(0, angle * 5, 0);
-
-	angle += 0.01;
-
-	if (Input::GetKeyDown(DIK_END))
+	if (Input::GetKeyDown(DIK_R))
 	{
 		Game::Get()->LoadScene(new CollisionTestScene());
 	}
@@ -341,5 +324,4 @@ void CollisionTestScene::Update()
 	{
 		Game::Get()->ToggleFullscreen();
 	}
-
 }

@@ -5,7 +5,7 @@
 #include "game/scene.h"
 #include "game/collision_manager.h"
 #include "game/component/collider/floor_collider.h"
-#include "game/component/collider/mesh_collider.h"
+#include "game/component/collider/polygon_collider.h"
 #include "game/component/collider/capsule_collider.h"
 #include <typeinfo>
 
@@ -98,9 +98,9 @@ bool Collider::Intersects(Collider* collider)
     {
         return Intersects((FloorCollider*)collider);
     }
-    else if (typeid(*collider) == typeid(MeshCollider))
+    else if (typeid(*collider) == typeid(PolygonCollider))
     {
-        return Intersects((MeshCollider*)collider);
+        return Intersects((PolygonCollider*)collider);
     }
     
     return false;
@@ -121,7 +121,7 @@ bool Collider::Intersects(FloorCollider* floor)
     return false;
 }
 
-bool Collider::Intersects(MeshCollider* collider)
+bool Collider::Intersects(PolygonCollider* collider)
 {
     return false;
 }

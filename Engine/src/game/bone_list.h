@@ -31,7 +31,10 @@ public:
 
 	void SaveBuffer();
 
+	const std::vector<Bone*>& RootBones();
+
 private:
 	std::vector<Bone*> bones_;
 	std::map<std::string, int> bone_map_;
+	std::vector<Bone*> root_bones_;
 };

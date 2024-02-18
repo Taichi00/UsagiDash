@@ -9,7 +9,7 @@ Model::~Model()
 {
 }
 
-std::unique_ptr<Model> Model::Load(const std::string& key)
+std::unique_ptr<Model> Model::Load(const std::wstring& key)
 {
 	auto model = AssimpLoader::Load(key);
 
