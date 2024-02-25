@@ -71,7 +71,7 @@ protected:
 	std::vector<HitInfo> hits_;
 	HitInfo nearest_hit_; // Å‚à‹ß‚¢Õ“Ë
 
-	std::shared_ptr<CollisionManager> collision_manager_;
+	CollisionManager* collision_manager_;
 
 	bool has_detected_; // ”»’è‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©
 };

@@ -3,6 +3,7 @@
 #include "game/component/component.h"
 
 class Collider;
+class AudioSource;
 
 class CoinScript : public Component
 {
@@ -17,7 +18,8 @@ public:
 
 private:
 	Collider* collider_ = nullptr;
-	Collider* player_collider_ = nullptr;
+	AudioSource* audio_source_ = nullptr;
+
 	float angle_;
 	float angle_speed_;
 	float effect_time_;

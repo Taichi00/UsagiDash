@@ -36,11 +36,14 @@ Scene::~Scene()
 	gbuffer_heap_->Free(brdf_handle_);
 }
 
+void Scene::Awake()
+{
+	// ルートエンティティを生成
+	root_entity_ = std::make_unique<Entity>("Root");
+}
+
 bool Scene::Init()
 {
-	// ルートエンティティを設定
-	root_entity_ = std::make_unique<Entity>("Root");
-
 	rtv_heap_ = Game::Get()->GetEngine()->RtvHeap();
 	dsv_heap_ = Game::Get()->GetEngine()->DsvHeap();
 	gbuffer_heap_ = Game::Get()->GetEngine()->SrvHeap();
@@ -56,6 +59,7 @@ bool Scene::Init()
 		RSTexture,			// Depth
 		RSTexture,			// ShadowMap
 		RSTexture,			// Skybox
+		RSTexture,			
 		RSTexture,			
 		RSTexture,			
 	};
@@ -151,6 +155,9 @@ void Scene::Update(const float delta_time)
 
 	// 衝突判定
 	Game::Get()->GetCollisionManager()->Update(delta_time);
+
+	// 変換行列の更新
+	for (auto& entity : entity_list_) { entity->TransformUpdate(delta_time); };
 
 	// 定数バッファの更新
 	UpdateCB();
@@ -254,6 +261,7 @@ void Scene::DrawLighting()
 	commandList->SetGraphicsRootDescriptorTable(8, diffusemap_handle_.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(9, specularmap_handle_.HandleGPU());
 	commandList->SetGraphicsRootDescriptorTable(10, brdf_handle_.HandleGPU());
+	commandList->SetGraphicsRootDescriptorTable(11, skybox_handle_.HandleGPU());
 
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -416,6 +424,37 @@ Entity* Scene::CreateEntity(Entity* entity)
 void Scene::AddDestroyEntity(Entity* entity)
 {
 	destroy_entities_.push_back(entity);
+}
+
+bool Scene::DontDestroyOnLoad(Entity* entity)
+{
+	// すでに追加していたらやめる
+	if (std::find(dont_destroy_entities_.begin(), dont_destroy_entities_.end(), entity) != dont_destroy_entities_.end())
+		return false;
+
+	dont_destroy_entities_.push_back(entity);
+	return true;
+}
+
+std::vector<std::unique_ptr<Entity>> Scene::MoveDontDestroyEntities()
+{
+	std::vector<std::unique_ptr<Entity>> entities;
+	
+	for (auto dd_entity : dont_destroy_entities_)
+	{
+		auto e = root_entity_->FindEntityIf([&dd_entity](Entity& entity) {
+			return &entity == dd_entity;
+			});
+
+		auto parent = e->GetParent();
+
+		if (!parent)
+			continue;
+
+		entities.push_back(parent->MoveChild(e));
+	}
+
+	return entities;
 }
 
 Entity* Scene::FindEntityWithTag(const std::string& tag)

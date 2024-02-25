@@ -8,6 +8,8 @@ Transform::Transform()
 	position = Vec3::Zero();
 	scale = Vec3(1, 1, 1);
 	rotation = Quaternion::Identity();
+
+	world_matrix_ = XMMatrixIdentity();
 }
 
 bool Transform::Init()
@@ -15,19 +17,20 @@ bool Transform::Init()
 	return true;
 }
 
-XMMATRIX Transform::GetWorldMatrix()
+void Transform::TransformUpdate(const float delta_time)
 {
-	auto world = XMMatrixIdentity();
-	world *= XMMatrixScalingFromVector(scale);
-	world *= XMMatrixRotationQuaternion(rotation);
-	world *= XMMatrixTranslationFromVector(position);
+	// ワールド変換行列を更新
+	world_matrix_ = XMMatrixIdentity();
+	world_matrix_ *= XMMatrixScalingFromVector(scale);
+	world_matrix_ *= XMMatrixRotationQuaternion(rotation);
+	world_matrix_ *= XMMatrixTranslationFromVector(position);
 
-	MulParentWorld(world);
+	world_matrix_ *= GetEntity()->GetParent()->transform->world_matrix_;
 
-	return world;
+	world_position_ = world_matrix_.r[3];
 }
 
-XMMATRIX Transform::GetBillboardWorldMatrix()
+XMMATRIX Transform::BillboardWorldMatrix()
 {
 	auto view = GetEntity()->GetScene()->GetMainCamera()->GetViewMatrix();
 	auto viewRot = XMQuaternionRotationMatrix(view);
@@ -38,12 +41,12 @@ XMMATRIX Transform::GetBillboardWorldMatrix()
 	world *= XMMatrixRotationQuaternion(XMQuaternionInverse(viewRot));
 	world *= XMMatrixTranslationFromVector(position);
 
-	MulParentWorld(world);
+	world *= GetEntity()->GetParent()->transform->world_matrix_;
 
 	return world;
 }
 
-Quaternion Transform::GetWorldRotation()
+Quaternion Transform::WorldRotation()
 {
 	auto rot = rotation;
 

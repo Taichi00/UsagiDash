@@ -6,29 +6,23 @@
 #include "game/component/transform.h"
 #include "game/game.h"
 
-Label::Label()
+Label::Label() : Control()
 {
 	text_ = L"";
-	font_name_ = L"MS ƒSƒVƒbƒN";
-	font_size_ = 24;
-	font_color_ = Color::White();
-	font_weight_ = FontWeight::NORMAL;
+	text_prop_ = TextProperty{};
+	text_color_ = Color::White();
 }
 
 Label::Label(const std::string& text) : Label()
 {
 	text_ = StringMethods::GetWideString(text);
-	FitSize();
 }
 
-Label::Label(const std::string& text, const std::string& font, const float size, const FontWeight& font_weight, const Color& color) : Label()
+Label::Label(const std::string& text, const TextProperty& prop, const Color& color)
 {
 	text_ = StringMethods::GetWideString(text);
-	font_name_ = StringMethods::GetWideString(font);
-	font_size_ = size;
-	font_color_ = color;
-	font_weight_ = font_weight;
-	FitSize();
+	text_prop_ = prop;
+	text_color_ = color;
 }
 
 Label::~Label()
@@ -39,20 +33,26 @@ bool Label::Init()
 {
 	Control::Init();
 
+	engine_->RegisterTextFormat(text_prop_.font);
+	engine_->RegisterSolidColorBrush(text_color_);
+
 	return true;
 }
 
 void Label::Draw2D()
 {
-	auto engine2d = Game::Get()->GetEngine()->GetEngine2D();
+	auto ratio = engine_->RenderTargetSize().y / 720.0;
 
-	auto ratio = engine2d->RenderTargetSize().y / 720.0;
-
-	auto rect = GetRect() * ratio;
+	auto rect = GetRect();
 	auto world_matrix = WorldMatrix();
 
-	engine2d->SetTransform(world_matrix);
-	engine2d->DrawText(text_, rect, font_name_, font_size_ * ratio, font_weight_, font_color_);
+	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
+	engine_->DrawText(
+		text_, 
+		rect, 
+		text_prop_.font, text_prop_.font_size, text_prop_.font_weight, 
+		text_prop_.horizontal_alignment, text_prop_.vertical_alignment,
+		text_color_);
 }
 
 void Label::SetText(const std::string& text)
@@ -62,8 +62,7 @@ void Label::SetText(const std::string& text)
 
 void Label::FitSize()
 {
-	auto engine2d = Game::Get()->GetEngine()->GetEngine2D();
-	auto size = engine2d->GetTextSize(text_, font_name_, font_size_, font_weight_);
+	auto size = engine_->GetTextSize(text_, text_prop_.font, text_prop_.font_size, text_prop_.font_weight);
 	SetAnchor({ 0, 0, 0, 0 });
 	SetOffset({ 0, 0, -size.x, -size.y });
 }

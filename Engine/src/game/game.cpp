@@ -5,13 +5,16 @@
 #include "game/entity.h"
 #include "game/component/camera.h"
 #include "game/shadow_map.h"
-#include "game/input.h"
+#include "game/input/input.h"
 #include "game/scene.h"
 #include "game/resource_manager.h"
 #include "game/resource/resource.h"
 #include "game/collision_manager.h"
-#include "game/audio.h"
+#include "game/audio_engine.h"
+#include "game/input/input_icon_manager.h"
 #include <chrono>
+
+Game* Game::instance_ = nullptr;
 
 Game::Game()
 {
@@ -91,8 +94,26 @@ void Game::ToggleFullscreen()
 Scene* Game::LoadScene(Scene* scene)
 {
 	Game::Get()->GetEngine()->WaitGPU();
+
+	std::vector<std::unique_ptr<Entity>> dont_destroy_entities;
+
+	if (current_scene_)
+	{
+		// 破棄しないエンティティを避難させる
+		dont_destroy_entities = current_scene_->MoveDontDestroyEntities();
+	}
+
+	// 新しいシーンの読み込み
 	current_scene_.reset(scene);
+	scene->Awake();
 	scene->Init();
+	
+	// dont destroy entities を新しいシーンに生成
+	for (auto& entity : dont_destroy_entities)
+	{
+		scene->CreateEntity(entity.release());
+	}
+
 	return scene;
 }
 
@@ -104,11 +125,6 @@ Scene* Game::GetCurrentScene()
 Vec2 Game::GetWindowSize()
 {
 	return Vec2((float)window_->Width(), (float)window_->Height());
-}
-
-std::shared_ptr<CollisionManager> Game::GetCollisionManager()
-{
-	return collision_manager_;
 }
 
 double Game::DeltaTime() const
@@ -125,6 +141,9 @@ void Game::Init(const GameSettings& settings)
 	// ウィンドウの生成
 	window_ = std::make_shared<Window>(window_title_.c_str(), window_width_, window_height_);
 
+	// ResourceManagerの生成
+	resource_manager_ = std::make_unique<ResourceManager>();
+
 	// 描画エンジンの初期化
 	engine_ = std::make_unique<Engine>();
 	if (!engine_->Init(window_))
@@ -133,7 +152,7 @@ void Game::Init(const GameSettings& settings)
 	}
 
 	// オーディオエンジンの初期化
-	audio_ = std::make_unique<Audio>();
+	audio_ = std::make_unique<AudioEngine>();
 
 	// カスタムフォントの読み込み
 	engine_->GetEngine2D()->LoadCustomFonts(settings.font_files);
@@ -141,19 +160,41 @@ void Game::Init(const GameSettings& settings)
 	// キー入力
 	Input::Create(window_.get());
 
-	// ResourceManagerの生成
-	resource_manager_ = std::make_unique<ResourceManager>();
-
 	// CollisionManagerの生成
 	collision_manager_ = std::make_unique<CollisionManager>();
+
+	// キーマップの設定
+	for (const auto& action : settings.button_actions)
+	{
+		Input::Get()->AddButtonAction(action.first, action.second);
+	}
+	for (const auto& action : settings.axis_actions)
+	{
+		Input::Get()->AddAxisAction(action.first, action.second);
+	}
+
+	input_icon_manager_ = std::make_unique<InputIconManager>();
+
+	input_icon_manager_->AddInputIcon("jump", {
+		{ Input::InputType::KEYBOARD, L"Assets/image/keyboard_space.png" },
+		{ Input::InputType::GAMEPAD, L"Assets/image/xbox_button_color_a.png" }
+		});
 }
 
 void Game::Update()
 {
+	// キー入力の更新
+	Input::Get()->Update();
+
+	input_icon_manager_->Update();
 }
 
 void Game::End()
 {
+	// シーンを解放
+	current_scene_.reset();
+
+	// input を解放
 	Input::Destroy();
 }
 

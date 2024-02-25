@@ -28,6 +28,7 @@ public:
 	Scene();
 	~Scene();
 
+	virtual void Awake();
 	virtual bool Init();
 	virtual void Update(const float delta_time);
 	virtual void AfterUpdate();
@@ -43,6 +44,10 @@ public:
 
 	Entity* CreateEntity(Entity* entity);
 	void AddDestroyEntity(Entity* entity);
+
+	// シーン破棄時に破棄しないエンティティを追加
+	bool DontDestroyOnLoad(Entity* entity);
+	std::vector<std::unique_ptr<Entity>> MoveDontDestroyEntities();
 
 	Entity* FindEntityWithTag(const std::string& tag);
 
@@ -80,6 +85,7 @@ private:
 private:
 	std::unique_ptr<Entity> root_entity_;
 	std::vector<Entity*> destroy_entities_;
+	std::vector<Entity*> dont_destroy_entities_;
 	std::vector<Entity*> entity_list_;
 
 	Camera* main_camera_ = nullptr;

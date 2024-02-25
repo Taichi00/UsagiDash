@@ -5,6 +5,8 @@
 #include "game/scene.h"
 #include "game/component/collider/sphere_collider.h"
 #include "math/easing.h"
+#include "app/component/game_manager.h"
+#include "game/component/audio/audio_source.h"
 
 CoinScript::CoinScript()
 {
@@ -16,6 +18,7 @@ CoinScript::CoinScript()
 bool CoinScript::Init()
 {
     collider_ = GetEntity()->GetComponent<SphereCollider>();
+    audio_source_ = GetEntity()->GetComponent<AudioSource>();
 
     return true;
 }
@@ -52,5 +55,9 @@ void CoinScript::OnCollisionEnter(Collider* collider)
         angle_speed_ = 18;
 
         destroy_flag_ = true;
+
+        GameManager::Get()->AddCoin(1);
+        audio_source_->Play(0.8f);
+        audio_source_->SetPitch(50.f);
     }
 }

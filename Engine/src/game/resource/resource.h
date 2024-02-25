@@ -9,6 +9,9 @@ public:
 
 	virtual bool Release();
 
-private:
-	std::string key_;	// リソースを識別するためのキー（通常はファイルへのパス）
+	std::wstring Name() const { return name_; }
+	void SetName(const std::wstring& name);
+
+protected:
+	std::wstring name_;
 };

@@ -2,25 +2,16 @@
 
 #include "game/component/gui/control.h"
 #include "math/color.h"
+#include "game/component/gui/text_property.h"
 #include <string>
 #include <memory>
 
 class Label : public Control
 {
 public:
-	enum FontWeight : unsigned
-	{
-		LIGHT = 300,
-		NORMAL = 400,
-		REGULAR = 400,
-		SEMI_BOLD = 600,
-		BOLD = 700,
-		EXTRA_BOLD = 800
-	};
-
 	Label();
 	Label(const std::string& text);
-	Label(const std::string& text, const std::string& font, const float size, const FontWeight& font_weight, const Color& color);
+	Label(const std::string& text, const TextProperty& prop, const Color& color);
 
 	~Label();
 
@@ -34,10 +25,8 @@ private:
 
 private:
 	std::wstring text_;
-	std::wstring font_name_;
-	float font_size_;
-	Color font_color_;
-	FontWeight font_weight_;
+	TextProperty text_prop_;
+	Color text_color_;
 
 	std::string color_key_;
 	std::string font_key_;

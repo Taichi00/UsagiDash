@@ -22,6 +22,7 @@ Texture2D gShadowMap : register(t5);
 TextureCube gDiffuseMap : register(t6);
 TextureCube gSpecularMap : register(t7);
 Texture2D gBrdfLUT : register(t8);
+TextureCube gSkybox : register(t9);
 
 SamplerState gSampler : register(s0);
 
@@ -305,9 +306,13 @@ float4 main(VSOutput input) : SV_TARGET
     float3 color = ambient + Lo * shadowColor;
     
     // ÉtÉHÉO
-    float fog = inverseLerp(100, 300, depth);
-    float3 fogColor = float3(1, 1, 1);
+    float fog = inverseLerp(60, 300, depth);
+    float3 fogColor = gSkybox.SampleLevel(gSampler, -V, 5).rgb * float3(0.8, 0.9, 1.0);
     color = lerp(color, fogColor, fog);
+    
+    //fog = inverseLerp(0, -200, (worldPos.xyz).y);
+    //fogColor = float3(1, 1, 1);
+    //color = lerp(color, fogColor, fog);
       
     return float4(color, 1.0);
 }

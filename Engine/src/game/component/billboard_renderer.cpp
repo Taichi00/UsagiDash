@@ -119,7 +119,7 @@ void BillboardRenderer::UpdateCB()
 
 	// Transform
 	auto currentTransform = transform_cb_[currentIndex]->GetPtr<TransformParameter>();
-	auto world = transform->GetBillboardWorldMatrix();
+	auto world = transform->BillboardWorldMatrix();
 	auto view = camera->GetViewMatrix();
 	auto viewRot = XMQuaternionRotationMatrix(view);
 	auto proj = camera->GetProjMatrix();

@@ -3,16 +3,20 @@
 #include "game/component/mesh_renderer.h"
 #include "game/component/collider/sphere_collider.h"
 #include "game/resource/model.h"
+#include "game/resource/audio.h"
 #include "app/component/coin_script.h"
+#include "game/component/audio/audio_source.h"
 
 Coin::Coin(const std::string& name) : Entity(name, "coin")
 {
 	auto game = Game::Get();
 
 	auto model = game->LoadResource<Model>(L"Assets/PlatformerPack/Coin.gltf");
+	auto se = game->LoadResource<Audio>(L"Assets/se/blop0.wav");
 
 	AddComponent(new MeshRenderer(model));
-	AddComponent(new SphereCollider(1.5));
+	AddComponent(new SphereCollider(1.5f));
+	AddComponent(new AudioSource(se));
 	AddComponent(new CoinScript());
 }
 

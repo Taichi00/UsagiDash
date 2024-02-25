@@ -1,8 +1,10 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 #include <map>
 #include <memory>
 #include <typeindex>
+#include "resource/resource.h"
 
 class Resource;
 class Texture2D;
@@ -18,7 +20,7 @@ public:
 	{
 		std::shared_ptr<T> resource;
 
-		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
 		{
 			resource = T::Load(path);
 
@@ -42,7 +44,7 @@ public:
 	template<class T>
 	std::shared_ptr<T> Get(const std::wstring& path) // リソースを取得する
 	{
-		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
 		{
 			return nullptr;
 		}
@@ -53,19 +55,36 @@ public:
 	template<class T>
 	bool Release(const std::wstring& path)	// リソースを開放する
 	{
-		if (resource_map_[typeid(T)].find(path) == resource_map_[typeid(T)].end())	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
 		{
 			return false;
 		}
 
-		resource_map_[typeid(T)][path]->Release();
+		auto& resource = resource_map_[typeid(T)][path];
+
+		if (!resource->Name().empty)
+		{
+			resource_name_map_.erase(resource.get());
+		}
+
+		resource->Release();
 		resource_map_[typeid(T)].erase(path);
 
 		return true;
 	}
 
-	void AddResource(std::shared_ptr<Resource> resource);	// リソースを追加する
+	template<class T>
+	void Add(const std::wstring& key, const std::shared_ptr<T>& resource)
+	{
+		resource_map_[typeid(T)][key] = resource;
+	}
+
+	const Resource* GetResourceFromName(const std::wstring& name);
+
+	// リソースの名前を設定する
+	void RegisterResourceName(const Resource* resource, const std::wstring& name);
 
 private:
-	std::map<std::type_index, std::map<std::wstring, std::shared_ptr<Resource>>> resource_map_;	// リソースマップ
+	std::unordered_map<std::type_index, std::unordered_map<std::wstring, std::shared_ptr<Resource>>> resource_map_;	// リソースマップ
+	std::unordered_map<std::wstring, const Resource*> resource_name_map_;
 };

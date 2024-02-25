@@ -25,12 +25,20 @@
 #include "game/component/sphere_mesh.h"
 #include "game/entity.h"
 #include "game/game.h"
-#include "game/input.h"
+#include "game/input/input.h"
 #include "game/physics.h"
 #include "game/resource/texture2d.h"
+#include "game/resource/bitmap.h"
 #include "math/quaternion.h"
 #include "math/rect.h"
 #include "app/component/map_loader.h"
+#include "game/component/gui/picture.h"
+#include "app/component/game_manager.h"
+#include "game/component/audio/audio_source.h"
+#include "game/resource/audio.h"
+#include "game/component/audio/audio_listener.h"
+#include "game/component/gui/text_property.h"
+#include <dinput.h>
 #include <memory>
 #include <random>
 
@@ -129,7 +137,8 @@ bool CollisionTestScene::Init()
 	player->AddComponent(new CapsuleCollider({ 1, 1 }));
 	player->AddComponent(new Rigidbody(1, true, false, 0));
 	player->AddComponent(new Animator());
-	player->AddComponent(new Player(18, 1.2));
+	player->AddComponent(new AudioSource(LoadResource<Audio>(L"Assets/se/Retro Jump Classic 08.wav")));
+	player->AddComponent(new Player(20, 1.2));
 
 	player->GetComponent<Animator>()->Play("Idle", 2.0f);
 	player->GetComponent<Collider>()->offset = Vec3(0, 1.5, 0);
@@ -152,6 +161,7 @@ bool CollisionTestScene::Init()
 
 	auto camera = new Entity("Camera");
 	camera->AddComponent(new Camera());
+	camera->AddComponent(new AudioListener());
 	camera->AddComponent(new GameCamera(player));
 	CreateEntity(camera);
 	SetMainCamera(camera);
@@ -206,7 +216,7 @@ bool CollisionTestScene::Init()
 	enemy->AddComponent(new Animator());
 
 	enemy->GetComponent<Collider>()->offset = Vec3(0, 1.5, 0);
-	enemy->transform->position = Vec3(0, 0, 5);
+	enemy->transform->position = Vec3(-5, 0, -5);
 	enemy->transform->scale = Vec3(2, 2, 2);
 	CreateEntity(enemy);
 	enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
@@ -246,25 +256,72 @@ bool CollisionTestScene::Init()
 	CreateEntity(map_loader);
 
 
-	{
-		Control* control;
+	Control* control;
 
-		auto panel = new Entity();
-		panel->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 10), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.5)));
-		control = panel->GetComponent<Control>();
-		control->SetRotation(4);
-		
-		{
-			auto coin_label = new Entity("Coin Label");
-			coin_label->AddComponent(new Label("023", "Koruri", 34, Label::FontWeight::EXTRA_BOLD, Color(1, 1, 1)));
-			control = coin_label->GetComponent<Control>();
-			control->SetTransform(Vec2(50, 0), Vec2(100, 50), Vec2(0.5, 1), Vec2(0.5, 0.5));
+	auto panel = new Entity();
+	panel->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 8), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.4)));
+	control = panel->GetComponent<Control>();
+	control->SetRotation(4);
+	
 
-			coin_label->SetParent(panel);
-		}
+	TextProperty coin_label_prop{};
+	coin_label_prop.font = L"Koruri";
+	coin_label_prop.font_size = 28;
+	coin_label_prop.font_weight = TextProperty::WEIGHT_EXTRA_BOLD;
 
-		CreateEntity(panel);
-	}
+	auto coin_label = new Entity("Coin Label");
+	
+	coin_label->AddComponent(new Label("0000", coin_label_prop, Color(1, 1, 1)));
+	control = coin_label->GetComponent<Control>();
+	control->SetTransform(Vec2(40, -10), Vec2(100, 28), Vec2(0.5, 1), Vec2(0.5, 0));
+
+	coin_label->SetParent(panel);
+
+
+	auto coin_icon = new Entity("Coin Icon");
+	coin_icon->AddComponent(new Picture(LoadResource<Bitmap>(L"Assets/image/coin_icon.png")));
+	control = coin_icon->GetComponent<Control>();
+	control->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
+	control->SetScale(Vec2(0.32, 0.32));
+
+	coin_icon->SetParent(panel);
+	
+	CreateEntity(panel);
+
+
+	auto test_panel = new Entity();
+	test_panel->AddComponent(new Panel(Vec2(0, 130), Vec2(200, 46), Vec2(0.5, 0.5), Vec2(0.5, 0), 23.f, Color(1, 1, 1)));
+
+
+	TextProperty text_prop{};
+	text_prop.font = L"Koruri";
+	text_prop.font_size = 22;
+	text_prop.font_weight = TextProperty::WEIGHT_BOLD;
+	text_prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
+	text_prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
+
+	//auto bitmap_jump = LoadResource<Bitmap>(L"Assets/image/xbox_button_color_a.png");
+	/*auto bitmap_jump = LoadResource<Bitmap>(L"Assets/image/keyboard_space.png");
+	bitmap_jump->SetName(L"input_jump");*/
+
+	auto test_label = new Entity();
+	test_label->AddComponent(new Label("<bitmap input_jump>‚ÅƒWƒƒƒ“ƒv", text_prop, Color(0.35, 0.3, 0.3)));
+	control = test_label->GetComponent<Control>();
+	control->SetTransform(Vec2(0, 0), Vec2(300, 40), Vec2(0.5, 0.5), Vec2(0.5, 0.5));
+	test_label->SetParent(test_panel);
+
+	CreateEntity(test_panel);
+
+	
+	auto game_manager = new Entity("Game Manager");
+	game_manager->AddComponent(new GameManager(
+		player->GetComponent<Player>(),
+		coin_label->GetComponent<Label>()
+	));
+	//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"Assets/bgm/y014_m.wav"), 100.f));
+
+	CreateEntity(game_manager);
+
 	
 	return true;
 }

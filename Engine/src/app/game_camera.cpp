@@ -1,12 +1,17 @@
 #include "app/game_camera.h"
-#include "game/input.h"
+#include "game/input/input.h"
 #include "game/entity.h"
 #include "game/component/camera.h"
 #include "game/physics.h"
 #include "app/player.h"
+#include <dinput.h>
 
 GameCamera::GameCamera(Entity* target)
 {
+	angle_speed_ = 2.4f;
+	angle_acceleration_ = 0.12f;
+	distance_ = 20.f;
+
 	target_ = target;
 	angle_ = Vec3(0.5, 0, 0);
 	current_distance_ = distance_;
@@ -29,38 +34,55 @@ void GameCamera::BeforeCameraUpdate(const float delta_time)
 
 void GameCamera::Move(const float delta_time)
 {
-	float rate = 0.05;
+	auto input_type = Input::CurrentInputType();
 
-	if (Input::GetKey(DIK_A))
+	Vec2 input_dir;
+	input_dir.x = Input::GetAxis("camera_horizontal");
+	input_dir.y = Input::GetAxis("camera_vertical");
+	float input_length = input_dir.Length();
+
+	Vec2 angle_speed = Vec2(1, 1) * angle_speed_;
+	float angle_acceleration = angle_acceleration_;
+	float angle_friction = 0.92f;
+
+	if (input_type == Input::InputType::GAMEPAD)
 	{
-		angle_velocity_.y += -0.12;
-	}
-	else if (Input::GetKey(DIK_D))
-	{
-		angle_velocity_.y += 0.12;
-	}
-	else
-	{
-		angle_velocity_.y *= 0.92;
+		auto speed = angle_speed * 1.2f;
+		if (std::abs(angle_velocity_.y) < speed.y * std::abs(input_dir.x) * 1.1f)
+		{
+			angle_speed.y = speed.y * std::abs(input_dir.x);
+		}
+		else
+		{
+			angle_speed.y = std::abs(angle_velocity_.y);
+		}
+
+		if (std::abs(angle_velocity_.x) < speed.x * std::abs(input_dir.y) * 1.1f)
+		{
+			angle_speed.x = speed.x * std::abs(input_dir.y);
+		}
+		else
+		{
+			angle_speed.x = std::abs(angle_velocity_.x);
+		}
+
+		angle_acceleration = angle_acceleration_ * 1.5f;
+		angle_friction = 0.9f;
 	}
 
-	if (Input::GetKey(DIK_W))
-	{
-		angle_velocity_.x += -0.12;
-	}
-	else if (Input::GetKey(DIK_S))
-	{
-		angle_velocity_.x += 0.12;
-	}
-	else
-	{
-		angle_velocity_.x *= 0.92;
-	}
+	angle_velocity_.y +=  input_dir.x * angle_acceleration;
+	angle_velocity_.x += -input_dir.y * angle_acceleration;
 
-	angle_velocity_.y = min(max(angle_velocity_.y, -2.4), 2.4);
-	angle_velocity_.x = min(max(angle_velocity_.x, -2.4), 2.4);
+	if (input_dir.y == 0.f)
+		angle_velocity_.x *= angle_friction;
+	if (input_dir.x == 0.f)
+		angle_velocity_.y *= angle_friction;
+
+	angle_velocity_.y = std::min(std::max(angle_velocity_.y, -angle_speed.y), angle_speed.y);
+	angle_velocity_.x = std::min(std::max(angle_velocity_.x, -angle_speed.x), angle_speed.x);
+	
 	angle_ += angle_velocity_ * delta_time;
-
+	
 	if (angle_.x < -1.5)
 	{
 		angle_.x = -1.5;
@@ -76,15 +98,16 @@ void GameCamera::Move(const float delta_time)
 	Vec3 currPos = camera_->GetFocusPosition();
 	Vec3 v = targetPos - currPos;
 
+	float rate = 0.05;
 	auto origin = currPos + v * rate;
 	auto direction = Quaternion::FromEuler(angle_.x, angle_.y, angle_.z) * Vec3(0, 0, 1);
-	auto distance = distance_ * max(0.5, min(1.5, 0.75 + angle_.x * 0.8));
+	auto distance = distance_ * std::max(0.5, std::min(1.5, 0.75 + angle_.x * 0.8));
 
 	// めり込み防止
 	RaycastHit hit;
 	if (Physics::Raycast(origin, direction, distance, hit, {"map"}))
 	{
-		distance = max(hit.distance - 0.1, 0);
+		distance = std::max(hit.distance - 0.1f, 0.f);
 	}
 
 	// ズームインは素早く、ズームアウトはゆっくり

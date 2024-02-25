@@ -27,7 +27,6 @@ MeshRenderer::MeshRenderer(std::shared_ptr<Model> model) : MeshRenderer()
 
 MeshRenderer::~MeshRenderer()
 {
-	printf("Delete MeshRenderer\n");
 }
 
 void MeshRenderer::SetOutlineWidth(float width)
@@ -377,14 +376,14 @@ void MeshRenderer::UpdateCB()
 
 	auto aabb = model_->aabb;
 	aabb.Scale(transform->scale);
-	aabb.Translate(transform->position);
+	aabb.Translate(transform->WorldPosition());
 
 	auto center = aabb.Center();
 	float radius = aabb.Size().Length() / 2;
 
 	// Transform
 	auto currentTransform = transform_cb_[currentIndex]->GetPtr<TransformParameter>();
-	auto world = transform->GetWorldMatrix();
+	auto world = transform->WorldMatrix();
 	auto view = camera->GetViewMatrix();
 	auto proj = camera->GetProjMatrix();
 	auto ditherLevel = (1.0 - std::max((center - camera->transform->position).Length() - radius, 0.f) / 3.0) * 16;

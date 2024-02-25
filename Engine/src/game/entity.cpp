@@ -112,6 +112,17 @@ void Entity::PhysicsUpdate(const float delta_time)
 	}
 }
 
+void Entity::TransformUpdate(const float delta_time)
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->TransformUpdate(delta_time);
+		}
+	}
+}
+
 void Entity::OnCollisionEnter(Collider* collider)
 {
 	for (auto& components : component_map_)

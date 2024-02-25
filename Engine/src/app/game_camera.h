@@ -23,8 +23,10 @@ private:
 
 	Camera* camera_;
 
+	float angle_speed_;
+	float angle_acceleration_;
 	Vec3 angle_velocity_;
 	Vec3 angle_;
-	float distance_ = 20;
+	float distance_;
 	float current_distance_;
 };

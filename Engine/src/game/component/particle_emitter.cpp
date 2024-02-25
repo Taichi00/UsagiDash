@@ -453,8 +453,8 @@ void ParticleEmitter::InitPosition(Particle& particle, const ParticleEmitterPosi
 	auto acceleration = CalcStartVector(prop.acceleration, prop.acceleration_range);
 	auto pos = particle.position;
 
-	auto world = transform->GetWorldMatrix();
-	auto rot = transform->GetWorldRotation().Conjugate();
+	auto world = transform->WorldMatrix();
+	auto rot = transform->WorldRotation().Conjugate();
 	auto p = (XMMatrixTranslationFromVector(position + pos) * world).r[3].m128_f32;
 
 	auto q = particle.local_direction;
@@ -471,7 +471,7 @@ void ParticleEmitter::InitPosition(Particle& particle, const ParticleEmitterPosi
 	auto middle = CalcStartVector(prop.middle, prop.middle_range);
 	auto pos = particle.position;
 
-	auto world = transform->GetWorldMatrix();
+	auto world = transform->WorldMatrix();
 	auto q = particle.local_direction;
 
 	auto s = (XMMatrixTranslationFromVector(q * start + pos) * world).r[3].m128_f32;

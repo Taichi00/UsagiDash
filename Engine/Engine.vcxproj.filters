@@ -87,7 +87,7 @@
     <ClCompile Include="src\engine\window.cpp">
       <Filter>ソース ファイル\Window</Filter>
     </ClCompile>
-    <ClCompile Include="src\game\input.cpp">
+    <ClCompile Include="src\game\input\input.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
     <ClCompile Include="src\game\bone.cpp">
@@ -228,7 +228,34 @@
     <ClCompile Include="src\app\component\map_loader.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\game\audio.cpp">
+    <ClCompile Include="src\game\audio_engine.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\resource\bitmap.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\picture.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\input\direct_input.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\input\x_input.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\resource\audio.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\audio\audio_source.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\audio\audio_listener.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\resource\inline_image.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\input\input_icon_manager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -284,7 +311,7 @@
     <ClInclude Include="src\engine\window.h">
       <Filter>ヘッダー ファイル\Window</Filter>
     </ClInclude>
-    <ClInclude Include="src\game\input.h">
+    <ClInclude Include="src\game\input\input.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
     <ClInclude Include="src\game\bone.h">
@@ -464,7 +491,40 @@
     <ClInclude Include="src\app\component\map_loader.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\game\audio.h">
+    <ClInclude Include="src\game\audio_engine.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\state.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\resource\bitmap.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\picture.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\input\direct_input.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\input\x_input.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\resource\audio.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\audio\audio_source.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\audio\audio_listener.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\text_property.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\resource\inline_image.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\input\input_icon_manager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

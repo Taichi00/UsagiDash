@@ -37,5 +37,5 @@ public:
 
 	Vec3 wall_normal;
 
-	std::shared_ptr<CollisionManager> collision_manager_;
+	CollisionManager* collision_manager_;
 };

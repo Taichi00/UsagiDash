@@ -3,9 +3,13 @@
 #include "engine/buffer_manager.h"
 #include "engine/buffer.h"
 #include "game/game.h"
+#include "game/resource/bitmap.h"
+#include "game/resource/inline_image.h"
 
 Engine2D::Engine2D()
 {
+	render_target_width_ = 0;
+	render_target_height_ = 0;
 }
 
 Engine2D::~Engine2D()
@@ -17,6 +21,12 @@ bool Engine2D::Init()
 	if (!CreateD3D11Device())
 	{
 		printf("D3D11のデバイス生成に失敗\n");
+		return false;
+	}
+	
+	if (!CreateIWICImagingFactory())
+	{
+		printf("WICImagingFactoryの生成に失敗\n");
 		return false;
 	}
 
@@ -101,9 +111,60 @@ bool Engine2D::LoadCustomFonts(const std::vector<std::wstring>& fonts)
 	}
 }
 
+void Engine2D::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap)
+{
+	ComPtr<IWICBitmapDecoder> decoder;
+	ComPtr<IWICBitmapFrameDecode> source;
+	ComPtr<IWICStream> stream;
+	ComPtr<IWICFormatConverter> converter;
+	ComPtr<IWICBitmapScaler> scaler;
+
+	// decoder の作成
+	auto hr = wic_factory_->CreateDecoderFromFilename(
+		(LPCWSTR)path.c_str(),
+		nullptr,
+		GENERIC_READ,
+		WICDecodeMetadataCacheOnLoad,
+		&decoder
+	);
+	if (FAILED(hr))
+		throw "CreateDecodeFromFilename";
+	
+	// 最初のフレームを source に保存
+	hr = decoder->GetFrame(0, &source);
+	if (FAILED(hr))
+		throw "GetFrame";
+
+	// 画像を 32bppPBGRA に変換するコンバータを生成
+	hr = wic_factory_->CreateFormatConverter(&converter);
+	if (FAILED(hr))
+		throw "CreateFormatConverter";
+	
+	// 変換を実行
+	hr = converter->Initialize(
+		source.Get(),
+		GUID_WICPixelFormat32bppPBGRA,
+		WICBitmapDitherTypeNone,
+		nullptr,
+		0.f,
+		WICBitmapPaletteTypeMedianCut
+	);
+	if (FAILED(hr))
+		throw "Initialize";
+	
+	// bitmap を作成
+	hr = d2d_device_context_->CreateBitmapFromWicBitmap(
+		converter.Get(),
+		nullptr,
+		bitmap
+	);
+	if (FAILED(hr))
+		throw "CreateBitmapFromWicBitmap";
+}
+
 Vec2 Engine2D::GetTextSize(const std::wstring& text, const std::wstring& font, const float size, const unsigned int weight)
 {
-	const auto& text_format = CreateTextFormat(font, size, weight);
+	const auto& text_format = text_format_map_.at(font);
 
 	IDWriteTextLayout* text_layout = NULL;
 	dwrite_factory_->CreateTextLayout(text.c_str(), text.size(), text_format.Get(), 10000, 0, &text_layout);
@@ -135,13 +196,17 @@ void Engine2D::SetTransform(const Matrix3x2& matrix)
 	d2d_device_context_->SetTransform(mat);
 }
 
-void Engine2D::DrawText(const std::wstring& text, const Rect2& rect, const std::wstring& font, const float size, const unsigned int weight, const Color& color) const
+void Engine2D::DrawText(const std::wstring& text, const Rect2& rect,
+	const std::wstring& font, const float size, const unsigned weight,
+	const unsigned horizontal_alignment, const unsigned vertical_alignment,
+	const Color& color) const
 {
-	const auto& text_format = CreateTextFormat(font, size, weight);
-	const auto& brush = CreateSolidColorBrush(color);
+	const auto& text_format = text_format_map_.at(font);
+	const auto& brush = solid_color_brush_map_.at(color);
 	
-	/*IDWriteTextLayout* layout;
-	dwrite_factory_->CreateTextLayout(
+	// text layout の生成
+	IDWriteTextLayout* layout = nullptr;
+	auto hr = dwrite_factory_->CreateTextLayout(
 		text.c_str(),
 		text.size(),
 		text_format.Get(),
@@ -149,49 +214,67 @@ void Engine2D::DrawText(const std::wstring& text, const Rect2& rect, const std::
 		rect.Height(),
 		&layout
 	);
+	if (FAILED(hr))
+		throw "CreateTextLayout";
 
-	ComPtr<ID2D1Effect> effect;
-	d2d_device_context_->CreateEffect(CLSID_D2D1GaussianBlur, &effect);
-	effect->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, 3.0f);
+	DWRITE_TEXT_RANGE range = { 0, (unsigned)text.size() };
+	layout->SetFontSize(size, range);
+	layout->SetFontWeight((DWRITE_FONT_WEIGHT)weight, range);
+	layout->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)horizontal_alignment);
+	layout->SetParagraphAlignment((DWRITE_PARAGRAPH_ALIGNMENT)vertical_alignment);
 
-	layout->SetDrawingEffect(effect.Get(), { 0, (unsigned int)text.size() });*/
+	ParseText(text, size, layout);
 
-	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
-	
-	d2d_device_context_->DrawTextW(
-		text.c_str(),
-		static_cast<UINT32>(text.length()),
-		text_format.Get(),
-		&rectf,
-		brush.Get()
-	);
-	/*d2d_device_context_->DrawTextLayout(
+	// 描画
+	d2d_device_context_->DrawTextLayout(
 		{ rect.left, rect.top },
 		layout,
 		brush.Get()
 	);
-
-	layout->Release();*/
+	
+	layout->Release();
 }
 
-void Engine2D::DrawRectangle(const Rect2& rect, const Color& color) const
+void Engine2D::DrawRectangle(const Rect2& rect, const Color& color, const float radius) const
 {
-	const auto& brush = CreateSolidColorBrush(color);
+	const auto& brush = solid_color_brush_map_.at(color);
 
-	d2d_device_context_->DrawRectangle(
-		{ rect.left, rect.top, rect.right, rect.bottom },
-		brush.Get()
-	);
+	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
+
+	if (!radius)
+	{
+		d2d_device_context_->DrawRectangle(rectf, brush.Get());
+	}
+	else
+	{
+		d2d_device_context_->DrawRoundedRectangle({ rectf, radius, radius }, brush.Get());
+	}
 }
 
-void Engine2D::DrawFillRectangle(const Rect2& rect, const Color& color) const
+void Engine2D::DrawFillRectangle(const Rect2& rect, const Color& color, const float radius) const
 {
-	const auto& brush = CreateSolidColorBrush(color);
+	const auto& brush = solid_color_brush_map_.at(color);
 
-	d2d_device_context_->FillRectangle(
-		{ rect.left, rect.top, rect.right, rect.bottom },
-		brush.Get()
-	);
+	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
+
+	if (!radius)
+	{
+		d2d_device_context_->FillRectangle(rectf, brush.Get());
+	}
+	else
+	{
+		d2d_device_context_->FillRoundedRectangle({ rectf, radius, radius }, brush.Get());
+	}
+}
+
+void Engine2D::DrawBitmap(const Bitmap* bitmap)
+{
+	d2d_device_context_->DrawBitmap(
+		bitmap->Data().Get(),
+		0,
+		1.f,
+		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
+		);
 }
 
 void Engine2D::ResetRenderTargets()
@@ -310,32 +393,98 @@ bool Engine2D::CreateFontSetBuilder()
 	return SUCCEEDED(hr);
 }
 
-ComPtr<ID2D1SolidColorBrush> Engine2D::CreateSolidColorBrush(const Color& color) const
+bool Engine2D::CreateIWICImagingFactory()
 {
+	// WICImagingFactoryの生成
+	auto hr = CoCreateInstance(
+		CLSID_WICImagingFactory,
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		IID_PPV_ARGS(&wic_factory_)
+	);
+
+	return SUCCEEDED(hr);
+}
+
+void Engine2D::ParseText(const std::wstring& text, const float size, IDWriteTextLayout* layout) const
+{
+	auto text_p = text.data();
+	auto rm = Game::Get()->GetResourceManager();
+
+	DWRITE_TEXT_RANGE range = {};
+
+	while (*text_p)
+	{
+		if (*text_p == '<')
+		{
+			range.startPosition = text_p - text.data();
+			++text_p;
+
+			std::wstring token = L"";
+			while (*text_p > 32)
+			{
+				token += *text_p;
+				++text_p;
+			}
+
+			++text_p;
+
+			if (token == L"bitmap")
+			{
+				std::wstring name = L"";
+				while (*text_p != '>')
+				{
+					name += *text_p;
+					++text_p;
+				}
+
+				auto inline_image = new InlineImage(d2d_device_context_.Get(), (Bitmap*)rm->GetResourceFromName(name), size * 1.5);
+
+				range.length = text_p - text.data() - range.startPosition + 1;
+				layout->SetInlineObject(inline_image, range);
+			}
+		}
+
+		++text_p;
+	}
+}
+
+void Engine2D::RegisterSolidColorBrush(const Color& color)
+{
+	if (solid_color_brush_map_.contains(color))
+	{
+		return;
+	}
+
 	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
 	d2d_device_context_->CreateSolidColorBrush(
 		{ color.r, color.g, color.b, color.a },
 		brush.GetAddressOf()
 	);
 
-	return brush;
+	solid_color_brush_map_[color] = brush;
 }
 
-ComPtr<IDWriteTextFormat> Engine2D::CreateTextFormat(const std::wstring& font_name, const float font_size, const unsigned int font_weight) const
+void Engine2D::RegisterTextFormat(const std::wstring& font_name)
 {
+	if (text_format_map_.contains(font_name))
+	{
+		return;
+	}
+	
 	ComPtr<IDWriteTextFormat> text_format = nullptr;
 	dwrite_factory_->CreateTextFormat(
 		font_name.c_str(),
 		font_collection_.Get(),
-		(DWRITE_FONT_WEIGHT)font_weight,
+		DWRITE_FONT_WEIGHT_NORMAL,
 		DWRITE_FONT_STYLE_NORMAL,
 		DWRITE_FONT_STRETCH_NORMAL,
-		font_size,
+		16,
 		L"ja-jp",
 		text_format.GetAddressOf()
 	);
 
-	return text_format;
+	text_format_map_[font_name] = text_format;
 }
 
 bool Engine2D::CreateD2DRenderTarget()

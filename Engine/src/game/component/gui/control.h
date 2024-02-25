@@ -5,6 +5,8 @@
 #include "math/rect.h"
 #include "math/matrix3x2.h"
 
+class Engine2D;
+
 class Control : public Component
 {
 public:
@@ -34,6 +36,9 @@ protected:
 	void Layout();
 
 	Vec2 ParentSize() const { return parent_size_; }
+
+protected:
+	Engine2D* engine_ = nullptr;
 
 private:
 	float rotation_ = 0.0;

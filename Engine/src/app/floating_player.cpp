@@ -1,10 +1,11 @@
 #include "app/floating_player.h"
-#include "game/input.h"
+#include "game/input/input.h"
 #include "game/entity.h"
 #include "game/component/animator.h"
 #include "game/component/camera.h"
 #include "game/scene.h"
 #include "game/component/rigidbody.h"
+#include <dinput.h>
 
 FloatingPlayer::FloatingPlayer(FloatingPlayerProperty prop)
 {

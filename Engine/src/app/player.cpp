@@ -1,5 +1,5 @@
 #include "app/player.h"
-#include "game/input.h"
+#include "game/input/input.h"
 #include "game/entity.h"
 #include "game/component/animator.h"
 #include "game/component/camera.h"
@@ -8,13 +8,15 @@
 #include "game/physics.h"
 #include "game/component/particle_emitter.h"
 #include "math/easing.h"
+#include "game/component/audio/audio_source.h"
+#include <iostream>
 
 Player::Player(float speed, float acceleration)
 {
 	speed_ = speed;
 	acceleration_ = acceleration;
 	plus_speed_ = 0.f;
-	dashjump_speed_ = 5;
+	dashjump_speed_ = 4;
 }
 
 Player::~Player()
@@ -25,10 +27,15 @@ bool Player::Init()
 {
 	animator_ = GetEntity()->GetComponent<Animator>();
 	rigidbody_ = GetEntity()->GetComponent<Rigidbody>();
+	audio_source_ = GetEntity()->GetComponent<AudioSource>();
 
 	run_smoke_emitter_ = GetEntity()->GetChild("Run Smoke Emitter")->GetComponent<ParticleEmitter>();
 	jump_smoke_emitter_ = GetEntity()->GetChild("Jump Smoke Emitter")->GetComponent<ParticleEmitter>();
 	circle_smoke_emitter_ = GetEntity()->GetChild("Circle Smoke Emitter")->GetComponent<ParticleEmitter>();
+
+	/*idle_state_ = std::make_unique<IdleState>(this);
+	run_state_ = std::make_unique<RunState>(this);
+	state_ = idle_state_.get();*/
 
 	return true;
 }
@@ -38,10 +45,65 @@ void Player::Update(const float delta_time)
 	Move(delta_time);
 	Animate(delta_time);
 
+	//state_->Execute();
+
 	is_running_prev_ = is_running_;
 	is_grounded_prev_ = is_grounded_;
 	jump_frame_prev_ = jump_frame_;
 	
+}
+
+void Player::Move2(const float delta_time)
+{
+	// フラグ更新
+	is_grounded_ = rigidbody_->is_grounded;
+	is_touching_wall_ = rigidbody_->is_touching_wall;
+
+	float friction = is_grounded_ ? 0.9f : 1.f;
+	auto acceleration = is_grounded_ ? acceleration_ : walljump_frame_ ? 0.f : acceleration_ * 0.8f;
+	auto speed = speed_ + plus_speed_;
+	auto velocity = (rigidbody_->velocity - rigidbody_->floor_velocity) / delta_time;
+
+	// カメラ取得
+	auto camera = GetScene()->GetMainCamera();
+	auto camera_rot = camera->transform->rotation;
+
+	// カメラ前方方向ベクトル
+	auto forward = Vec3::Scale(camera_rot * Vec3(0, 0, -1), 1, 0, 1).Normalized();
+	// カメラ左方向ベクトル
+	auto left = Vec3::Scale(camera_rot * Vec3(-1, 0, 0), 1, 0, 1).Normalized();
+
+	// 移動
+	auto v = Vec3::Zero();
+	/*if (Input::GetKey(DIK_UP))
+	{
+		v += forward;
+	}
+	else if (Input::GetKey(DIK_DOWN))
+	{
+		v += -forward;
+	}
+	if (Input::GetKey(DIK_LEFT))
+	{
+		v += left;
+	}
+	else if (Input::GetKey(DIK_RIGHT))
+	{
+		v += -left;
+	}*/
+	v = v.Normalized();
+
+	auto pv = v * acceleration;
+	velocity += pv;
+
+	if (is_grounded_)
+	{
+		is_running_ = v.Length() > 0 ? true : false;
+	}
+	else
+	{
+		
+	}
 }
 
 void Player::Move(const float delta_time)
@@ -76,27 +138,35 @@ void Player::Move(const float delta_time)
 			acceleration *= 0.8;
 		}
 	}
+
+	Vec2 input_dir;
+	input_dir.x = Input::GetAxis("horizontal");
+	input_dir.y = Input::GetAxis("vertical");
+
+	float input_length = std::min(input_dir.Length(), 1.f);
+
+	if (Input::CurrentInputType() == Input::InputType::GAMEPAD)
+	{
+		if (is_grounded_)
+		{
+			if (Vec3::Scale(velocity, 1, 0, 1).Length() < speed * input_length * 1.1f)
+			{
+				speed = speed * input_length;
+			}
+			else
+			{
+				speed = Vec3::Scale(velocity, 1, 0, 1).Length();
+			}
+		}
+	}
 	
 	// 移動
-	Vec3 v = Vec3::Zero();
-	if (Input::GetKey(DIK_UP))
-	{
-		v += forward;
-	}
-	else if (Input::GetKey(DIK_DOWN))
-	{
-		v += -forward;
-	}
-	if (Input::GetKey(DIK_LEFT))
-	{
-		v += left;
-	}
-	else if (Input::GetKey(DIK_RIGHT))
-	{
-		v += -left;
-	}
+	auto v = Vec3::Zero();
+	v += -left * input_dir.x;
+	v += forward * input_dir.y;
+
 	v = v.Normalized();
-	auto pv = v * acceleration;
+	auto pv = v * acceleration * input_dir.Length();
 
 	// 速度の更新
 	velocity += pv;
@@ -149,9 +219,9 @@ void Player::Move(const float delta_time)
 	}
 
 	// 最大速度を制限する
+	auto velocityXZ = Vec3::Scale(velocity, 1, 0, 1);
 	if (is_grounded_ && plus_speed_ == 0)
 	{
-		auto velocityXZ = Vec3::Scale(velocity, 1, 0, 1);
 		auto speedXZ = Vec3::Dot(velocityXZ.Normalized(), v) * speed;
 
 		// Length > speedXZ とすることで壁に向かって加速し続けるのを防ぐ
@@ -182,7 +252,7 @@ void Player::Move(const float delta_time)
 		if (is_touching_wall_ && v.Length() > 0)
 		{
 			auto normal = rigidbody_->wall_normal;
-			if (Vec3::Dot(v, -Vec3::Scale(normal, 1, 0, 1).Normalized()) > 0.0)
+			if (Vec3::Dot(v, -Vec3::Scale(normal, 1, 0, 1).Normalized()) > 0.5)
 			{
 				is_sliding_wall_ = true;
 				velocity *= 0.8;
@@ -192,11 +262,11 @@ void Player::Move(const float delta_time)
 
 	// ジャンプ
 	is_jump_start_frame_ = false;
-	if (Input::GetKeyDown(DIK_SPACE))
+	if (Input::GetButtonDown("jump"))
 	{
 		if (is_grounded_ || is_touching_wall_)
 		{
-			if (Input::GetKey(DIK_LSHIFT))
+			if (Input::GetButton("crouch"))
 			{
 				velocity += v.Normalized() * speed_;
 				dashjump_frame_ = 1;
@@ -216,13 +286,15 @@ void Player::Move(const float delta_time)
 				velocity = Vec3::Scale(rigidbody_->wall_normal, 1, 0, 1) * 15;
 				walljump_frame_ = 25;
 			}
+
+			audio_source_->Play(0.5f);
 		}
 	}
 	if (jump_frame_ > 0 && jump_frame_ <= jump_frame_max_)
 	{
 		float jump_power = 7.f;
 
-		if (Input::GetKey(DIK_SPACE))
+		if (Input::GetButton("jump"))
 		{
 			(velocity).y += jump_power * std::pow((jump_frame_max_ - jump_frame_) / (float)jump_frame_max_, 2);
 		}
@@ -368,3 +440,56 @@ void Player::Animate(const float delta_time)
 
 	transform->scale = Vec3::Lerp(transform->scale, scale, 0.3);
 }
+
+Vec2 Player::GetInputDirection()
+{
+	Vec2 v = Vec2::Zero();
+	if (Input::GetKey(DIK_UP))
+	{
+		v.y -= 1;
+	}
+	else if (Input::GetKey(DIK_DOWN))
+	{
+		v.y += 1;
+	}
+	if (Input::GetKey(DIK_LEFT))
+	{
+		v.x -= 1;
+	}
+	else if (Input::GetKey(DIK_RIGHT))
+	{
+		v.x += 1;
+	}
+	return v.Normalized();
+}
+
+//void Player::IdleState::Enter()
+//{
+//	std::cout << "IdleState enter." << std::endl;
+//}
+//
+//void Player::IdleState::Execute()
+//{
+//	auto input_dir = object_->GetInputDirection();
+//
+//	if (input_dir.Length())
+//	{
+//		ChangeState(object_->run_state_.get());
+//	}
+//}
+//
+//void Player::RunState::Enter()
+//{
+//	std::cout << "RunState enter." << std::endl;
+//}
+//
+//void Player::RunState::Execute()
+//{
+//	auto input_dir = object_->GetInputDirection();
+//
+//	if (!input_dir.Length())
+//	{
+//		ChangeState(object_->idle_state_.get());
+//	}
+//}
+//

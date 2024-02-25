@@ -142,7 +142,7 @@ float4 main(VSOutput input) : SV_TARGET
 {
     float2 uv = input.UV;
     
-    float4 color = gTex.Sample(gSampler, uv);
+    float3 color = gTex.Sample(gSampler, uv).rgb;
     
     float4 texNormal = gNormal.Sample(gSampler, uv);
     float4 texAlbedo = gAlbedo.Sample(gSampler, uv);
@@ -158,7 +158,14 @@ float4 main(VSOutput input) : SV_TARGET
     
     float2 screenSize;
     gAlbedo.GetDimensions(screenSize.x, screenSize.y);
-        
+    
+    // ガンマ補正
+    const float gamma = 2.2;
+    const float exposure = 1;
+    
+    color = 1.0 - exp(-color * exposure);
+    color = pow(color, 1.0 / gamma);
+    
     // アウトライン
     float outlineNormalWidth = 0.5;
     float3 offset = float3(1.0 / screenSize.x, 1.0 / screenSize.y, 0) * outlineNormalWidth;
@@ -176,19 +183,14 @@ float4 main(VSOutput input) : SV_TARGET
     
     outlineColor = lerp(0, 1, outlineColor);
     
-    float outlinePower = lerp(0.3, 0.6, inverseLerp(60, 100, depth));
-    color.rgb = color.rgb * lerp(outlinePower, 1, saturate(outlineColor));
+    float outlinePower = lerp(0.6, 0.85, inverseLerp(30, 80, depth));
+    //outlinePower = lerp(outlinePower, 1, inverseLerp(190, 200, depth));
+    color = color * lerp(outlinePower, 1, saturate(outlineColor));
     
     // SSAO
     //float ssao = gSSAO.Sample(gSampler, uv).r;
     //color.rgb *= saturate(ssao);
     
-    // ガンマ補正
-    const float gamma = 2.2;
-    const float exposure = 1;
-  
-    float3 mapped = 1.0 - exp(-color * exposure);
-    mapped = pow(mapped, 1.0 / gamma);
     
-    return float4(mapped, 1);
+    return float4(color, 1);
 }

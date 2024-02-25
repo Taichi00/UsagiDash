@@ -156,6 +156,11 @@ public:
 		return Vec3(x - v.x, y - v.y, z - v.z);
 	}
 
+	const Vec3 operator *(const Vec3& v) const
+	{
+		return Vec3(x * v.x, y * v.y, z * v.z);
+	}
+
 	const Vec3 operator *(const float& n) const
 	{
 		return Vec3(x * n, y * n, z * n);
@@ -194,6 +199,14 @@ public:
 		x -= v.x;
 		y -= v.y;
 		z -= v.z;
+		return *this;
+	}
+
+	Vec3& operator *=(const Vec3& v)
+	{
+		x *= v.x;
+		y *= v.y;
+		z *= v.z;
 		return *this;
 	}
 
@@ -314,13 +327,23 @@ public:
 		return Vec3(mx, my, mz);
 	}
 
-	std::string GetString() const
+	static Vec3 Abs(const Vec3& v)
+	{
+		return Vec3(std::abs(v.x), std::abs(v.y), std::abs(v.z));
+	}
+
+	std::string ToString() const
 	{
 		std::string sx = std::to_string(x);
 		std::string sy = std::to_string(y);
 		std::string sz = std::to_string(z);
 
 		return std::string("Vec3(" + sx + ", " + sy + ", " + sz + ")");
+	}
+
+	void Print() const
+	{
+		printf("%s\n", ToString().c_str());
 	}
 
 public:

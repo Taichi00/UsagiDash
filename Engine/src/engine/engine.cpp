@@ -206,7 +206,7 @@ void Engine::EndRender()
 	queue_->ExecuteCommandLists(1, ppCmdLists);
 
 	// スワップチェーンを切り替え
-	swapchain_->Present(1, 0);
+	swapchain_->Present(0, 0);
 
 	// 描画完了を待つ
 	WaitGPU();

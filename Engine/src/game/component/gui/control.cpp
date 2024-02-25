@@ -6,6 +6,8 @@
 
 Control::Control()
 {
+	engine_ = Game::Get()->GetEngine()->GetEngine2D();
+
 	parent_size_ = Vec2::Zero();
 	parent_position_ = Vec2::Zero();
 	rect_ = { 0, 0, 0, 0 };
@@ -46,9 +48,7 @@ void Control::SetTransform(const Vec2& position, const Vec2& size, const Vec2& p
 
 void Control::Layout()
 {
-	auto engine2d = Game::Get()->GetEngine()->GetEngine2D();
-
-	auto ratio = engine2d->RenderTargetSize().y / 720.0;
+	auto ratio = engine_->RenderTargetSize().y / 720.0;
 	Matrix3x2 parent_matrix = Matrix3x2::Identity();
 
 	// 親Controlのサイズ、位置を取得
@@ -62,7 +62,7 @@ void Control::Layout()
 	else
 	{
 		// 親がnullptrの場合はレンダーターゲットのサイズ を取得
-		parent_size_ = Vec2(1280, 720);//engine2d->RenderTargetSize();
+		parent_size_ = Vec2(1280, 720);//engine_->RenderTargetSize();
 		parent_position_ = Vec2::Zero();
 	}
 
@@ -80,10 +80,10 @@ void Control::Layout()
 
 	// ワールド変換行列の生成
 	Matrix3x2 mat = Matrix3x2::Identity();
-	mat = mat * Matrix3x2::Translation(-Vec2(pivot_.x * size.x, pivot_.y * size.y) * ratio);
+	mat = mat * Matrix3x2::Translation(-Vec2(pivot_.x * size.x, pivot_.y * size.y));
 	mat = mat * Matrix3x2::Scale(scale_);
 	mat = mat * Matrix3x2::Rotation(rotation_);
-	mat = mat * Matrix3x2::Translation(pos * ratio);
+	mat = mat * Matrix3x2::Translation(pos);
 
 	world_matrix_ = mat * parent_matrix;
 }

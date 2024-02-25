@@ -137,15 +137,15 @@ double Window::TimeAdjustment()
 	}
 
 	fps = 1.0 / frame_time;
-	printf("%f\n", fps);
+	//printf("%f\n", fps);
 	return fps;
 }
 
 void Window::TickTime()
 {
-	/*QueryPerformanceCounter(&time_end_);
+	QueryPerformanceCounter(&time_end_);
 
-	TimeAdjustment();*/
+	TimeAdjustment();
 
 	QueryPerformanceCounter(&time_end_);
 	delta_time_ = (double)(time_end_.QuadPart - time_start_.QuadPart) / (double)(time_freq_.QuadPart);
