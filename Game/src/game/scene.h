@@ -49,6 +49,7 @@ public:
 	bool DontDestroyOnLoad(Entity* entity);
 	std::vector<std::unique_ptr<Entity>> MoveDontDestroyEntities();
 
+	Entity* FindEntity(const std::string& name);
 	Entity* FindEntityWithTag(const std::string& tag);
 
 	Entity* RootEntity();

@@ -2,10 +2,11 @@
 #include "game/component/gui/label.h"
 #include "game/scene.h"
 #include "game/component/audio/audio_source.h"
+#include "game/component/animator.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
-GameManager::GameManager(Player* player, Label* coin_label)
+GameManager::GameManager(PlayerController* player, Label* coin_label)
 {
 	player_ = player;
 	coin_label_ = coin_label;
@@ -31,7 +32,9 @@ bool GameManager::Init()
 		audio_source_->Play(0.3f, true);
 
 	// coin label ‚Ì‰Šú‰»
-	AddCoin(0);
+	coin_label_->SetText(GetCoinText(num_coins_));
+
+	coin_label_animator_ = coin_label_->GetEntity()->GetComponent<Animator>();
 
 	return true;
 }
@@ -44,7 +47,16 @@ void GameManager::AddCoin(const int n)
 {
 	num_coins_ = std::max(std::min(num_coins_ + n, 9999u), 0u);
 
-	auto str = std::to_string(num_coins_);
+	coin_label_->SetText(GetCoinText(num_coins_));
+
+	if (coin_label_animator_)
+		coin_label_animator_->Play("get", 1, false);
+}
+
+std::string GameManager::GetCoinText(const int n)
+{
+	auto str = std::to_string(n);
 	str = std::string(std::max(0, 4 - (int)str.size()), '0') + str;
-	coin_label_->SetText(str);
+
+	return str;
 }

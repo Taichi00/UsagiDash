@@ -108,7 +108,7 @@
     <ClCompile Include="src\game\component\mesh_renderer.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\player.cpp">
+    <ClCompile Include="src\app\component\player_controller.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="src\game\component\transform.cpp">
@@ -123,13 +123,10 @@
     <ClCompile Include="src\game\component\sphere_mesh.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\main_scene.cpp">
-      <Filter>ソース ファイル\App</Filter>
-    </ClCompile>
     <ClCompile Include="src\game\scene.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\collision_test_scene.cpp">
+    <ClCompile Include="src\app\scene\level1_scene.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="src\app\floating_player.cpp">
@@ -258,6 +255,18 @@
     <ClCompile Include="src\game\input\input_icon_manager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\app\entity\player.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\component\tutorial_text_display.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\entity\tutorial.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\text.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\assimp_loader.h">
@@ -344,14 +353,11 @@
     <ClInclude Include="src\game\component\mesh_renderer.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\player.h">
+    <ClInclude Include="src\app\component\player_controller.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\transform.h">
       <Filter>ヘッダー ファイル\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\app\main_scene.h">
-      <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\game\scene.h">
       <Filter>ヘッダー ファイル\Game</Filter>
@@ -359,7 +365,7 @@
     <ClInclude Include="src\game\component\sphere_mesh.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\collision_test_scene.h">
+    <ClInclude Include="src\app\scene\level1_scene.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\app\floating_player.h">
@@ -525,6 +531,24 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\game\input\input_icon_manager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\entity\player.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\panel_property.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\component\tutorial_text_display.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\entity\tutorial.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\text.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math\range.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

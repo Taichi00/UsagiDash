@@ -8,21 +8,24 @@
 
 Label::Label() : Control()
 {
-	text_ = L"";
-	text_prop_ = TextProperty{};
+	text_ = Text{};
+	//text_prop_ = TextProperty{};
+	panel_prop_ = PanelProperty{};
 	text_color_ = Color::White();
 }
 
 Label::Label(const std::string& text) : Label()
 {
-	text_ = StringMethods::GetWideString(text);
+	text_.string = StringMethods::GetWideString(text);
 }
 
-Label::Label(const std::string& text, const TextProperty& prop, const Color& color)
+Label::Label(const std::string& text, const TextProperty& text_prop, const PanelProperty& panel_prop, const Color& color, const bool fit)
 {
-	text_ = StringMethods::GetWideString(text);
-	text_prop_ = prop;
+	text_.string = StringMethods::GetWideString(text);
+	text_.prop = text_prop;
+	panel_prop_ = panel_prop;
 	text_color_ = color;
+	fit_ = fit;
 }
 
 Label::~Label()
@@ -33,36 +36,55 @@ bool Label::Init()
 {
 	Control::Init();
 
-	engine_->RegisterTextFormat(text_prop_.font);
+	engine_->RegisterTextFormat(text_.prop.font);
 	engine_->RegisterSolidColorBrush(text_color_);
+	engine_->RegisterSolidColorBrush(panel_prop_.color);
+
+	text_.Parse();
 
 	return true;
 }
 
+void Label::Update(const float delta_time)
+{
+	if (fit_)
+		FitSize();
+
+	Control::Update(delta_time);
+}
+
 void Label::Draw2D()
 {
-	auto ratio = engine_->RenderTargetSize().y / 720.0f;
+	auto ratio = engine_->AspectRatio();
+
+	auto padding = panel_prop_.padding;
 
 	auto rect = GetRect();
+	Rect2 panel_rect = { 
+		rect.left - padding.left, 
+		rect.top - padding.top, 
+		rect.right + padding.right, 
+		rect.bottom + padding.bottom
+	};
+
 	auto world_matrix = WorldMatrix();
 
 	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
-	engine_->DrawText(
-		text_, 
-		rect, 
-		text_prop_.font, text_prop_.font_size, text_prop_.font_weight, 
-		text_prop_.horizontal_alignment, text_prop_.vertical_alignment,
-		text_color_);
+	engine_->DrawFillRectangle(panel_rect, panel_prop_.color * GetColor(), panel_prop_.radius);
+	engine_->DrawText(text_, rect, text_color_ * GetColor());
 }
 
 void Label::SetText(const std::string& text)
 {
-	text_ = StringMethods::GetWideString(text);
+	text_.string = StringMethods::GetWideString(text);
+	text_.Parse();
+
+	Update(0);
 }
 
 void Label::FitSize()
 {
-	auto size = engine_->GetTextSize(text_, text_prop_.font, text_prop_.font_size, text_prop_.font_weight);
-	SetAnchor({ 0, 0, 0, 0 });
-	SetOffset({ 0, 0, -size.x, -size.y });
+	auto size = engine_->GetTextSize(text_);
+	SetSize(size);
+	Transform();
 }

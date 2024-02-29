@@ -1,101 +1,47 @@
 #include "game/bone.h"
 
-Bone::Bone()
-{
-}
-
-Bone::Bone(const std::string name)
+Bone::Bone(const std::string& name)
 {
 	name_ = name;
 	rotation_ = XMQuaternionIdentity();
 	mtx_inv_bind_ = XMMatrixIdentity();
 	mtx_local_ = XMMatrixIdentity();
 	mtx_world_ = XMMatrixIdentity();
+	mtx_global_ = XMMatrixIdentity();
+	children_.clear();
 }
 
-void Bone::SetPosition(XMFLOAT3 pos)
+Bone::Bone(const Bone& bone)
 {
-	position_ = XMLoadFloat3(&pos);
-}
-
-void Bone::SetRotation(XMFLOAT4 rot)
-{
-	rotation_ = XMLoadFloat4(&rot);
-}
-
-void Bone::SetScale(XMFLOAT3 scale)
-{
-	scale_ = XMLoadFloat3(&scale);
-}
-
-void Bone::SetInvBindMatrix(XMMATRIX mtx)
-{
-	mtx_inv_bind_ = mtx;
-}
-
-void Bone::SetGlobalMatrix(XMMATRIX mtx)
-{
-	mtx_global_ = mtx;
+	name_ = bone.name_;
+	position_ = bone.position_;
+	position_buf_ = bone.position_buf_;
+	rotation_ = bone.rotation_;
+	rotation_buf_ = bone.rotation_buf_;
+	scale_ = bone.scale_;
+	scale_buf_ = bone.scale_buf_;
+	mtx_local_ = bone.mtx_local_;
+	mtx_world_ = bone.mtx_world_;
+	mtx_inv_bind_ = bone.mtx_inv_bind_;
+	mtx_global_ = bone.mtx_global_;
+	parent_ = bone.parent_;
 }
 
 void Bone::SetParent(Bone* parent)
 {
-	parent_ = parent;
+	if (parent)
+	{
+		parent->AddChild(this);
+	}
 }
 
 void Bone::AddChild(Bone* child)
 {
-	children_.push_back(child);
-}
-
-XMVECTOR Bone::GetPosition()
-{
-	return position_;
-}
-
-XMVECTOR Bone::GetRotation()
-{
-	return rotation_;
-}
-
-XMVECTOR Bone::GetScale()
-{
-	return scale_;
-}
-
-XMMATRIX Bone::GetInvBindMatrix()
-{
-	return mtx_inv_bind_;
-}
-
-XMMATRIX Bone::GetLocalMatrix()
-{
-	return mtx_local_;
-}
-
-XMMATRIX Bone::GetWorldMatrix()
-{
-	return mtx_world_;
-}
-
-XMMATRIX Bone::GetGlobalMatrix()
-{
-	return mtx_global_;
-}
-
-std::string Bone::GetName()
-{
-	return name_;
-}
-
-Bone* Bone::GetParent()
-{
-	return parent_;
-}
-
-std::vector<Bone*> Bone::GetChildren()
-{
-	return children_;
+	if (child)
+	{
+		child->parent_ = this;
+		children_.push_back(child);
+	}
 }
 
 void Bone::SaveBuffer()
@@ -105,39 +51,23 @@ void Bone::SaveBuffer()
 	scale_buf_ = scale_;
 }
 
-XMVECTOR Bone::GetPositionBuffer()
-{
-	return position_buf_;
-}
-
-XMVECTOR Bone::GetRotationBuffer()
-{
-	return rotation_buf_;
-}
-
-XMVECTOR Bone::GetScaleBuffer()
-{
-	return scale_buf_;
-}
-
 void Bone::UpdateLocalMatrix()
 {
 	auto mtx = XMMatrixScalingFromVector(scale_)
 		* XMMatrixRotationQuaternion(rotation_)
 		* XMMatrixTranslationFromVector(position_);
 	mtx_local_ = XMMatrixTranspose(mtx);
-
 }
 
 void Bone::UpdateWorldMatrix()
 {
 	UpdateLocalMatrix();
-	auto mtxParent = XMMatrixIdentity();
+	auto mtx_parent = XMMatrixIdentity();
 	if (parent_)
 	{
-		mtxParent = parent_->GetWorldMatrix();
+		mtx_parent = parent_->mtx_world_;
 	}
-	mtx_world_ = mtxParent * mtx_local_;//mtxParent * m_mtxGlobal * m_mtxLocal;
+	mtx_world_ = mtx_parent * mtx_local_;
 }
 
 void Bone::UpdateMatrices()

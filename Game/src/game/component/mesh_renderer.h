@@ -32,8 +32,6 @@ public:
 	void DrawOutline() override;
 
 private:
-	bool PreparePSO();
-
 	void UpdateBone();
 	void UpdateCB();
 

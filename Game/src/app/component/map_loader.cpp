@@ -1,6 +1,7 @@
 #include "map_loader.h"
 #include "game/scene.h"
 #include "app/entity/coin.h"
+#include "app/entity/tutorial.h"
 
 MapLoader::MapLoader(const std::wstring& path)
 {
@@ -45,15 +46,23 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 
 		auto origin = MapFileParser::ToVec3(pairs.at("origin"));
 		origin = Vec3::Scale(origin, scale) + position;
-
+		
 		Entity* new_entity = nullptr;
 		if (class_name == "item_coin")
 		{
-			new_entity = scene->CreateEntity(new Coin(""));
+			new_entity = new Coin("");
+		}
+		else if (class_name == "tutorial")
+		{
+			new_entity = new Tutorial(
+				pairs.at("text"), 
+				MapFileParser::ToFloat(pairs.at("radius"))
+			);
 		}
 
 		if (new_entity)
 		{
+			scene->CreateEntity(new_entity);
 			new_entity->transform->position = origin;
 		}
 	}

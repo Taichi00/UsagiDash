@@ -11,8 +11,8 @@ Coin::Coin(const std::string& name) : Entity(name, "coin")
 {
 	auto game = Game::Get();
 
-	auto model = game->LoadResource<Model>(L"Assets/PlatformerPack/Coin.gltf");
-	auto se = game->LoadResource<Audio>(L"Assets/se/blop0.wav");
+	auto model = game->LoadResource<Model>(L"assets/model/item/Coin.gltf");
+	auto se = game->LoadResource<Audio>(L"assets/se/blop0.wav");
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(1.5f));

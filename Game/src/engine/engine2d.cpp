@@ -164,17 +164,19 @@ void Engine2D::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap
 		throw "CreateBitmapFromWicBitmap";
 }
 
-Vec2 Engine2D::GetTextSize(const std::wstring& text, const std::wstring& font, const float size, const unsigned int weight)
+Vec2 Engine2D::GetTextSize(const Text& text)
 {
-	const auto& text_format = text_format_map_.at(font);
+	const auto& text_format = text_format_map_.at(text.prop.font);
 
-	IDWriteTextLayout* text_layout = NULL;
-	dwrite_factory_->CreateTextLayout(text.c_str(), (UINT32)text.size(), text_format.Get(), 10000, 0, &text_layout);
+	IDWriteTextLayout* layout = nullptr;
+	dwrite_factory_->CreateTextLayout(text.string.c_str(), (UINT32)text.string.size(), text_format.Get(), 10000, 0, &layout);
+
+	CreateTextLayout(text, {}, layout);
 
 	DWRITE_TEXT_METRICS text_metrics;
-	text_layout->GetMetrics(&text_metrics);
+	layout->GetMetrics(&text_metrics);
 
-	text_layout->Release();
+	layout->Release();
 
 	return Vec2(text_metrics.width, text_metrics.height);
 }
@@ -198,19 +200,21 @@ void Engine2D::SetTransform(const Matrix3x2& matrix)
 	d2d_device_context_->SetTransform(mat);
 }
 
-void Engine2D::DrawText(const std::wstring& text, const Rect2& rect,
-	const std::wstring& font, const float size, const unsigned weight,
-	const unsigned horizontal_alignment, const unsigned vertical_alignment,
-	const Color& color) const
+void Engine2D::DrawText(const Text& text, const Rect2& rect, const Color& color) const
 {
-	const auto& text_format = text_format_map_.at(font);
-	const auto& brush = solid_color_brush_map_.at(color);
-	
+	const auto& text_format = text_format_map_.at(text.prop.font);
+	//const auto& brush = solid_color_brush_map_.at(color);
+	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
+	d2d_device_context_->CreateSolidColorBrush(
+		{ color.r, color.g, color.b, color.a },
+		brush.GetAddressOf()
+	);
+
 	// text layout ‚Ì¶¬
 	IDWriteTextLayout* layout = nullptr;
 	auto hr = dwrite_factory_->CreateTextLayout(
-		text.c_str(),
-		(UINT32)text.size(),
+		text.string.c_str(),
+		(UINT32)text.string.size(),
 		text_format.Get(),
 		rect.Width(),
 		rect.Height(),
@@ -219,27 +223,27 @@ void Engine2D::DrawText(const std::wstring& text, const Rect2& rect,
 	if (FAILED(hr))
 		throw "CreateTextLayout";
 
-	DWRITE_TEXT_RANGE range = { 0, (unsigned)text.size() };
-	layout->SetFontSize(size, range);
-	layout->SetFontWeight((DWRITE_FONT_WEIGHT)weight, range);
-	layout->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)horizontal_alignment);
-	layout->SetParagraphAlignment((DWRITE_PARAGRAPH_ALIGNMENT)vertical_alignment);
-
-	ParseText(text, size, layout);
+	CreateTextLayout(text, color, layout);
 
 	// •`‰æ
 	d2d_device_context_->DrawTextLayout(
 		{ rect.left, rect.top },
 		layout,
-		brush.Get()
+		brush.Get(),
+		D2D1_DRAW_TEXT_OPTIONS_DISABLE_COLOR_BITMAP_SNAPPING
 	);
-	
+
 	layout->Release();
 }
 
 void Engine2D::DrawRectangle(const Rect2& rect, const Color& color, const float radius) const
 {
-	const auto& brush = solid_color_brush_map_.at(color);
+	//const auto& brush = solid_color_brush_map_.at(color);
+	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
+	d2d_device_context_->CreateSolidColorBrush(
+		{ color.r, color.g, color.b, color.a },
+		brush.GetAddressOf()
+	);
 
 	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
 
@@ -255,7 +259,12 @@ void Engine2D::DrawRectangle(const Rect2& rect, const Color& color, const float 
 
 void Engine2D::DrawFillRectangle(const Rect2& rect, const Color& color, const float radius) const
 {
-	const auto& brush = solid_color_brush_map_.at(color);
+	//const auto& brush = solid_color_brush_map_.at(color);
+	ComPtr<ID2D1SolidColorBrush> brush = nullptr;
+	d2d_device_context_->CreateSolidColorBrush(
+		{ color.r, color.g, color.b, color.a },
+		brush.GetAddressOf()
+	);
 
 	D2D1_RECT_F rectf = { rect.left, rect.top, rect.right, rect.bottom };
 
@@ -408,46 +417,29 @@ bool Engine2D::CreateIWICImagingFactory()
 	return SUCCEEDED(hr);
 }
 
-void Engine2D::ParseText(const std::wstring& text, const float size, IDWriteTextLayout* layout) const
+void Engine2D::CreateTextLayout(const Text& text, const Color& color, IDWriteTextLayout* layout) const
 {
-	auto text_p = text.data();
 	auto rm = Game::Get()->GetResourceManager();
 
-	DWRITE_TEXT_RANGE range = {};
+	DWRITE_TEXT_RANGE range = { 0, (unsigned)text.string.size() };
 
-	while (*text_p)
+	layout->SetFontSize(text.prop.font_size, range);
+	layout->SetFontWeight((DWRITE_FONT_WEIGHT)text.prop.font_weight, range);
+	layout->SetTextAlignment((DWRITE_TEXT_ALIGNMENT)text.prop.horizontal_alignment);
+	layout->SetParagraphAlignment((DWRITE_PARAGRAPH_ALIGNMENT)text.prop.vertical_alignment);
+
+	for (const auto& tag : text.FormatTags())
 	{
-		if (*text_p == '<')
+		// ƒAƒCƒRƒ“
+		if (tag.key == L"bitmap")
 		{
-			range.startPosition = (UINT32)(text_p - text.data());
-			++text_p;
-
-			std::wstring token = L"";
-			while (*text_p > 32)
-			{
-				token += *text_p;
-				++text_p;
-			}
-
-			++text_p;
-
-			if (token == L"bitmap")
-			{
-				std::wstring name = L"";
-				while (*text_p != '>')
-				{
-					name += *text_p;
-					++text_p;
-				}
-
-				auto inline_image = new InlineImage(d2d_device_context_.Get(), (Bitmap*)rm->GetResourceFromName(name), size * 1.5f);
-
-				range.length = (UINT32)(text_p - text.data() - range.startPosition + 1);
-				layout->SetInlineObject(inline_image, range);
-			}
+			auto inline_image = new InlineImage(
+				d2d_device_context_.Get(), 
+				(Bitmap*)rm->GetResourceFromName(tag.value), 
+				text.prop.font_size * 1.3f, 
+				color);
+			layout->SetInlineObject(inline_image, { tag.range.start, tag.range.length });
 		}
-
-		++text_p;
 	}
 }
 
@@ -556,6 +548,8 @@ bool Engine2D::CreateD2DRenderTarget()
 	auto size = d2d_render_targets_[0]->GetSize();
 	render_target_width_ = (unsigned int)size.width;
 	render_target_height_ = (unsigned int)size.height;
+
+	aspect_ratio_ = render_target_height_ / DEFAULT_HEIGHT;
 
 	return true;
 }

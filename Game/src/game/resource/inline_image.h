@@ -4,13 +4,17 @@
 #include <dwrite_3.h>
 #include "game/resource/bitmap.h"
 #include "math/vec.h"
+#include "math/color.h"
+
+class Engine2D;
 
 struct InlineImage : public IDWriteInlineObject
 {
     InlineImage(
-        ID2D1RenderTarget* pRenderTarget,
+        ID2D1DeviceContext* pRenderTarget,
         Bitmap* bitmap,
-        float size
+        float size,
+        const Color& color
     );
 
     HRESULT STDMETHODCALLTYPE Draw(
@@ -41,10 +45,13 @@ struct InlineImage : public IDWriteInlineObject
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, LPVOID* ppv) override;
 
 private:
-    ID2D1RenderTarget* pRT_ = nullptr;
+    ID2D1DeviceContext* device_context_ = nullptr;
     Bitmap* bitmap_ = nullptr;
-    Vec2 size_;
+    float size_;
     float baseline_;
+    Color color_;
 
     LONG nRef_ = 0;
+
+    Engine2D* engine_ = nullptr;
 };

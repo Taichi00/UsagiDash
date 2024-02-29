@@ -175,10 +175,10 @@ void Game::Init(const GameSettings& settings)
 
 	input_icon_manager_ = std::make_unique<InputIconManager>();
 
-	input_icon_manager_->AddInputIcon("jump", {
-		{ Input::InputType::KEYBOARD, L"Assets/image/keyboard_space.png" },
-		{ Input::InputType::GAMEPAD, L"Assets/image/xbox_button_color_a.png" }
-		});
+	for (const auto& action : settings.action_icons)
+	{
+		input_icon_manager_->AddInputIcon(action.first, action.second);
+	}
 }
 
 void Game::Update()

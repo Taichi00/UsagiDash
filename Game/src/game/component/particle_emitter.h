@@ -173,6 +173,7 @@ public:
 	ParticleEmitterProperty& GetProperety();
 	void SetSpawnRate(float rate);
 	void Emit();
+	void Stop();
 
 private:
 	void PrepareModel();	// モデルデータの準備
@@ -215,7 +216,7 @@ private:
 	void UpdateScale(const ParticleEmitterScalePropertyPVA& prop);
 	void UpdateScale(const ParticleEmitterScalePropertyEasing& prop);
 
-	float (*GetEasingFunc(const ParticleEmitterEasingType& type))(const float&);	// Easing関数へのポインタを取得
+	float (*GetEasingFunc(const ParticleEmitterEasingType& type))(const float);	// Easing関数へのポインタを取得
 
 	void UpdateCB();	// ConstantBufferの更新
 

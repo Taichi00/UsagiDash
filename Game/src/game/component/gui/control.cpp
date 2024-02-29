@@ -36,14 +36,21 @@ void Control::Draw2D()
 
 void Control::SetTransform(const Vec2& position, const Vec2& size, const Vec2& pivot, const Vec2& anchor_pos)
 {
-	// position, size, pivot‚©‚çoffset‚ð‹tŽZ‚·‚é
-	offset_.left   = position.x - pivot.x * size.x;
-	offset_.top    = position.y - pivot.y * size.y;
-	offset_.right  = -position.x - (1 - pivot.x) * size.x;
-	offset_.bottom = -position.y - (1 - pivot.y) * size.y;
-
-	anchor_ = { anchor_pos.x, anchor_pos.y, anchor_pos.x, anchor_pos.y };
+	position_ = position;
+	size_ = size;
 	pivot_ = pivot;
+	anchor_ = { anchor_pos.x, anchor_pos.y, anchor_pos.x, anchor_pos.y };
+
+	Transform();
+}
+
+void Control::Transform()
+{
+	// position, size, pivot‚©‚çoffset‚ð‹tŽZ‚·‚é
+	offset_.left = position_.x - pivot_.x * size_.x;
+	offset_.top = position_.y - pivot_.y * size_.y;
+	offset_.right = -position_.x - (1 - pivot_.x) * size_.x;
+	offset_.bottom = -position_.y - (1 - pivot_.y) * size_.y;
 }
 
 void Control::Layout()

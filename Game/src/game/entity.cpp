@@ -10,7 +10,7 @@ Entity::Entity() : Entity("No Name")
 
 Entity::Entity(const std::string& name, const std::string& tag)
 {
-	name_ = name;
+	this->name = name;
 	this->tag = tag;
 
 	transform = new Transform();
@@ -23,7 +23,7 @@ Entity::Entity(const std::string& name, const std::string& tag)
 
 Entity::~Entity()
 {
-	printf("Delete Entity [%s]\n", name_.c_str());
+	printf("Delete Entity [%s]\n", name.c_str());
 }
 
 void Entity::Destroy()
@@ -35,10 +35,7 @@ Component* Entity::AddComponent(Component* component)
 {
 	std::string key = typeid(*component).name();
 
-	std::unique_ptr<Component> ucomponent;
-	ucomponent.reset(component);
-
-	component_map_[key].push_back(std::move(ucomponent));
+	component_map_[key].push_back(std::unique_ptr<Component>(component));
 
 	component->RegisterEntity(this);
 
@@ -249,7 +246,7 @@ Entity* Entity::GetChild(const std::string& name) const
 {
 	for (const auto& child : children_)
 	{
-		if (child->name_ == name)
+		if (child->name == name)
 			return child.get();
 	}
 

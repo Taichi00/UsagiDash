@@ -3,6 +3,9 @@
 #include "game/component/component.h"
 #include "math/quaternion.h"
 #include "math/vec.h"
+#include "math/color.h"
+#include <game/bone.h>
+#include <game/animation.h>
 #include <map>
 #include <memory>
 #include <queue>
@@ -10,40 +13,62 @@
 #include <vector>
 
 class Animation;
-struct VectorKey;
-struct QuatKey;
 class Bone;
 class MeshRenderer;
-
-struct AnimationArgs
-{
-	std::string name;
-	float speed;
-	bool loop;
-	float blend_time;
-};
+class Control;
 
 class Animator : public Component
 {
 public:
+	struct AnimationArgs
+	{
+		std::string name;
+		float speed;
+		bool loop;
+		float blend_time;
+	};
+
 	Animator();
+	Animator(const std::shared_ptr<Animation>& animation);
 
 	bool Init() override;
 	void Update(const float delta_time) override;
 
+	// アニメーションを登録する
 	void RegisterAnimation(const std::shared_ptr<Animation>& animation);
 	void RegisterAnimations(const std::vector<std::shared_ptr<Animation>>& animations);
+
+	// 再生
 	void Play(std::string name, float speed = 1.0f, bool loop = true, float blend_time = 0.08f);
+
+	// 再生（同じアニメーションを再生中ならそのまま）
+	void Playing(std::string name, float speed = 1.0f, bool loop = true, float blend_time = 0.08f);
+
+	// 再生キューに追加
 	void Push(std::string name, float speed = 1.0f, bool loop = true, float blend_time = 0.08f);
+
+	// 停止
 	void Stop();
+
+	// 再生速度を設定
 	void SetSpeed(float speed);
 
 private:
 	void Play(AnimationArgs anim);
 
-	Vec3 CalcCurrentPosition(std::vector<VectorKey>* keys, float currentTime, Bone* bone);
-	Quaternion CalcCurrentRotation(std::vector<QuatKey>* keys, float currentTime, Bone* bone);
-	Vec3 CalcCurrentScale(std::vector<VectorKey>* keys, float currentTime, Bone* bone);
+	void AnimateBone(const Animation::BoneChannel* channel, const float current_time);
+	void AnimateGUI(const Animation::GUIChannel* channel, const float current_time);
+
+	Vec2 CalcCurrentVec2(const std::vector<Animation::Vec2Key>& keys, const float current_time);
+	Vec3 CalcCurrentVec3(const std::vector<Animation::Vec3Key>& keys, const float current_time);
+	Quaternion CalcCurrentQuat(const std::vector<Animation::QuatKey>& keys, const float current_time);
+	Color CalcCurrentColor(const std::vector<Animation::ColorKey>& keys, const float current_time);
+	float CalcCurrentFloat(const std::vector<Animation::FloatKey>& keys, const float current_time);
+
+	// 現在時間の前後のキーを取得する
+	void GetCurrentKeys(const std::vector<Animation::Key>& keys, const float current_time, int& index1, int& index2);
+
+	float GetEasingTime(const Animation::Key& key1, const Animation::Key& key2, const float current_time);
 
 private:
 	std::vector<std::shared_ptr<Animation>> animations_;
@@ -54,8 +79,9 @@ private:
 	float current_time_;
 	float speed_;
 	bool loop_;
-	float transition_ratio_;
+	float blend_ratio_;
 	float blend_time_;
 
-	MeshRenderer* mesh_renderer_;
+	MeshRenderer* mesh_renderer_ = nullptr;
+	Control* control_ = nullptr;
 };

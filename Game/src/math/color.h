@@ -17,6 +17,56 @@ struct Color
 	static Color Green()	{ return Color(0.0, 1.0, 0.0); }
 	static Color Blue()		{ return Color(0.0, 0.0, 1.0); }
 
+	const Color operator -() const
+	{
+		return Color(-r, -g, -b, -a);
+	}
+
+	const Color operator *(const float n) const
+	{
+		return Color(r * n, g * n, b * n, a * n);
+	}
+
+	friend Color operator *(const float n, const Color& c)
+	{
+		return c * n;
+	}
+
+	const Color operator *(const Color& c)
+	{
+		return Color(r * c.r, g * c.g, b * c.b, a * c.a);
+	}
+
+	const Color operator /(const float n) const
+	{
+		return Color(r / n, g / n, b / n, a / n);
+	}
+
+	const Color operator +(const Color& c) const
+	{
+		return Color(r + c.r, g + c.g, b + c.b, a + c.a);
+	}
+
+	const Color operator -(const Color& c) const
+	{
+		return *this + (-c);
+	}
+
+	Color& operator +=(const Color& c)
+	{
+		r += c.r;
+		g += c.g;
+		b += c.b;
+		a += c.a;
+		return *this;
+	}
+
+	Color& operator -=(const Color& c)
+	{
+		*this += (-c);
+		return *this;
+	}
+
 	bool operator ==(const Color& c) const
 	{
 		return r == c.r && g == c.g && b == c.b && a == c.a;
@@ -67,6 +117,11 @@ struct Color
 		else if (a > c.a) return false;
 
 		return false;
+	}
+
+	static Color Lerp(const Color& c1, const Color& c2, const float t)
+	{
+		return c1 * (1 - t) + c2 * t;
 	}
 
 	std::string GetString()

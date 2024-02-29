@@ -1,7 +1,6 @@
 #include "game/game.h"
 #include "game/game_settings.h"
-#include "app/collision_test_scene.h"
-#include "app/main_scene.h"
+#include "app/scene/level1_scene.h"
 #include "engine/comptr.h"
 
 int wmain(int argc, wchar_t** argv, wchar_t** envp)
@@ -17,12 +16,14 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 	settings.window_height = 720;
 	settings.title = L"DirectX12 Game";
 	settings.font_files = {
-		L"Assets/font/Koruri-Light.ttf",
-		L"Assets/font/Koruri-Regular.ttf",
-		L"Assets/font/Koruri-Bold.ttf",
-		L"Assets/font/Koruri-Semibold.ttf",
-		L"Assets/font/Koruri-Extrabold.ttf",
+		L"assets/font/Koruri-Light.ttf",
+		L"assets/font/Koruri-Regular.ttf",
+		L"assets/font/Koruri-Bold.ttf",
+		L"assets/font/Koruri-Semibold.ttf",
+		L"assets/font/Koruri-Extrabold.ttf",
 	};
+
+	// アクションのキー設定
 	settings.button_actions["jump"] = {
 		{ Input::InputType::KEYBOARD, Input::Button::KEY_SPACE },
 		{ Input::InputType::GAMEPAD, Input::Button::PAD_A }
@@ -41,9 +42,27 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ Input::InputType::GAMEPAD, Input::Axis::PAD_RSTICK_Y }
 	};
 
+	// ボタンアイコンの設定
+	settings.action_icons["jump"] = {
+		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_space.png" },
+		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_button_a.png" }
+	};
+	settings.action_icons["crouch"] = {
+		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_shift.png" },
+		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_lt.png" }
+	};
+	settings.action_icons["move"] = {
+		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_arrows2.png" },
+		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_l.png" }
+	};
+	settings.action_icons["camera"] = {
+		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_wasd.png" },
+		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_r.png" }
+	};
+
 	Game::Create();
 
-	Game::Get()->Run(new CollisionTestScene(), settings);
+	Game::Get()->Run(new Level1Scene(), settings);
 
 	Game::Destroy();
 

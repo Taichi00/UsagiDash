@@ -1,3 +1,21 @@
+newmtl Dark/texture_03
+map_Kd ..\..\Assets\Map\textures\Dark\texture_03.png
+
+newmtl Dark/texture_06
+map_Kd ..\..\Assets\Map\textures\Dark\texture_06.png
+
+newmtl Green/texture_01
+map_Kd ..\..\Assets\Map\textures\Green\texture_01.png
+
+newmtl Orange/texture_01
+map_Kd ..\..\Assets\Map\textures\Orange\texture_01.png
+
 newmtl __TB_empty
-map_Kd textures\__TB_empty.png
+map_Kd ..\..\Assets\Map\textures\__TB_empty.png
+
+newmtl blue
+map_Kd ..\..\Assets\Map\textures\blue.png
+
+newmtl orange
+map_Kd ..\..\Assets\Map\textures\orange.png
 

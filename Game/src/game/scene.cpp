@@ -457,11 +457,18 @@ std::vector<std::unique_ptr<Entity>> Scene::MoveDontDestroyEntities()
 	return entities;
 }
 
+Entity* Scene::FindEntity(const std::string& name)
+{
+	return root_entity_->FindEntityIf([&name](Entity& entity) {
+		return entity.name == name;
+		});
+}
+
 Entity* Scene::FindEntityWithTag(const std::string& tag)
 {
 	return root_entity_->FindEntityIf([&tag](Entity& entity) {
 		return entity.tag == tag;
-	});
+		});
 }
 
 Entity* Scene::RootEntity()

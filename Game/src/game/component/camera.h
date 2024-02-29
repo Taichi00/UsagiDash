@@ -9,6 +9,7 @@ using namespace DirectX;
 class Camera : public Component
 {
 public:
+	Camera();
 
 	XMMATRIX GetViewMatrix();
 	XMMATRIX GetProjMatrix();

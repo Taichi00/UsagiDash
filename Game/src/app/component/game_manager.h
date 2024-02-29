@@ -4,14 +4,17 @@
 #include "game/entity.h"
 #include <string>
 
-class Player;
+#define NOMINMAX
+
+class PlayerController;
 class Label;
 class AudioSource;
+class Animator;
 
 class GameManager : public Component
 {
 public:
-	GameManager(Player* player, Label* coin_label);
+	GameManager(PlayerController* player, Label* coin_label);
 	~GameManager() = default;
 
 	static GameManager* Get()
@@ -39,10 +42,14 @@ public:
 	void AddCoin(const int n);
 
 private:
+	std::string GetCoinText(const int n);
+
+private:
 	static GameManager* instance_;
 
-	Player* player_;
+	PlayerController* player_;
 	Label* coin_label_;
+	Animator* coin_label_animator_ = nullptr;
 
 	AudioSource* audio_source_ = nullptr;
 

@@ -1,40 +1,46 @@
 #pragma once
 
+#include "game/bone.h"
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <string>
-
-class Bone;
+#include <memory>
 
 class BoneList
 {
 public:
-	BoneList();
+	BoneList() {}
 
-	static BoneList Copy(const BoneList& boneList);
-
-	typedef std::vector<Bone*>::iterator iterator;
-	typedef std::vector<Bone*>::const_iterator const_iterator;
+	typedef std::vector<std::shared_ptr<Bone>>::iterator iterator;
+	typedef std::vector<std::shared_ptr<Bone>>::const_iterator const_iterator;
 
 	iterator begin() { return bones_.begin(); }
 	const_iterator begin() const { return bones_.begin(); }
 	iterator end() { return bones_.end(); }
 	const_iterator end() const { return bones_.end(); }
 
-	Bone* operator[](int i) { return bones_[i]; }
+	Bone* operator[](int i) { return bones_[i].get(); }
 
+	// ボーンを追加
 	void Append(Bone* bone);
-	Bone* Find(const std::string& name);
-	int Index(Bone* bone) const;
-	int Size();
-	void Clear();
 
+	// 名前からボーンを検索
+	Bone* Find(const std::string& name) const;
+
+	// ボーンのインデックス番号を取得
+	unsigned int Index(Bone* bone) const;
+
+	// 現在の状態をバッファに保存
 	void SaveBuffer();
 
-	const std::vector<Bone*>& RootBones();
+	// BoneList を複製
+	BoneList Clone();
+
+	size_t Size() const { return bones_.size(); }
+	Bone* RootBone() const { return root_bone_; }
 
 private:
-	std::vector<Bone*> bones_;
-	std::map<std::string, int> bone_map_;
-	std::vector<Bone*> root_bones_;
+	std::vector<std::shared_ptr<Bone>> bones_;
+	std::unordered_map<std::string, unsigned int> name_index_map_;
+	Bone* root_bone_ = nullptr;
 };

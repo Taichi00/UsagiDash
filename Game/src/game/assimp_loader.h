@@ -32,10 +32,11 @@ class AssimpLoader
 public:
 	AssimpLoader() = default;
 
-	static std::unique_ptr<Model> Load(const std::wstring& filename);
-	static std::unique_ptr<CollisionModel> LoadCollision(const std::wstring& filename);
+	static std::unique_ptr<Model> Load(const std::wstring& path);
+	static std::unique_ptr<CollisionModel> LoadCollision(const std::wstring& path);
 
 private:
+	// ノードをたどってメッシュとボーンを読み込む
 	static void ProcessNode(Model& model, aiNode* node, const aiScene* scene);
 
 	static void LoadMesh(Mesh& dst, const aiMesh* src);
@@ -45,12 +46,13 @@ private:
 	static std::unique_ptr<Texture2D> LoadTexture(aiString path, const aiMaterial* src, const aiScene* scene);
 	static std::unique_ptr<Texture2D> LoadEmbeddedTexture(const aiTexture* texture);
 
-	static void BuildBoneHierarchy(BoneList& bones, aiNode* node, Bone* parentBone);
+	// bone tree を構築する
+	static void CreateBoneTree(BoneList& bone_tree, Bone* parent, const aiNode* node);
 
-	static void LoadAnimation(Animation* animation, aiAnimation* pAnimation, BoneList* bones);
+	static void LoadAnimation(Animation& animation, aiAnimation* src, const BoneList& bones);
 
 	static void GenSmoothNormal(Mesh& dst);
 
 private:
-	
+	static std::wstring directory_path;
 };

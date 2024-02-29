@@ -123,12 +123,12 @@
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
-      <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(ProjectDir)assets\shader\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <PostBuildEvent>
-      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT
+      <Command>robocopy "$(ProjectDir)assets" "$(OutDir)assets" * /xo /E /COPY:DT
 IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
-      <Message>Assets以下の変更されたファイルをコピーする</Message>
+      <Message>assets以下の変更されたファイルをコピーする</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -149,20 +149,24 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
-      <ObjectFileOutput>$(ProjectDir)Assets\Shaders\%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput>$(ProjectDir)assets\shader\%(Filename).cso</ObjectFileOutput>
     </FxCompile>
     <PostBuildEvent>
-      <Command>robocopy "$(ProjectDir)Assets" "$(OutDir)Assets" * /xo /E /COPY:DT
+      <Command>robocopy "$(ProjectDir)assets" "$(OutDir)assets" * /xo /E /COPY:DT
 IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
-      <Message>Assets以下の変更されたファイルをコピーする</Message>
+      <Message>assets以下の変更されたファイルをコピーする</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\app\component\tutorial_text_display.cpp" />
     <ClCompile Include="src\app\component\game_manager.cpp" />
     <ClCompile Include="src\app\component\coin_script.cpp" />
     <ClCompile Include="src\app\component\map_loader.cpp" />
     <ClCompile Include="src\app\entity\coin.cpp" />
+    <ClCompile Include="src\app\entity\player.cpp" />
+    <ClCompile Include="src\app\entity\tutorial.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
+    <ClCompile Include="src\game\component\gui\text.cpp" />
     <ClCompile Include="src\game\input\input_icon_manager.cpp" />
     <ClCompile Include="src\game\resource\inline_image.cpp" />
     <ClCompile Include="src\engine\pipeline_state_manager.cpp" />
@@ -180,7 +184,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\capsule_mesh.cpp" />
     <ClCompile Include="src\game\component\collider\collider.cpp" />
     <ClCompile Include="src\game\collision_manager.cpp" />
-    <ClCompile Include="src\app\collision_test_scene.cpp" />
+    <ClCompile Include="src\app\scene\level1_scene.cpp" />
     <ClCompile Include="src\game\component\collider\polygon_collider.cpp" />
     <ClCompile Include="src\game\component\component.cpp" />
     <ClCompile Include="src\engine\constant_buffer.cpp" />
@@ -200,7 +204,6 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\input\direct_input.cpp" />
     <ClCompile Include="src\game\input\input.cpp" />
     <ClCompile Include="src\app\main.cpp" />
-    <ClCompile Include="src\app\main_scene.cpp" />
     <ClCompile Include="src\game\component\collider\mesh_collider.cpp" />
     <ClCompile Include="src\game\component\mesh_renderer.cpp" />
     <ClCompile Include="src\game\component\gui\label.cpp" />
@@ -214,7 +217,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\particle_emitter.cpp" />
     <ClCompile Include="src\game\physics.cpp" />
     <ClCompile Include="src\engine\pipeline_state.cpp" />
-    <ClCompile Include="src\app\player.cpp" />
+    <ClCompile Include="src\app\component\player_controller.cpp" />
     <ClCompile Include="src\game\component\collider\ray.cpp" />
     <ClCompile Include="src\game\component\rigidbody.cpp" />
     <ClCompile Include="src\engine\root_signature.cpp" />
@@ -232,13 +235,17 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\tag_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\app\component\tutorial_text_display.h" />
     <ClInclude Include="src\app\component\game_manager.h" />
     <ClInclude Include="src\app\component\coin_script.h" />
     <ClInclude Include="src\app\component\map_loader.h" />
     <ClInclude Include="src\app\entity\coin.h" />
+    <ClInclude Include="src\app\entity\player.h" />
+    <ClInclude Include="src\app\entity\tutorial.h" />
     <ClInclude Include="src\app\state.h" />
     <ClInclude Include="src\engine\d3dx12.h" />
     <ClInclude Include="src\engine\font_collection.h" />
+    <ClInclude Include="src\game\component\gui\panel_property.h" />
     <ClInclude Include="src\game\input\input_icon_manager.h" />
     <ClInclude Include="src\game\resource\inline_image.h" />
     <ClInclude Include="src\engine\pipeline_state_manager.h" />
@@ -259,6 +266,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\resource\collision_model.h" />
     <ClInclude Include="src\game\resource\font.h" />
     <ClInclude Include="src\game\resource\bitmap.h" />
+    <ClInclude Include="src\game\component\gui\text.h" />
     <ClInclude Include="src\game\tag_manager.h" />
     <ClInclude Include="src\math\aabb.h" />
     <ClInclude Include="src\math\color.h" />
@@ -276,7 +284,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\capsule_mesh.h" />
     <ClInclude Include="src\game\component\collider\collider.h" />
     <ClInclude Include="src\game\collision_manager.h" />
-    <ClInclude Include="src\app\collision_test_scene.h" />
+    <ClInclude Include="src\app\scene\level1_scene.h" />
     <ClInclude Include="src\game\component\component.h" />
     <ClInclude Include="src\engine\comptr.h" />
     <ClInclude Include="src\engine\constant_buffer.h" />
@@ -292,13 +300,12 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\engine\buffer_manager.h" />
     <ClInclude Include="src\engine\index_buffer.h" />
     <ClInclude Include="src\game\input\input.h" />
-    <ClInclude Include="src\app\main_scene.h" />
     <ClInclude Include="src\game\component\collider\mesh_collider.h" />
     <ClInclude Include="src\game\component\mesh_renderer.h" />
     <ClInclude Include="src\game\particle.h" />
     <ClInclude Include="src\game\component\particle_emitter.h" />
     <ClInclude Include="src\engine\pipeline_state.h" />
-    <ClInclude Include="src\app\player.h" />
+    <ClInclude Include="src\app\component\player_controller.h" />
     <ClInclude Include="src\math\matrix3x2.h" />
     <ClInclude Include="src\math\octree.h" />
     <ClInclude Include="src\math\quaternion.h" />
@@ -316,6 +323,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\engine\streamreader.h" />
     <ClInclude Include="src\game\resource\texture2d.h" />
     <ClInclude Include="src\game\component\transform.h" />
+    <ClInclude Include="src\math\range.h" />
     <ClInclude Include="src\math\rect.h" />
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\engine\vertex_buffer.h" />

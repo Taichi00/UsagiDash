@@ -3,7 +3,6 @@
 #include "game/entity.h"
 #include "game/component/camera.h"
 #include "game/physics.h"
-#include "app/player.h"
 #include <dinput.h>
 
 GameCamera::GameCamera(Entity* target)

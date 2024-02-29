@@ -2,6 +2,18 @@
 #include "engine/engine.h"
 #include "game/game.h"
 
+Camera::Camera()
+{
+    focus_pos_ = XMFLOAT3(0, 0, 0);
+    up_dir_ = XMFLOAT3(0, 1, 0);
+    fov_ = 60;
+    near_ = 0.3f;
+    far_ = 1000;
+
+    mtx_view_ = XMMatrixIdentity();
+    mtx_proj_ = XMMatrixIdentity();
+}
+
 XMMATRIX Camera::GetViewMatrix()
 {
     return mtx_view_;
@@ -49,15 +61,6 @@ void Camera::SetFov(float fov)
 
 bool Camera::Init()
 {
-    focus_pos_ = XMFLOAT3(0, 0, 0);
-    up_dir_ = XMFLOAT3(0, 1, 0);
-    fov_ = 60;
-    near_ = 0.3f;
-    far_ = 1000;
-
-    mtx_view_ = XMMatrixIdentity();
-    mtx_proj_ = XMMatrixIdentity();
-
     return true;
 }
 

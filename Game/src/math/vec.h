@@ -14,22 +14,27 @@ public:
 	Vec2() {}
 	Vec2(float x, float y) : x(x), y(y) {}
 
-	Vec2 operator +(Vec2 v) const
+	const Vec2 operator +(const Vec2& v) const
 	{
 		return Vec2(x + v.x, y + v.y);
 	}
 
-	Vec2 operator -(Vec2 v) const
+	const Vec2 operator -(const Vec2& v) const
 	{
 		return Vec2(x - v.x, y - v.y);
 	}
 
-	Vec2 operator *(float n) const
+	const Vec2 operator *(const float n) const
 	{
 		return Vec2(x * n, y * n);
 	}
 
-	Vec2 operator /(float n) const
+	friend Vec2 operator *(const float n, const Vec2& v)
+	{
+		return v * n;
+	}
+
+	const Vec2 operator /(const float n) const
 	{
 		return Vec2(x / n, y / n);
 	}
@@ -124,6 +129,11 @@ public:
 		return v1.x * v2.x + v1.y * v2.y;
 	}
 
+	static Vec2 Lerp(const Vec2& v1, const Vec2& v2, const float& t)
+	{
+		return v1 * (1 - t) + v2 * t;
+	}
+
 	std::string GetString() const
 	{
 		std::string sx = std::to_string(x);
@@ -161,12 +171,17 @@ public:
 		return Vec3(x * v.x, y * v.y, z * v.z);
 	}
 
-	const Vec3 operator *(const float& n) const
+	const Vec3 operator *(const float n) const
 	{
 		return Vec3(x * n, y * n, z * n);
 	}
 
-	const Vec3 operator /(const float& n) const
+	friend Vec3 operator *(const float n, const Vec3& v)
+	{
+		return v * n;
+	}
+
+	const Vec3 operator /(const float n) const
 	{
 		return Vec3(x / n, y / n, z / n);
 	}

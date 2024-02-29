@@ -22,7 +22,7 @@ MeshRenderer::MeshRenderer()
 MeshRenderer::MeshRenderer(std::shared_ptr<Model> model) : MeshRenderer()
 {
 	model_ = model;
-	bones_ = BoneList::Copy(model_->bones);
+	bones_ = model_->bones.Clone();
 }
 
 MeshRenderer::~MeshRenderer()
@@ -56,12 +56,6 @@ bool MeshRenderer::Init()
 	}
 
 	pipeline_manager_ = Game::Get()->GetEngine()->GetPipelineStateManager();
-
-	if (!PreparePSO())
-	{
-		printf("パイプラインステートの生成に失敗\n");
-		return false;
-	}
 
 	printf("MeshRendererの初期化に成功\n");
 	return true;
@@ -355,18 +349,13 @@ void MeshRenderer::DrawOutline()
 	}
 }
 
-bool MeshRenderer::PreparePSO()
-{
-	return true;
-}
-
 void MeshRenderer::UpdateBone()
 {
+	auto root = bones_.RootBone();
+
 	// 行列の更新
-	for (auto& b : bones_.RootBones())
-	{
-		b->UpdateMatrices();
-	}
+	if (root)
+		root->UpdateMatrices();
 }
 
 void MeshRenderer::UpdateCB()
@@ -396,16 +385,16 @@ void MeshRenderer::UpdateCB()
 	// Bone
 	auto currentBone = bone_cb_[currentIndex]->GetPtr<BoneParameter>();
 
-	for (int i = 0; i < (int)bones_.Size(); i++)
+	for (int i = 0; i < bones_.Size(); i++)
 	{
 		auto bone = bones_[i];
-		auto mtx = bone->GetWorldMatrix() * bone->GetInvBindMatrix();
+		auto mtx = bone->WorldMatrix() * bone->InvBindMatrix();
 		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
 		XMStoreFloat4x4(&(currentBone->bone_normal[i]), XMMatrixInverse(nullptr, mtx));	// 法線は逆行列の転置で変換
 	}
 
 	// Material
-	for (int i = 0; i < (int)model_->materials.size(); i++)
+	for (int i = 0; i < model_->materials.size(); i++)
 	{
 		auto ptr = materials_cb_[i]->GetPtr<MaterialParameter>();
 		ptr->outline_width = outline_width_;
@@ -445,5 +434,5 @@ Bone* MeshRenderer::FindBone(std::string name)
 
 BoneList* MeshRenderer::GetBones()
 {
-	return &(bones_);
+	return &bones_;
 }

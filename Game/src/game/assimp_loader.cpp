@@ -6,6 +6,7 @@
 #include "engine/index_buffer.h"
 #include "engine/pipeline_state.h"
 #include "engine/descriptor_heap.h"
+#include "math/easing.h"
 #include "game/game.h"
 #include "game/bone.h"
 #include "game/bone_list.h"
@@ -32,37 +33,35 @@
 
 namespace fs = std::filesystem;
 
-std::wstring directoryPath;
+std::wstring AssimpLoader::directory_path;
 
-std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& filename)
+std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& path)
 {
-    if (filename.empty())
-    {
+    if (path.empty())
         return nullptr;
-    }
-    
-    directoryPath = StringMethods::GetDirectoryPath(filename);
 
+    // モデルのインスタンスを生成
     auto model = std::make_unique<Model>();
-
     auto& meshes = model->meshes;
     auto& materials = model->materials;
     auto& bones = model->bones;
     auto& animations = model->animations;
 
-    auto path = StringMethods::GetString(filename);
+    directory_path = StringMethods::GetDirectoryPath(path);
 
-    Assimp::Importer importer;
+    // インポートフラグを設定
     int flag = 0;
     flag |= aiProcess_Triangulate;
     flag |= aiProcess_LimitBoneWeights;
     flag |= aiProcess_FlipUVs;
     flag |= aiProcess_GenUVCoords;
     flag |= aiProcess_CalcTangentSpace;
-
-    auto pScene = importer.ReadFile(path, flag);
     
-    if (pScene == nullptr)
+    // ファイルを読み込む
+    Assimp::Importer importer;
+    auto scene = importer.ReadFile(StringMethods::GetString(path), flag);
+    
+    if (!scene)
     {
         // もし読み込みエラーが出たら表示する
         printf(importer.GetErrorString());
@@ -70,53 +69,50 @@ std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& filename)
         return nullptr;
     }
     
-    meshes.clear();
-    meshes.resize(pScene->mNumMeshes);
-    bones.Clear();
+    meshes.resize(scene->mNumMeshes);
+    materials.resize(scene->mNumMaterials);
+    animations.resize(scene->mNumAnimations);
 
-    // Boneの階層構造を構築
-    BuildBoneHierarchy(bones, pScene->mRootNode, nullptr);
+    // bone tree を構築
+    CreateBoneTree(bones, nullptr, scene->mRootNode);
     
     // Mesh, Boneの読み込み
-    ProcessNode(*model, pScene->mRootNode, pScene);
+    ProcessNode(*model, scene->mRootNode, scene);
 
     // Materialの読み込み
-    materials.clear();
-    materials.resize(pScene->mNumMaterials);
-    for (size_t i = 0; i < materials.size(); ++i)
+    for (int i = 0; i < materials.size(); i++)
     {
-        const auto pMaterial = pScene->mMaterials[i];
-        LoadMaterial(materials[i], pMaterial, pScene);
+        const auto aimaterial = scene->mMaterials[i];
+        LoadMaterial(materials[i], aimaterial, scene);
     }
 
     // Aniamtionの読み込み
-    animations.clear();
-    animations.resize(pScene->mNumAnimations);
-    for (size_t i = 0; i < animations.size(); i++)
+    for (int i = 0; i < animations.size(); i++)
     {
         animations[i] = std::make_unique<Animation>();
-        LoadAnimation(animations[i].get(), pScene->mAnimations[i], &bones);
+        LoadAnimation(*animations[i], scene->mAnimations[i], bones);
     }
 
-    // SmoothNormalの生成
+    // SmoothNormalの生成（アウトライン用）
     flag |= aiProcess_GenSmoothNormals;
     flag |= aiProcess_ForceGenNormals;
-    pScene = importer.ReadFile(path, flag);
+    scene = importer.ReadFile(StringMethods::GetString(path), flag);
 
-    for (size_t i = 0; i < meshes.size(); ++i)
+    for (int i = 0; i < meshes.size(); i++)
     {
-        auto mesh = &(meshes[i]);
-        auto aimesh = pScene->mMeshes[i];
-        for (size_t j = 0; j < meshes[i].vertices.size(); ++j)
+        auto& mesh = meshes[i];
+        auto aimesh = scene->mMeshes[i];
+        for (int j = 0; j < mesh.vertices.size(); j++)
         {
-            auto vertex = &(meshes[i].vertices[j]);
+            auto vertex = &(mesh.vertices[j]);
             auto normal = &(aimesh->mNormals[j]);
+
             vertex->smooth_normal = DirectX::XMFLOAT3(normal->x, normal->y, normal->z);
         }
     }
 
     // 頂点バッファ・インデックスバッファの生成
-    for (size_t i = 0; i < meshes.size(); i++)
+    for (int i = 0; i < meshes.size(); i++)
     {
         meshes[i].vertex_buffer = Game::Get()->GetEngine()->CreateVertexBuffer(meshes[i].vertices);
         meshes[i].index_buffer = Game::Get()->GetEngine()->CreateIndexBuffer(meshes[i].indices);
@@ -154,29 +150,29 @@ std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& filename)
         printf("%d\t%s\n", i, bones[i]->GetName().c_str());
     }*/
 
-    pScene = nullptr;
+    scene = nullptr;
     return std::move(model);
 }
 
-std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& filename)
+std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& path)
 {
-    if (filename.empty())
+    if (path.empty())
     {
         return nullptr;
     }
 
-    directoryPath = StringMethods::GetDirectoryPath(filename);
+    directory_path = StringMethods::GetDirectoryPath(path);
 
-    auto path = StringMethods::GetString(filename);
-
-    Assimp::Importer importer;
+    // インポート用のフラグを設定
     int flag = 0;
     flag |= aiProcess_Triangulate;
     flag |= aiProcess_PreTransformVertices;
 
-    auto pScene = importer.ReadFile(path, flag);
+    // ファイルを読み込む
+    Assimp::Importer importer;
+    auto scene = importer.ReadFile(StringMethods::GetString(path), flag);
 
-    if (pScene == nullptr)
+    if (!scene)
     {
         // もし読み込みエラーが出たら表示する
         printf(importer.GetErrorString());
@@ -185,24 +181,21 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& 
     }
 
     auto model = std::make_unique<CollisionModel>();
-
     auto& meshes = model->meshes;
-    meshes.clear();
-    meshes.resize(pScene->mNumMeshes);
 
-    for (auto i = 0u; i < pScene->mNumMeshes; i++)
+    meshes.resize(scene->mNumMeshes);
+
+    for (auto i = 0u; i < scene->mNumMeshes; i++)
     {
-        const auto pMesh = pScene->mMeshes[i];
+        const auto aimesh = scene->mMeshes[i];
         auto& mesh = model->meshes[i];
 
-        //std::map<std::set<uint32_t>, std::vector<CollisionFace*>> edgeMap;  // エッジから接続しているポリゴンを検索するマップ
-
         // 頂点情報の読み込み
-        std::vector<CollisionVertex> vertices(pMesh->mNumVertices);
-        for (auto j = 0u; j < pMesh->mNumVertices; j++)
+        std::vector<CollisionVertex> vertices(aimesh->mNumVertices);
+        for (auto j = 0u; j < aimesh->mNumVertices; j++)
         {
-            auto position = &(pMesh->mVertices[j]);
-            auto normal = &(pMesh->mNormals[j]);
+            auto position = &(aimesh->mVertices[j]);
+            auto normal = &(aimesh->mNormals[j]);
 
             auto& vertex = vertices[j];
             vertex.position = Vec3(position->x, position->y, position->z);
@@ -210,10 +203,10 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& 
         }
 
         // ポリゴン情報の読み込み
-        mesh.polygons.resize(pMesh->mNumFaces);
-        for (auto j = 0u; j < pMesh->mNumFaces; j++)
+        mesh.polygons.resize(aimesh->mNumFaces);
+        for (auto j = 0u; j < aimesh->mNumFaces; j++)
         {
-            const auto& aiface = pMesh->mFaces[j];
+            const auto& aiface = aimesh->mFaces[j];
 
             auto id0 = aiface.mIndices[0];
             auto id1 = aiface.mIndices[1];
@@ -238,39 +231,6 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& 
             polygon.aabb.min = Vec3::Min(Vec3::Min(p0, p1), p2);
         }
 
-        //for (const auto& [edge, faces] : edgeMap)
-        //{
-        //    // 共有していないエッジは無視しない
-        //    if (faces.size() != 2) continue;
-
-        //    // 法線が異なれば無視しない
-        //    if (faces[0]->normal != faces[1]->normal) continue;
-        //    
-        //    // 無視するエッジを削除
-        //    auto& edges0 = faces[0]->edges;
-        //    auto& edges1 = faces[1]->edges;
-        //    auto& indices0 = faces[0]->indices;
-        //    auto& indices1 = faces[1]->indices;
-
-        //    for (auto j = 0; j < edges0.size(); j++)
-        //    {
-        //        if (edge == std::set<uint32_t>{indices0[edges0[j].first], indices0[edges0[j].second]})
-        //        {
-        //            edges0.erase(edges0.begin() + j);
-        //            break;
-        //        }
-        //    }
-
-        //    for (auto j = 0; j < edges1.size(); j++)
-        //    {
-        //        if (edge == std::set<uint32_t>{indices1[edges1[j].first], indices1[edges1[j].second]})
-        //        {
-        //            edges1.erase(edges1.begin() + j);
-        //            break;
-        //        }
-        //    }
-        //}
-
         // meshのAABBを設定
         if (!mesh.polygons.empty())
         {
@@ -294,7 +254,7 @@ std::unique_ptr<CollisionModel> AssimpLoader::LoadCollision(const std::wstring& 
         model->aabb.min = Vec3::Min(model->aabb.min, meshes[i].aabb.min);
     }
 
-    pScene = nullptr;
+    scene = nullptr;
     return std::move(model);
 }
 
@@ -303,19 +263,16 @@ void AssimpLoader::ProcessNode(Model& model, aiNode* node, const aiScene* scene)
     auto& meshes = model.meshes;
     auto& bones = model.bones; 
 
-    for (UINT i = 0; i < node->mNumMeshes; i++)
+    for (auto i = 0u; i < node->mNumMeshes; i++)
     {
-        auto meshIndex = node->mMeshes[i];
-        aiMesh* pMesh = scene->mMeshes[meshIndex];
-        LoadMesh(meshes[meshIndex], pMesh);
-        
-        LoadBones(bones, meshes[meshIndex], pMesh, node);
+        auto mesh_index = node->mMeshes[i];
+        auto aimesh = scene->mMeshes[mesh_index];
 
-        // アウトライン用のスムーズな法線を生成
-        //GenSmoothNormal(meshes[meshIndex]);
+        LoadMesh(meshes[mesh_index], aimesh);
+        LoadBones(bones, meshes[mesh_index], aimesh, node);
     }
 
-    for (UINT i = 0; i < node->mNumChildren; i++)
+    for (auto i = 0u; i < node->mNumChildren; i++)
     {
         ProcessNode(model, node->mChildren[i], scene);
     }
@@ -458,13 +415,14 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
 {
     for (auto i = 0u; i < pMesh->mNumBones; i++)
     {
-        auto pBone = pMesh->mBones[i];
-        auto name = std::string(pBone->mName.C_Str());
+        auto aibone = pMesh->mBones[i];
+        auto name = std::string(aibone->mName.C_Str());
         
         Bone* bone = bones.Find(name);
-        int boneIndex = bones.Index(bone);
+        auto bone_index = bones.Index(bone);
 
-        auto mat = pBone->mOffsetMatrix;
+        // オフセット行列を読み込む
+        auto mat = aibone->mOffsetMatrix;
         auto ibmat = DirectX::XMMATRIX(
             mat.a1, mat.a2, mat.a3, mat.a4,
             mat.b1, mat.b2, mat.b3, mat.b4,
@@ -472,18 +430,31 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
             mat.d1, mat.d2, mat.d3, mat.d4);
         bone->SetInvBindMatrix(ibmat);
 
-        auto weights = pBone->mWeights;
-        for (auto j = 0u; j < pBone->mNumWeights; j++)
+        // ウェイトの値を読み込む
+        auto weights = aibone->mWeights;
+        for (auto j = 0u; j < aibone->mNumWeights; j++)
         {
             auto weight = weights[j].mWeight;
             auto vertexId = weights[j].mVertexId;
             auto vertex = &(mesh.vertices[vertexId]);
 
             auto n = vertex->bone_num;
-            uint32_t indices[] = { vertex->bone_indices.x, vertex->bone_indices.y, vertex->bone_indices.z, vertex->bone_indices.w };
-            float weights[] = { vertex->bone_weights.x, vertex->bone_weights.y, vertex->bone_weights.z, vertex->bone_weights.w };
 
-            indices[n] = boneIndex;
+            uint32_t indices[] = { 
+                vertex->bone_indices.x, 
+                vertex->bone_indices.y, 
+                vertex->bone_indices.z, 
+                vertex->bone_indices.w 
+            };
+
+            float weights[] = { 
+                vertex->bone_weights.x, 
+                vertex->bone_weights.y, 
+                vertex->bone_weights.z, 
+                vertex->bone_weights.w 
+            };
+
+            indices[n] = bone_index;
             weights[n] = weight;
 
             vertex->bone_indices = XMUINT4(indices);
@@ -492,10 +463,11 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
         }
     }
 
+    // ノードをボーンとして読み込む
     auto name = std::string(node->mName.C_Str());
     
     Bone* bone = bones.Find(name);
-    int boneIndex = bones.Index(bone);
+    int bone_index = bones.Index(bone);
 
     for (auto i = 0u; i < pMesh->mNumVertices; ++i)
     {
@@ -504,10 +476,21 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
 
         if (n >= 4) continue;
 
-        uint32_t indices[] = { vertex->bone_indices.x, vertex->bone_indices.y, vertex->bone_indices.z, vertex->bone_indices.w };
-        float weights[] = { vertex->bone_weights.x, vertex->bone_weights.y, vertex->bone_weights.z, vertex->bone_weights.w };
+        uint32_t indices[] = {
+            vertex->bone_indices.x,
+            vertex->bone_indices.y, 
+            vertex->bone_indices.z, 
+            vertex->bone_indices.w
+        };
 
-        indices[n] = boneIndex;
+        float weights[] = { 
+            vertex->bone_weights.x, 
+            vertex->bone_weights.y, 
+            vertex->bone_weights.z, 
+            vertex->bone_weights.w
+        };
+
+        indices[n] = bone_index;
         weights[n] = 1.0f - (weights[0] + weights[1] + weights[2] + weights[3]);
 
         vertex->bone_indices = XMUINT4(indices);
@@ -526,11 +509,10 @@ std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(aiString path, const aiMate
     }
     else
     {
-        // テクスチャパスは相対パスで入っているので、ファイルの場所とくっつける
+        // テクスチャパスは相対パスで入っているので、ディレクトリのパスとくっつける
         auto file = std::string(path.C_Str());
-        auto texturePath = directoryPath + StringMethods::GetWideString(file);
+        auto texturePath = directory_path + StringMethods::GetWideString(file);
 
-        //dst.DiffuseMap = dir + ToWideString(file);
         return Texture2D::Load(texturePath);
     }
 }
@@ -547,92 +529,104 @@ std::unique_ptr<Texture2D> AssimpLoader::LoadEmbeddedTexture(const aiTexture* te
     }
 }
 
-void AssimpLoader::BuildBoneHierarchy(BoneList& bones, aiNode* node, Bone* parentBone)
+void AssimpLoader::CreateBoneTree(BoneList& bone_tree, Bone* parent, const aiNode* node)
 {
     auto name = std::string(node->mName.C_Str());
     auto mat = node->mTransformation;
     
-    Bone* bone = new Bone(name);
-    bone->SetGlobalMatrix(
-        DirectX::XMMATRIX(
-            mat.a1, mat.a2, mat.a3, mat.a4,
-            mat.b1, mat.b2, mat.b3, mat.b4,
-            mat.c1, mat.c2, mat.c3, mat.c4,
-            mat.d1, mat.d2, mat.d3, mat.d4));
-
+    // 行列から scale, rotation, position を取得
     aiVector3D scale;
     aiQuaternion rot;
     aiVector3D pos;
     mat.Decompose(scale, rot, pos);
 
+    // 新しいボーンを生成
+    auto bone = new Bone(name);
+    bone->SetGlobalMatrix(
+        DirectX::XMMATRIX(
+            mat.a1, mat.a2, mat.a3, mat.a4,
+            mat.b1, mat.b2, mat.b3, mat.b4,
+            mat.c1, mat.c2, mat.c3, mat.c4,
+            mat.d1, mat.d2, mat.d3, mat.d4)
+    );
     bone->SetScale(Vec3(scale.x, scale.y, scale.z));
     bone->SetRotation(Quaternion(rot.x, rot.y, rot.z, rot.w));
     bone->SetPosition(Vec3(pos.x, pos.y, pos.z));
+    bone->SetParent(parent);
 
-    if (parentBone != nullptr)
-    {
-        bone->SetParent(parentBone);
-        parentBone->AddChild(bone);
-    }
-    bones.Append(bone);
+    bone_tree.Append(bone);
 
-    for (UINT i = 0; i < node->mNumChildren; i++)
+    // 子ノードを探索
+    for (auto i = 0u; i < node->mNumChildren; i++)
     {
-        BuildBoneHierarchy(bones, node->mChildren[i], bone);
+        CreateBoneTree(bone_tree, bone, node->mChildren[i]);
     }
 }
 
-void AssimpLoader::LoadAnimation(Animation* animation, aiAnimation* pAnimation, BoneList* bones)
+void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const BoneList& bones)
 {
-    auto animName = std::string(pAnimation->mName.C_Str());
-    printf("Animation load: %s\n", animName.c_str());
+    auto anim_name = std::string(src->mName.C_Str());
+    printf("Animation load: %s\n", anim_name.c_str());
 
-    animation->SetName(animName);
-    animation->SetDuration(pAnimation->mDuration);
-    animation->SetTicksPerSecond(pAnimation->mTicksPerSecond);
+    animation.SetName(anim_name);
+    animation.SetDuration((float)src->mDuration);
+    animation.SetTicksPerSecond((float)src->mTicksPerSecond);
 
-    for (auto i = 0u; i < pAnimation->mNumChannels; i++)
+    for (auto i = 0u; i < src->mNumChannels; i++)
     {
-        auto channel = pAnimation->mChannels[i];
+        auto channel = src->mChannels[i];
         auto name = std::string(channel->mNodeName.C_Str());
-        auto bone = bones->Find(name);
-        auto mtxGlobal = XMMatrixInverse(nullptr, bone->GetGlobalMatrix());
+        auto bone = bones.Find(name);
 
-        std::vector<VectorKey> scalingKeys;
-        std::vector<QuatKey> rotationKeys;
-        std::vector<VectorKey> positionKeys;
+        std::vector<Animation::Vec3Key> scaling_keys;
+        std::vector<Animation::QuatKey> rotation_keys;
+        std::vector<Animation::Vec3Key> position_keys;
 
-        scalingKeys.resize(channel->mNumScalingKeys);
-        for (int j = 0; j < scalingKeys.size(); j++)
+        // 拡大縮小キーの読み込み
+        scaling_keys.resize(channel->mNumScalingKeys);
+        for (int j = 0; j < scaling_keys.size(); j++)
         {
-            auto time = channel->mScalingKeys[j].mTime;
+            auto time = (float)channel->mScalingKeys[j].mTime;
             auto value = channel->mScalingKeys[j].mValue;
-            auto scale = Vec3(value.x, value.y, value.z);
-            scalingKeys[j] = { time, scale };
+            
+            scaling_keys[j].time = time;
+            scaling_keys[j].value = Vec3(value.x, value.y, value.z);
+            scaling_keys[j].easing = Easing::Linear;
         }
 
-        rotationKeys.resize(channel->mNumRotationKeys);
-        for (int j = 0; j < rotationKeys.size(); j++)
+        // 回転キーの読み込み
+        rotation_keys.resize(channel->mNumRotationKeys);
+        for (int j = 0; j < rotation_keys.size(); j++)
         {
-            auto time = channel->mRotationKeys[j].mTime;
+            auto time = (float)channel->mRotationKeys[j].mTime;
             auto value = channel->mRotationKeys[j].mValue;
-            auto rot = Quaternion(value.x, value.y, value.z, value.w);
-            rotationKeys[j] = { time, rot };
+
+            rotation_keys[j].time = time;
+            rotation_keys[j].value = Quaternion(value.x, value.y, value.z, value.w);
+            rotation_keys[j].easing = Easing::Linear;
         }
         
-        positionKeys.resize(channel->mNumPositionKeys);
-        for (int j = 0; j < positionKeys.size(); j++)
+        // 移動キーの読み込み
+        position_keys.resize(channel->mNumPositionKeys);
+        for (int j = 0; j < position_keys.size(); j++)
         {
-            auto time = channel->mPositionKeys[j].mTime;
+            auto time = (float)channel->mPositionKeys[j].mTime;
             auto value = channel->mPositionKeys[j].mValue;
-            /*auto xmf = XMFLOAT3(value.x, value.y, value.z);
-            auto mtx = XMMatrixTranslationFromVector(XMLoadFloat3(&xmf)) * mtxGlobal;*/
-            auto pos = Vec3(value.x, value.y, value.z);
-            positionKeys[j] = { time, pos };
+
+            position_keys[j].time = time;
+            position_keys[j].value = Vec3(value.x, value.y, value.z);
+            position_keys[j].easing = Easing::Linear;
         }
 
-        Channel ch = { name, scalingKeys, rotationKeys, positionKeys };
-        animation->AddChannel(ch);
+        // チャンネルを生成して追加
+        auto bone_channel = new Animation::BoneChannel{};
+        bone_channel->name = name;
+        bone_channel->scaling_keys = scaling_keys;
+        bone_channel->rotation_keys = rotation_keys;
+        bone_channel->position_keys = position_keys;
+        bone_channel->type = Animation::TYPE_BONE;
+
+        animation.AddChannel(bone_channel);
     }
 
 }

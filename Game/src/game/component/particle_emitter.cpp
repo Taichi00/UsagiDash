@@ -180,6 +180,11 @@ void ParticleEmitter::Emit()
 	is_active_ = true;
 }
 
+void ParticleEmitter::Stop()
+{
+	is_active_ = false;
+}
+
 void ParticleEmitter::PrepareModel()
 {
 	// テクスチャ情報の取得
@@ -646,7 +651,7 @@ void ParticleEmitter::UpdatePosition(const ParticleEmitterPositionPropertyPVA& p
 
 void ParticleEmitter::UpdatePosition(const ParticleEmitterPositionPropertyEasing& prop)
 {
-	float (*easing)(const float&) = GetEasingFunc(prop.type);
+	float (*easing)(const float) = GetEasingFunc(prop.type);
 
 	if (prop.middle_enabled)
 	{
@@ -719,7 +724,7 @@ void ParticleEmitter::UpdateScale(const ParticleEmitterScalePropertyPVA& prop)
 void ParticleEmitter::UpdateScale(const ParticleEmitterScalePropertyEasing& prop)
 {
 
-	float (*easing)(const float&);
+	float (*easing)(const float);
 	easing = GetEasingFunc(prop.type);
 	
 	if (prop.middle_enabled)
@@ -750,7 +755,7 @@ void ParticleEmitter::UpdateScale(const ParticleEmitterScalePropertyEasing& prop
 	
 }
 
-float (*ParticleEmitter::GetEasingFunc(const ParticleEmitterEasingType& type))(const float&)
+float (*ParticleEmitter::GetEasingFunc(const ParticleEmitterEasingType& type))(const float)
 {
 	switch (type)
 	{

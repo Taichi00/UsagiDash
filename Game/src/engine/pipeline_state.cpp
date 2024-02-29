@@ -40,7 +40,7 @@ void PipelineState::SetRootSignature(ID3D12RootSignature* rootSignature)
 void PipelineState::SetVS(std::wstring filePath)
 {
 	// 頂点シェーダー読み込み
-	auto hr = D3DReadFileToBlob((L"Assets/Shaders/" + filePath).c_str(), vs_blob_.GetAddressOf());
+	auto hr = D3DReadFileToBlob((L"assets/shader/" + filePath).c_str(), vs_blob_.GetAddressOf());
 	if (FAILED(hr))
 	{
 		printf("頂点シェーダーの読み込みに失敗\n");
@@ -53,7 +53,7 @@ void PipelineState::SetVS(std::wstring filePath)
 void PipelineState::SetPS(std::wstring filePath)
 {
 	// ピクセルシェーダー読み込み
-	auto hr = D3DReadFileToBlob((L"Assets/Shaders/" + filePath).c_str(), ps_blob_.GetAddressOf());
+	auto hr = D3DReadFileToBlob((L"assets/shader/" + filePath).c_str(), ps_blob_.GetAddressOf());
 	if (FAILED(hr))
 	{
 		printf("ピクセルシェーダーの読み込みに失敗\n");

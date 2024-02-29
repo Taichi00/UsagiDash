@@ -313,6 +313,6 @@ float4 main(VSOutput input) : SV_TARGET
     //fog = inverseLerp(0, -200, (worldPos.xyz).y);
     //fogColor = float3(1, 1, 1);
     //color = lerp(color, fogColor, fog);
-      
+    
     return float4(color, 1.0);
 }

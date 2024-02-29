@@ -46,5 +46,5 @@ void Panel::Draw2D()
 	auto world_matrix = WorldMatrix();
 
 	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
-	engine_->DrawFillRectangle(rect, color_, radius_);
+	engine_->DrawFillRectangle(rect, color_ * GetColor(), radius_);
 }
