@@ -50,7 +50,6 @@ std::unique_ptr<Texture2D> Texture2D::GetMono(const float color[4])
 		data[i + 2] = (int)(color[2] * 255);
 		data[i + 3] = (int)(color[3] * 255);
 	}
-	//std::fill(data.begin(), data.end(), 0xff);
 
 	auto hr = buff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, (UINT)data.size());
 	if (FAILED(hr))
@@ -59,18 +58,6 @@ std::unique_ptr<Texture2D> Texture2D::GetMono(const float color[4])
 	}
 
 	return std::make_unique<Texture2D>(buff.Get());
-
-	/*std::vector<unsigned char> data(4 * 4 * 4);
-
-	for (size_t i = 0; i < 4 * 4 * 4; i += 4)
-	{
-		data[i + 0] = color[0] * 255;
-		data[i + 1] = color[1] * 255;
-		data[i + 2] = color[2] * 255;
-		data[i + 3] = color[3] * 255;
-	}
-
-	return new Texture2D(data.data(), 16);*/
 }
 
 std::unique_ptr<Texture2D> Texture2D::GetWhite()

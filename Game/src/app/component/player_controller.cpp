@@ -357,13 +357,6 @@ void PlayerController::Move(const float delta_time)
 	run_smoke_emitter_->transform->rotation = floor_quat;
 	
 	rigidbody_->velocity = velocity * delta_time + rigidbody_->floor_velocity;
-
-
-	if (transform->position.y < -50)
-	{
-		transform->position = Vec3(0, 0, 0);
-		rigidbody_->velocity = Vec3(0, 0.1f, 0);
-	}
 }
 
 void PlayerController::Animate(const float delta_time)
@@ -379,25 +372,19 @@ void PlayerController::Animate(const float delta_time)
 
 	if (is_grounded_ && jump_frame_ == 0)
 	{
-		/*if ((is_running_ && !is_running_prev_) || (is_running_ && !is_grounded_prev_))
-		{
-			animator_->Play("Run", 2.0);
-		}
-		else if (!is_running_ && is_running_prev_ || (!is_running_ && !is_grounded_prev_))
-		{
-			animator_->Play("Idle", 2.0);
-		}*/
 		if (is_running_)
 		{
-			animator_->Playing("Run", 2.0f);
 			auto speed = Vec3::Scale(velocity, 1, 0, 1).Length();
+			animator_->Playing("Run", 2.0f);
 			animator_->SetSpeed(speed * 0.12f + 1.0f);
+
+			run_smoke_emitter_->Emit();
 			run_smoke_emitter_->SetSpawnRate(speed / speed_ * 0.22f);
 		}
 		else
 		{
 			animator_->Playing("Idle", 2.0f);
-			run_smoke_emitter_->SetSpawnRate(0);
+			run_smoke_emitter_->Stop();
 		}
 
 		if (!is_grounded_prev_ && air_count_ > 10)

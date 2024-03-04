@@ -60,6 +60,23 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_r.png" }
 	};
 
+	// ƒŒƒCƒ„[‚ÌÝ’è
+	settings.layers = {
+		"player",
+		"object",
+		"map",
+		"item",
+		"event",
+	};
+	settings.collision_table = {
+		{ "player", "map", true },
+		{ "player", "object", true },
+		{ "player", "item", true },
+		{ "player", "event", true },
+		{ "object", "map", true },
+		{ "object", "object", true },
+	};
+
 	Game::Create();
 
 	Game::Get()->Run(new Level1Scene(), settings);

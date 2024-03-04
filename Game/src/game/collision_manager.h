@@ -11,6 +11,7 @@ class Collider;
 class Rigidbody;
 class Ray;
 class Entity;
+class LayerManager;
 
 class CollisionManager
 {
@@ -39,4 +40,6 @@ private:
 
 	std::unique_ptr<Octree<Collider>> octree_;
 	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
+
+	LayerManager* layer_manager_ = nullptr;
 };

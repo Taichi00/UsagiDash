@@ -7,12 +7,12 @@
 #include "app/component/coin_script.h"
 #include "game/component/audio/audio_source.h"
 
-Coin::Coin(const std::string& name) : Entity(name, "coin")
+Coin::Coin(const std::string& name) : Entity(name, "coin", "item")
 {
 	auto game = Game::Get();
 
 	auto model = game->LoadResource<Model>(L"assets/model/item/Coin.gltf");
-	auto se = game->LoadResource<Audio>(L"assets/se/blop0.wav");
+	auto se = game->LoadResource<Audio>(L"assets/se/drop_003.wav");
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(1.5f));

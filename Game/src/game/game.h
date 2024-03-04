@@ -19,6 +19,7 @@ class Engine;
 class CollisionManager;
 class AudioEngine;
 class InputIconManager;
+class LayerManager;
 
 class Game
 {
@@ -73,13 +74,11 @@ public:
 		return resource_manager_->Load<T>(path);
 	}
 
-	CollisionManager* GetCollisionManager() { return collision_manager_.get(); }
-	ResourceManager* GetResourceManager() { return resource_manager_.get(); }
+	CollisionManager* GetCollisionManager() const { return collision_manager_.get(); }
+	ResourceManager* GetResourceManager() const { return resource_manager_.get(); }
+	LayerManager* GetLayerManager() const { return layer_manager_.get(); }
 
 	double DeltaTime() const;
-	
-	/*DirectX::XMMATRIX GetViewMatrix();
-	DirectX::XMMATRIX GetProjMatrix();*/
 
 protected:
 	virtual void Init(const GameSettings& settings);
@@ -93,16 +92,12 @@ private:
 	std::wstring window_title_ = L"Game";
 
 	std::unique_ptr<Engine> engine_; // 描画エンジンへのポインタ
-
 	std::unique_ptr<Scene> current_scene_; // 現在のシーンへのポインタ
-
 	std::unique_ptr<ResourceManager> resource_manager_; // ResourceManagerへのポインタ
-
 	std::unique_ptr<CollisionManager> collision_manager_;
-
 	std::unique_ptr<AudioEngine> audio_;
-
 	std::unique_ptr<InputIconManager> input_icon_manager_;
+	std::unique_ptr<LayerManager> layer_manager_;
 
 	float delta_time_ = 0.0001f;
 };

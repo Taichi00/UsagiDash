@@ -18,7 +18,12 @@ class Entity
 {
 public:
 	Entity();
-	Entity(const std::string& name, const std::string& tag = "untagged");
+	Entity(
+		const std::string& name, 
+		const std::string& tag = "untagged", 
+		const std::string& layer = "default"
+	);
+
 	virtual ~Entity();
 
 	void Destroy();
@@ -142,6 +147,7 @@ public:
 	Transform* transform;
 	std::string name;
 	std::string tag;
+	std::string layer;
 
 protected:
 	Scene* scene_;

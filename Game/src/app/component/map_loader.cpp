@@ -2,6 +2,10 @@
 #include "game/scene.h"
 #include "app/entity/coin.h"
 #include "app/entity/tutorial.h"
+#include "app/entity/checkpoint.h"
+#include "math/vec.h"
+#include "math/quaternion.h"
+#include "app/component/game_manager.h"
 
 MapLoader::MapLoader(const std::wstring& path)
 {
@@ -32,8 +36,8 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 {
 	auto scene = GetScene();
 	
-	auto position = transform->position;
-	auto scale = transform->scale;
+	auto map_position = transform->position;
+	auto map_scale = transform->scale;
 
 	// Entityの読み込み
 	for (const auto& entity : map.entities)
@@ -44,11 +48,29 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 		// Brush Entityは無視
 		if (class_name == "worldspawn") continue;
 
-		auto origin = MapFileParser::ToVec3(pairs.at("origin"));
-		origin = Vec3::Scale(origin, scale) + position;
+		// 位置
+		Vec3 position;
+		if (pairs.contains("origin"))
+		{
+			position = MapFileParser::ToVec3(pairs.at("origin"));
+		}
+		position = Vec3::Scale(position, map_scale) + map_position;
+
+		// 角度
+		Quaternion rotation;
+		if (pairs.contains("angle"))
+		{
+			rotation = Quaternion::FromEuler(0, (float)(MapFileParser::ToFloat(pairs.at("angle")) * PI / 180), 0);
+		}
 		
+		// エンティティの生成
 		Entity* new_entity = nullptr;
-		if (class_name == "item_coin")
+		if (class_name == "info_player_start")
+		{
+			// スタート位置を設定
+			GameManager::Get()->SetStartPosition(position);
+		}
+		else if (class_name == "item_coin")
 		{
 			new_entity = new Coin("");
 		}
@@ -59,11 +81,16 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 				MapFileParser::ToFloat(pairs.at("radius"))
 			);
 		}
+		else if (class_name == "checkpoint")
+		{
+			new_entity = new Checkpoint();
+		}
 
 		if (new_entity)
 		{
 			scene->CreateEntity(new_entity);
-			new_entity->transform->position = origin;
+			new_entity->transform->position = position;
+			new_entity->transform->rotation = rotation;
 		}
 	}
 }

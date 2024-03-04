@@ -58,6 +58,6 @@ void CoinScript::OnCollisionEnter(Collider* collider)
 
         GameManager::Get()->AddCoin(1);
         audio_source_->Play(0.8f);
-        audio_source_->SetPitch(50.f);
+        //audio_source_->SetPitch(50.f);
     }
 }

@@ -3,6 +3,9 @@
 #include "game/scene.h"
 #include "game/component/audio/audio_source.h"
 #include "game/component/animator.h"
+#include "app/component/player_controller.h"
+#include "game/component/rigidbody.h"
+#include "app/entity/checkpoint.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
@@ -18,10 +21,13 @@ bool GameManager::Init()
 	{
 		instance_->player_ = player_;
 		instance_->coin_label_ = coin_label_;
+		instance_->current_checkpoint_ = nullptr;
+
 		GetEntity()->Destroy();
 
 		return true;
 	}
+
 	instance_ = this;
 	GetScene()->DontDestroyOnLoad(GetEntity());
 
@@ -41,6 +47,7 @@ bool GameManager::Init()
 
 void GameManager::Update(const float delta_time)
 {
+	PlayerFallen();
 }
 
 void GameManager::AddCoin(const int n)
@@ -59,4 +66,26 @@ std::string GameManager::GetCoinText(const int n)
 	str = std::string(std::max(0, 4 - (int)str.size()), '0') + str;
 
 	return str;
+}
+
+void GameManager::PlayerFallen()
+{
+	if (player_->transform->position.y < -50)
+	{
+		RespawnPlayer();
+	}
+}
+
+void GameManager::RespawnPlayer()
+{
+	if (current_checkpoint_)
+	{
+		player_->transform->position = current_checkpoint_->transform->position + Vec3(0, 5, 0);
+	}
+	else
+	{
+		player_->transform->position = start_position_ + Vec3(0, 5, 0);
+	}
+
+	player_->GetEntity()->GetComponent<Rigidbody>()->velocity = Vec3(0, 0.1f, 0);
 }

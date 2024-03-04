@@ -2,6 +2,8 @@
 
 #include "math/vec.h"
 #include "math/aabb.h"
+#include "game/layer_manager.h"
+#include "game/game.h"
 #include <windows.h>
 #include <vector>
 #include <list>
@@ -18,6 +20,10 @@ public:
 	{
 		cell = nullptr;
 		object = nullptr;
+		next = nullptr;
+		previous = nullptr;
+		group = nullptr;
+		layer = 0;
 	}
 
 	virtual ~OctreeObject()
@@ -69,6 +75,7 @@ public:
 	OctreeObject<T>* next; // 次のObject
 	AABB aabb;
 	void* group;
+	int layer; // レイヤーのインデックス番号
 };
 
 template <class T>
@@ -143,6 +150,8 @@ public:
 		cell_num_ = 0;
 		cell_array_ = nullptr;
 		dim_ = 0;
+
+		layer_manager_ = Game::Get()->GetLayerManager();
 	}
 
 	virtual ~Octree()
@@ -230,15 +239,25 @@ protected:
 			OctreeObject<T>* obj2 = obj1->next;
 			while (obj2 != nullptr)
 			{
-				if (obj1->group != obj2->group)
+				if (obj1->group == obj2->group)
 				{
-					if (obj1->aabb.Intersects(obj2->aabb))
-					{
-						// 衝突リスト作成
-						col_vect.push_back(obj1->object);
-						col_vect.push_back(obj2->object);
-					}
+					obj2 = obj2->next;
+					continue;
 				}
+
+				if (!layer_manager_->IsCollisionEnabled(obj1->layer, obj2->layer))
+				{
+					obj2 = obj2->next;
+					continue;
+				}
+
+				if (obj1->aabb.Intersects(obj2->aabb))
+				{
+					// 衝突リスト作成
+					col_vect.push_back(obj1->object);
+					col_vect.push_back(obj2->object);
+				}
+
 				obj2 = obj2->next;
 			}
 
@@ -246,6 +265,7 @@ protected:
 			for (auto& stac : col_stac)
 			{
 				if (obj1->group == stac->group) continue;
+				if (!layer_manager_->IsCollisionEnabled(obj1->layer, stac->layer)) continue;
 				if (obj1->aabb.Intersects(stac->aabb))
 				{
 					col_vect.push_back(obj1->object);
@@ -373,4 +393,5 @@ protected:
 	unsigned long cell_num_; // 空間の数
 	unsigned int level_; // 最下位レベル
 
+	LayerManager* layer_manager_ = nullptr;
 };

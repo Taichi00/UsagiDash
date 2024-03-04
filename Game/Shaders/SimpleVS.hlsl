@@ -43,6 +43,7 @@ struct VSOutput
     float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
+    float4 instanceColor : INSTANCE_COLOR;
 };
 
 
@@ -132,5 +133,6 @@ VSOutput main(VSInput input)
     output.binormal = worldBinormal;
     output.color = input.color;
     output.uv = input.uv;
+    output.instanceColor = 1;
     return output;
 }

@@ -158,16 +158,23 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\app\component\checkpoint_controller.cpp" />
     <ClCompile Include="src\app\component\tutorial_text_display.cpp" />
     <ClCompile Include="src\app\component\game_manager.cpp" />
     <ClCompile Include="src\app\component\coin_script.cpp" />
     <ClCompile Include="src\app\component\map_loader.cpp" />
+    <ClCompile Include="src\app\entity\checkpoint.cpp" />
     <ClCompile Include="src\app\entity\coin.cpp" />
     <ClCompile Include="src\app\entity\player.cpp" />
     <ClCompile Include="src\app\entity\tutorial.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
     <ClCompile Include="src\game\component\gui\text.cpp" />
     <ClCompile Include="src\game\input\input_icon_manager.cpp" />
+    <ClCompile Include="src\game\layer_manager.cpp" />
+    <ClCompile Include="src\game\particle_renderer.cpp" />
+    <ClCompile Include="src\game\particle_renderer_mesh.cpp" />
+    <ClCompile Include="src\game\particle_renderer_opaque.cpp" />
+    <ClCompile Include="src\game\particle_renderer_sprite.cpp" />
     <ClCompile Include="src\game\resource\inline_image.cpp" />
     <ClCompile Include="src\engine\pipeline_state_manager.cpp" />
     <ClCompile Include="src\game\animation.cpp" />
@@ -232,13 +239,14 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\transform.cpp" />
     <ClCompile Include="src\engine\vertex_buffer.cpp" />
     <ClCompile Include="src\engine\window.cpp" />
-    <ClCompile Include="src\game\tag_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\app\component\checkpoint_controller.h" />
     <ClInclude Include="src\app\component\tutorial_text_display.h" />
     <ClInclude Include="src\app\component\game_manager.h" />
     <ClInclude Include="src\app\component\coin_script.h" />
     <ClInclude Include="src\app\component\map_loader.h" />
+    <ClInclude Include="src\app\entity\checkpoint.h" />
     <ClInclude Include="src\app\entity\coin.h" />
     <ClInclude Include="src\app\entity\player.h" />
     <ClInclude Include="src\app\entity\tutorial.h" />
@@ -247,6 +255,11 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\engine\font_collection.h" />
     <ClInclude Include="src\game\component\gui\panel_property.h" />
     <ClInclude Include="src\game\input\input_icon_manager.h" />
+    <ClInclude Include="src\game\layer_manager.h" />
+    <ClInclude Include="src\game\particle_renderer.h" />
+    <ClInclude Include="src\game\particle_renderer_mesh.h" />
+    <ClInclude Include="src\game\particle_renderer_opaque.h" />
+    <ClInclude Include="src\game\particle_renderer_sprite.h" />
     <ClInclude Include="src\game\resource\inline_image.h" />
     <ClInclude Include="src\engine\pipeline_state_manager.h" />
     <ClInclude Include="src\game\audio_engine.h" />
@@ -267,7 +280,6 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\resource\font.h" />
     <ClInclude Include="src\game\resource\bitmap.h" />
     <ClInclude Include="src\game\component\gui\text.h" />
-    <ClInclude Include="src\game\tag_manager.h" />
     <ClInclude Include="src\math\aabb.h" />
     <ClInclude Include="src\math\color.h" />
     <ClInclude Include="src\game\component\gui\label.h" />

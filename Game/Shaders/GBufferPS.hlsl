@@ -18,6 +18,7 @@ struct PSInput
     float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
+    float4 instanceColor : INSTANCE_COLOR;
 };
 
 cbuffer MaterialParameter : register(b3)
@@ -35,7 +36,7 @@ Texture2D gNormal : register(t2); // normalテクスチャ
 
 PSOutput main(PSInput In)
 {
-    float4 albedo = gAlbedo.Sample(gSampler, In.uv) * float4(BaseColor.rgb, 1);
+    float4 albedo = gAlbedo.Sample(gSampler, In.uv) * float4(BaseColor.rgb, 1) * In.instanceColor;
     
     if (albedo.a < 0.5)
         discard;

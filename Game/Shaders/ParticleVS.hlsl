@@ -19,12 +19,14 @@ struct VSOutput
     float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
+    float4 instanceColor : INSTANCE_COLOR;
 };
 
 struct ParticleData
 {
     float4x4 world;
     float4x4 lightWorld;
+    float4 color;
 };
 
 cbuffer Transform : register(b0)
@@ -45,7 +47,7 @@ cbuffer Scene : register(b1)
 
 cbuffer ParticleParameter : register(b2)
 {
-    ParticleData data[500];
+    ParticleData data[300];
 }
 
 
@@ -92,6 +94,7 @@ VSOutput main(VSInput input)
     // ShadowMapè„ÇÃç¿ïWÇéÊìæ
     float4 possm = GetShadowMapPosition(worldPos, input);
     
+    float4 color = data[index].color;
     
     output.svpos = projPos;
     output.worldPos = worldPos;
@@ -102,5 +105,6 @@ VSOutput main(VSInput input)
     output.binormal = worldBinormal;
     output.color = input.color;
     output.uv = input.uv;
+    output.instanceColor = color;
     return output;
 }

@@ -1,3 +1,6 @@
+newmtl Dark/texture_01
+map_Kd ..\..\Assets\Map\textures\Dark\texture_01.png
+
 newmtl Dark/texture_03
 map_Kd ..\..\Assets\Map\textures\Dark\texture_03.png
 

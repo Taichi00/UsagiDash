@@ -4,8 +4,10 @@
 
 struct Color
 {
-	float r = 0.0f, g = 0.0f, b = 0.0f;
-	float a = 1.0f;
+	float r = 0;
+	float g = 0;
+	float b = 0;
+	float a = 1;
 
 	Color() : r(0), g(0), b(0), a(1) {}
 	Color(const float r, const float g, const float b) : r(r), g(g), b(b), a(1) {}
@@ -122,6 +124,27 @@ struct Color
 	static Color Lerp(const Color& c1, const Color& c2, const float t)
 	{
 		return c1 * (1 - t) + c2 * t;
+	}
+
+	static Color HSVtoRGB(const float h, const float s, const float v, const float a = 1)
+	{
+		float r, g, b;
+		float c = s;
+		float h2 = h / 60.f;
+		float x = c * (float)(1 - abs(fmod(h2, 2.f) - 1));
+
+		if (0 <= h2 && h2 < 1) r = c, g = x, b = 0;
+		else if (1 <= h2 && h2 < 2) r = x, g = c, b = 0;
+		else if (2 <= h2 && h2 < 3) r = 0, g = c, b = x;
+		else if (3 <= h2 && h2 < 4) r = 0, g = x, b = c;
+		else if (4 <= h2 && h2 < 5) r = x, g = 0, b = c;
+		else if (5 <= h2 && h2 < 6) r = c, g = 0, b = x;
+		else r = g = b = 0;
+		r += v - c;
+		g += v - c;
+		b += v - c;
+
+		return Color(r, g, b, a);
 	}
 
 	std::string GetString()

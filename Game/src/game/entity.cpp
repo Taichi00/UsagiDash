@@ -8,10 +8,11 @@ Entity::Entity() : Entity("No Name")
 	
 }
 
-Entity::Entity(const std::string& name, const std::string& tag)
+Entity::Entity(const std::string& name, const std::string& tag, const std::string& layer)
 {
 	this->name = name;
 	this->tag = tag;
+	this->layer = layer;
 
 	transform = new Transform();
 	AddComponent(transform);

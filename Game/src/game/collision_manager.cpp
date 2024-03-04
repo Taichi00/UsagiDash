@@ -6,12 +6,15 @@
 #include "game/component/collider/ray.h"
 #include "game/entity.h"
 #include "math/aabb.h"
-#include <chrono>
+#include "game/game.h"
+#include "game/layer_manager.h"
 
 CollisionManager::CollisionManager()
 {
 	octree_ = std::make_unique<Octree<Collider>>();
 	octree_->Init(6, { Vec3(1000, 1000, 1000), Vec3(-1000, -1000, -1000) });
+
+	layer_manager_ = Game::Get()->GetLayerManager();
 }
 
 void CollisionManager::Update(const float delta_time)
@@ -40,7 +43,6 @@ void CollisionManager::Update(const float delta_time)
 	}
 
 	// 準備
-	auto start = std::chrono::system_clock::now();
 	for (auto i = 0; i < colliders_.size(); i++)
 	{
 		colliders_[i]->Prepare();
@@ -51,48 +53,8 @@ void CollisionManager::Update(const float delta_time)
 	}
 
 	// 衝突判定
-	//for (auto i = 0; i < colliders_.size(); i++)
-	//{
-	//	auto collider1 = colliders_[i];
-
-	//	for (auto j = i + 1; j < colliders_.size(); j++)
-	//	{
-	//		auto collider2 = colliders_[j];
-	//		
-	//		// 衝突しないタグの組であれば無視
-	//		/*auto& tag1 = collider1->GetEntity()->tag;
-	//		auto& tag2 = collider2->GetEntity()->tag;
-	//		if (std::find(non_collision_tags_.begin(), non_collision_tags_.end(), std::make_pair(tag1, tag2)) != non_collision_tags_.end())
-	//		{
-	//			continue;
-	//		}*/
-
-	//		if (collider1->GetEntity() == collider2->GetEntity())
-	//		{
-	//			continue;
-	//		}
-
-	//		// AABBが衝突していなければ無視
-	//		if (!collider1->GetAABB().Intersects(collider2->GetAABB()))
-	//		{
-	//			continue;
-	//		}
-	//		
-	//		// 衝突判定
-	//		if (collider1->Intersects(collider2))
-	//		{
-	//			collided_entities_.insert({ collider1->GetEntity(), collider2 });
-	//			collided_entities_.insert({ collider2->GetEntity(), collider1 });
-	//		}
-	//	}
-	//}
-	
-	//start = std::chrono::system_clock::now();
 	std::vector<Collider*> collision_list;
 	octree_->GetAllCollisionList(collision_list);
-	/*end = std::chrono::system_clock::now();
-	time = (double)(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0);
-	printf("CollisionList:\t%lf[ms]\n", time);*/
 
 	for (int i = 0; i < collision_list.size(); i += 2)
 	{
@@ -137,46 +99,6 @@ void CollisionManager::Update(const float delta_time)
 		}
 
 		// 衝突判定
-		//for (auto i = 0; i < colliders_.size(); i++)
-		//{
-		//	auto collider1 = colliders_[i];
-
-		//	if (!collider1->GetRigidbody()) continue;
-
-		//	for (auto j = i + 1; j < colliders_.size(); j++)
-		//	{
-		//		auto collider2 = colliders_[j];
-
-		//		if (!collider2->GetRigidbody()) continue;
-
-		//		// 衝突しないタグの組であれば無視
-		//		/*auto& tag1 = collider1->GetEntity()->tag;
-		//		auto& tag2 = collider2->GetEntity()->tag;
-		//		if (std::find(non_collision_tags_.begin(), non_collision_tags_.end(), std::make_pair(tag1, tag2)) != non_collision_tags_.end())
-		//		{
-		//			continue;
-		//		}*/
-
-		//		if (collider1->GetEntity() == collider2->GetEntity())
-		//		{
-		//			continue;
-		//		}
-
-		//		// AABBが衝突していなければ無視
-		//		if (!collider1->GetAABB().Intersects(collider2->GetAABB()))
-		//		{
-		//			continue;
-		//		}
-		//		
-		//		// 衝突判定
-		//		if (collider1->Intersects(collider2))
-		//		{
-		//			collided_entities_.insert({ collider1->GetEntity(), collider2 });
-		//			collided_entities_.insert({ collider2->GetEntity(), collider1 });
-		//		}
-		//	}
-		//}
-		
 		collision_list.clear();
 		octree_->GetAllCollisionList(collision_list);
 
@@ -214,30 +136,9 @@ void CollisionManager::Update(const float delta_time)
 	for (auto& rigidbody : rigidbodies_)
 	{
 		// 位置の更新
-		/*if (rigidbody->floor_rigidbody)
-		{
-			rigidbody->floor_velocity = rigidbody->floor_rigidbody->velocity;
-		}
-		rigidbody->floor_velocity *= 0.98;*/
-
-		//rigidbody->transform->position += rigidbody->floor_velocity;
-
 		rigidbody->transform->position = rigidbody->position;
 		rigidbody->velocity = (rigidbody->position - rigidbody->position_prev);
-
-		//rigidbody->transform->position += rigidbody->floor_velocity;
 	}
-
-	/*for (auto& rigidbody : rigidbodies_)
-	{
-		if (rigidbody->floor_rigidbody)
-		{
-			rigidbody->floor_velocity = rigidbody->floor_rigidbody->velocity;
-		}
-		rigidbody->floor_velocity *= 0.98;
-
-		rigidbody->transform->position += rigidbody->floor_velocity;
-	}*/
 
 	for (auto& p : collided_entities_)
 	{
@@ -249,9 +150,14 @@ void CollisionManager::Add(Collider* collider)
 {
 	colliders_.push_back(collider);
 
+	auto entity = collider->GetEntity();
 	auto obj = std::make_unique<OctreeObject<Collider>>();
+
 	obj->object = collider;
-	obj->group = collider->GetEntity();
+	obj->group = entity;
+	obj->layer = layer_manager_->GetLayerIndex(entity->layer);
+
+	// Octreeに追加
 	octree_objects_.push_back(std::move(obj));
 }
 
@@ -331,18 +237,3 @@ void CollisionManager::SetNonCollisionTags(const std::string& tag1, const std::s
 {
 	non_collision_tags_.push_back(std::make_pair(tag1, tag2));
 }
-
-//void CollisionManager::Remove()
-//{
-//	// nullptrであれば削除
-//	for (auto it = colliders_.begin(); it != colliders_.end(); ++it)
-//	{
-//		if (*it == nullptr) colliders_.erase(it);
-//	}
-//
-//	for (auto it = rigidbodies_.begin(); it != rigidbodies_.end(); ++it)
-//	{
-//		if (*it == nullptr) rigidbodies_.erase(it);
-//	}
-//
-//}

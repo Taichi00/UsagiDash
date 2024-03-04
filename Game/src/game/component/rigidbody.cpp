@@ -121,10 +121,6 @@ void Rigidbody::Resolve()
 				k = 0.3f;
 			}
 			
-			/*velocity += normal * J / mass;
-			velocity += tangent * B / mass;
-			velocity += normal * depth * k;*/
-
 			position += dp + tangent * B / mass;
 		}
 	}

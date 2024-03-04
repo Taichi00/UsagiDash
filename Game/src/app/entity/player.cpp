@@ -11,7 +11,7 @@
 #include "game/resource/texture2d.h"
 #include "player.h"
 
-Player::Player(const std::string& name) : Entity(name, "player")
+Player::Player(const std::string& name) : Entity(name, "player", "player")
 {
 	auto game = Game::Get();
 
@@ -27,16 +27,16 @@ Player::Player(const std::string& name) : Entity(name, "player")
 	run_smoke_prop.time_to_live_range = 10;
 	run_smoke_prop.spawn_rate = 0.2f;
 	run_smoke_prop.spawn_rate_range = 0;
-	run_smoke_prop.position_type = PARTICAL_PROP_TYPE_EASING;
-	run_smoke_prop.position_easing.type = PARTICLE_EASE_LINEAR;
+	run_smoke_prop.position_type = PROP_TYPE_EASING;
+	run_smoke_prop.position_easing.type = EASE_LINEAR;
 	run_smoke_prop.position_easing.start = Vec3(0, 0.3f, -1);
 	run_smoke_prop.position_easing.start_range = Vec3(0.5f, 0.1f, 0.5f);
 	run_smoke_prop.position_easing.end = Vec3(0, 2, -2);
 	run_smoke_prop.position_easing.end_range = Vec3(0.5f, 0.8f, 0.5f);
 	run_smoke_prop.rotation_pva.rotation_range = Vec3(0, 0, 3.14f);
-	run_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 0.1f);
-	run_smoke_prop.scaleType = PARTICAL_PROP_TYPE_EASING;
-	run_smoke_prop.scale_easing.type = PARTICLE_EASE_OUT_CUBIC;
+	run_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 6);
+	run_smoke_prop.scale_type = PROP_TYPE_EASING;
+	run_smoke_prop.scale_easing.type = EASE_OUT_CUBIC;
 	run_smoke_prop.scale_easing.keep_aspect = true;
 	run_smoke_prop.scale_easing.middle_enabled = true;
 	run_smoke_prop.scale_easing.start = Vec3(0.1f, 0.1f, 0.1f);
@@ -54,9 +54,9 @@ Player::Player(const std::string& name) : Entity(name, "player")
 	jump_smoke_prop.position_pva.position = Vec3(0, 0.5f, 0);
 	jump_smoke_prop.position_pva.velocity_range = Vec3(0.01f, 0.01f, 0.01f);
 	jump_smoke_prop.rotation_pva.rotation_range = Vec3(0, 0, 3.14f);
-	jump_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 0.1f);
-	jump_smoke_prop.scaleType = PARTICAL_PROP_TYPE_EASING;
-	jump_smoke_prop.scale_easing.type = PARTICLE_EASE_LINEAR;
+	jump_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 6);
+	jump_smoke_prop.scale_type = PROP_TYPE_EASING;
+	jump_smoke_prop.scale_easing.type = EASE_LINEAR;
 	jump_smoke_prop.scale_easing.start = Vec3(0.6f, 0.6f, 0.6f);
 	jump_smoke_prop.scale_easing.end = Vec3(0, 0, 0);
 	jump_smoke_prop.sprite.albedo_texture = smoke_albedo;
@@ -68,18 +68,18 @@ Player::Player(const std::string& name) : Entity(name, "player")
 	circle_smoke_prop.spawn_rate = 5;
 	circle_smoke_prop.time_to_live = 35;
 	circle_smoke_prop.time_to_live_range = 15;
-	circle_smoke_prop.spawning_method = PARTICAL_SPAWN_METHOD_CIRCLE;
+	circle_smoke_prop.spawning_method = SPAWN_METHOD_CIRCLE;
 	circle_smoke_prop.spawning_circle.radius = 0.5;
 	circle_smoke_prop.spawning_circle.vertices = 5;
-	circle_smoke_prop.position_type = PARTICAL_PROP_TYPE_EASING;
-	circle_smoke_prop.position_easing.type = PARTICLE_EASE_OUT_CUBIC;
+	circle_smoke_prop.position_type = PROP_TYPE_EASING;
+	circle_smoke_prop.position_easing.type = EASE_OUT_CUBIC;
 	circle_smoke_prop.position_easing.start = Vec3(0, 0.3f, 0);
 	circle_smoke_prop.position_easing.end = Vec3(2, 0.8f, 0);
 	circle_smoke_prop.position_easing.end_range = Vec3(0.1f, 0.1f, 0.1f);
 	circle_smoke_prop.rotation_pva.rotation_range = Vec3(0, 0, 3.14f);
-	circle_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 0.1f);
-	circle_smoke_prop.scaleType = PARTICAL_PROP_TYPE_EASING;
-	circle_smoke_prop.scale_easing.type = PARTICLE_EASE_OUT_CUBIC;
+	circle_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 6);
+	circle_smoke_prop.scale_type = PROP_TYPE_EASING;
+	circle_smoke_prop.scale_easing.type = EASE_OUT_CUBIC;
 	circle_smoke_prop.scale_easing.keep_aspect = true;
 	circle_smoke_prop.scale_easing.middle_enabled = true;
 	circle_smoke_prop.scale_easing.start = Vec3(0.1f, 0.1f, 0.1f);
@@ -95,16 +95,16 @@ Player::Player(const std::string& name) : Entity(name, "player")
 	wall_slide_smoke_prop.time_to_live_range = 10;
 	wall_slide_smoke_prop.spawn_rate = 0.08f;
 	wall_slide_smoke_prop.spawn_rate_range = 0;
-	wall_slide_smoke_prop.position_type = PARTICAL_PROP_TYPE_EASING;
-	wall_slide_smoke_prop.position_easing.type = PARTICLE_EASE_LINEAR;
+	wall_slide_smoke_prop.position_type = PROP_TYPE_EASING;
+	wall_slide_smoke_prop.position_easing.type = EASE_LINEAR;
 	wall_slide_smoke_prop.position_easing.start = Vec3(-0.5f, 2, -0.5f);
 	wall_slide_smoke_prop.position_easing.start_range = Vec3(0.5f, 0.5f, 0.1f);
 	wall_slide_smoke_prop.position_easing.end = Vec3(-0.5f, 4, -0.2f);
 	wall_slide_smoke_prop.position_easing.end_range = Vec3(0.5f, 0.5f, 0.8f);
 	wall_slide_smoke_prop.rotation_pva.rotation_range = Vec3(0, 0, 3.14f);
-	wall_slide_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 0.1f);
-	wall_slide_smoke_prop.scaleType = PARTICAL_PROP_TYPE_EASING;
-	wall_slide_smoke_prop.scale_easing.type = PARTICLE_EASE_OUT_CUBIC;
+	wall_slide_smoke_prop.rotation_pva.velocity_range = Vec3(0, 0, 6);
+	wall_slide_smoke_prop.scale_type = PROP_TYPE_EASING;
+	wall_slide_smoke_prop.scale_easing.type = EASE_OUT_CUBIC;
 	wall_slide_smoke_prop.scale_easing.keep_aspect = true;
 	wall_slide_smoke_prop.scale_easing.middle_enabled = true;
 	wall_slide_smoke_prop.scale_easing.start = Vec3(0.1f, 0.1f, 0.1f);

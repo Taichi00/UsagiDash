@@ -7,6 +7,13 @@
 
 struct GameSettings
 {
+	struct CollisionInfo
+	{
+		std::string layer1;
+		std::string layer2;
+		bool collision_enabled;
+	};
+
 	std::wstring title = L"Game";
 	unsigned int window_width = 1280;
 	unsigned int window_height = 720;
@@ -18,4 +25,7 @@ struct GameSettings
 	std::map<std::string, std::vector<Input::AxisActionInfo>> axis_actions = {};
 
 	std::map<std::string, std::vector<InputIconManager::InputIconInfo>> action_icons = {};
+
+	std::vector<std::string> layers = {};
+	std::vector<CollisionInfo> collision_table = {};
 };

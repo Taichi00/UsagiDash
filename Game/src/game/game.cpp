@@ -12,6 +12,7 @@
 #include "game/collision_manager.h"
 #include "game/audio_engine.h"
 #include "game/input/input_icon_manager.h"
+#include "game/layer_manager.h"
 #include <chrono>
 
 Game* Game::instance_ = nullptr;
@@ -160,6 +161,19 @@ void Game::Init(const GameSettings& settings)
 	// キー入力
 	Input::Create(window_.get());
 
+	// LayerManager の生成
+	layer_manager_ = std::make_unique<LayerManager>();
+
+	// レイヤーの設定
+	for (const auto& name : settings.layers)
+	{
+		layer_manager_->AddLayer(name);
+	}
+	for (const auto& info : settings.collision_table)
+	{
+		layer_manager_->SetCollisionTable(info.layer1, info.layer2, info.collision_enabled);
+	}
+
 	// CollisionManagerの生成
 	collision_manager_ = std::make_unique<CollisionManager>();
 
@@ -173,6 +187,7 @@ void Game::Init(const GameSettings& settings)
 		Input::Get()->AddAxisAction(action.first, action.second);
 	}
 
+	// InputIconManager の生成
 	input_icon_manager_ = std::make_unique<InputIconManager>();
 
 	for (const auto& action : settings.action_icons)

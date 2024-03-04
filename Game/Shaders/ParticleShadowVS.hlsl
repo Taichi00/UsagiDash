@@ -23,6 +23,7 @@ struct ParticleData
 {
     float4x4 world;
     float4x4 lightWorld;
+    float4 color;
 };
 
 cbuffer Transform : register(b0)
@@ -44,7 +45,7 @@ cbuffer Scene : register(b1)
 
 cbuffer ParticleParameter : register(b2)
 {
-    ParticleData data[500];
+    ParticleData data[300];
 }
 
 VSOutput main(VSInput input)
