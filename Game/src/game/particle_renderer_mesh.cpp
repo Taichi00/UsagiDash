@@ -100,8 +100,8 @@ bool ParticleRendererMesh::PreparePSO()
 	shadow_pso_ = std::make_unique<PipelineState>();
 	shadow_pso_->SetInputLayout(Vertex::InputLayout);
 	shadow_pso_->SetRootSignature(root_signature_->Get());
-	shadow_pso_->SetVS(L"ParticleShadowVS.cso");
-	shadow_pso_->SetPS(L"ShadowPS.cso");
+	shadow_pso_->SetVS(L"particle_shadow_vs.cso");
+	shadow_pso_->SetPS(L"shadow_ps.cso");
 	shadow_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	shadow_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	shadow_pso_->Create();
@@ -115,8 +115,8 @@ bool ParticleRendererMesh::PreparePSO()
 	depth_pso_ = std::make_unique<PipelineState>();
 	depth_pso_->SetInputLayout(Vertex::InputLayout);
 	depth_pso_->SetRootSignature(root_signature_->Get());
-	depth_pso_->SetVS(L"ParticleVS.cso");
-	depth_pso_->SetPS(L"DepthPS.cso");
+	depth_pso_->SetVS(L"particle_vs.cso");
+	depth_pso_->SetPS(L"depth_ps.cso");
 	depth_pso_->SetCullMode(prop_.mesh.is_two_side ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_FRONT);
 	depth_pso_->SetRTVFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 
@@ -131,8 +131,8 @@ bool ParticleRendererMesh::PreparePSO()
 	gbuffer_pso_ = std::make_unique<PipelineState>();
 	gbuffer_pso_->SetInputLayout(Vertex::InputLayout);
 	gbuffer_pso_->SetRootSignature(root_signature_->Get());
-	gbuffer_pso_->SetVS(L"ParticleVS.cso");
-	gbuffer_pso_->SetPS(L"GBufferPS.cso");
+	gbuffer_pso_->SetVS(L"particle_vs.cso");
+	gbuffer_pso_->SetPS(L"gbuffer_ps.cso");
 	gbuffer_pso_->SetCullMode(prop_.mesh.is_two_side ? D3D12_CULL_MODE_NONE : D3D12_CULL_MODE_FRONT);
 
 	auto desc = gbuffer_pso_->GetDesc();

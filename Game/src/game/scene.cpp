@@ -486,16 +486,6 @@ Camera* Scene::GetMainCamera()
 	return main_camera_;
 }
 
-//ShadowMap* Scene::GetShadowMap()
-//{
-//	return m_pShadowMap.get();
-//}
-
-//CollisionManager* Scene::GetCollisionManager()
-//{
-//	return collision_manager_.get();
-//}
-
 void Scene::SetSkybox(const std::wstring& path)
 {
 	auto device = Game::Get()->GetEngine()->Device();
@@ -611,8 +601,8 @@ bool Scene::PreparePSO()
 	lighting_pso_ = pm->Create("Lighting");
 	lighting_pso_->SetInputLayout({nullptr, 0});
 	lighting_pso_->SetRootSignature(root_signature_->Get());
-	lighting_pso_->SetVS(L"ScreenVS.cso");
-	lighting_pso_->SetPS(L"PBR.cso");
+	lighting_pso_->SetVS(L"screen_vs.cso");
+	lighting_pso_->SetPS(L"pbr_ps.cso");
 	lighting_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	lighting_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
@@ -629,8 +619,8 @@ bool Scene::PreparePSO()
 	ssao_pso_ = pm->Create("SSAO");
 	ssao_pso_->SetInputLayout({ nullptr, 0 });
 	ssao_pso_->SetRootSignature(root_signature_->Get());
-	ssao_pso_->SetVS(L"ScreenVS.cso");
-	ssao_pso_->SetPS(L"SSAO.cso");
+	ssao_pso_->SetVS(L"screen_vs.cso");
+	ssao_pso_->SetPS(L"ssao_ps.cso");
 	ssao_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = ssao_pso_->GetDesc();
@@ -646,8 +636,8 @@ bool Scene::PreparePSO()
 	blur_horizontal_pso_ = pm->Create("BlurHorizontal");
 	blur_horizontal_pso_->SetInputLayout({ nullptr, 0 });
 	blur_horizontal_pso_->SetRootSignature(root_signature_->Get());
-	blur_horizontal_pso_->SetVS(L"ScreenVS.cso");
-	blur_horizontal_pso_->SetPS(L"GaussianBlurHorizontal.cso");
+	blur_horizontal_pso_->SetVS(L"screen_vs.cso");
+	blur_horizontal_pso_->SetPS(L"gaussian_blur_horizontal.cso");
 	blur_horizontal_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = blur_horizontal_pso_->GetDesc();
@@ -663,8 +653,8 @@ bool Scene::PreparePSO()
 	blur_vertical_pso_ = pm->Create("BlurVertical");
 	blur_vertical_pso_->SetInputLayout({ nullptr, 0 });
 	blur_vertical_pso_->SetRootSignature(root_signature_->Get());
-	blur_vertical_pso_->SetVS(L"ScreenVS.cso");
-	blur_vertical_pso_->SetPS(L"GaussianBlurVertical.cso");
+	blur_vertical_pso_->SetVS(L"screen_vs.cso");
+	blur_vertical_pso_->SetPS(L"gaussian_blur_vertical.cso");
 	blur_vertical_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = blur_vertical_pso_->GetDesc();
@@ -680,8 +670,8 @@ bool Scene::PreparePSO()
 	postprocess_pso_ = pm->Create("PostProcess");
 	postprocess_pso_->SetInputLayout({ nullptr, 0 });
 	postprocess_pso_->SetRootSignature(root_signature_->Get());
-	postprocess_pso_->SetVS(L"ScreenVS.cso");
-	postprocess_pso_->SetPS(L"PostProcessPS.cso");
+	postprocess_pso_->SetVS(L"screen_vs.cso");
+	postprocess_pso_->SetPS(L"postprocess_ps.cso");
 	postprocess_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = postprocess_pso_->GetDesc();
@@ -697,8 +687,8 @@ bool Scene::PreparePSO()
 	fxaa_pso_ = pm->Create("FXAA");
 	fxaa_pso_->SetInputLayout({ nullptr, 0 });
 	fxaa_pso_->SetRootSignature(root_signature_->Get());
-	fxaa_pso_->SetVS(L"ScreenVS.cso");
-	fxaa_pso_->SetPS(L"FXAA.cso");
+	fxaa_pso_->SetVS(L"screen_vs.cso");
+	fxaa_pso_->SetPS(L"fxaa_ps.cso");
 	fxaa_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = fxaa_pso_->GetDesc();
@@ -714,8 +704,8 @@ bool Scene::PreparePSO()
 	skybox_pso_ = pm->Create("Skybox");
 	skybox_pso_->SetInputLayout(Vertex::InputLayout);
 	skybox_pso_->SetRootSignature(skybox_root_signature_->Get());
-	skybox_pso_->SetVS(L"SkyboxVS.cso");
-	skybox_pso_->SetPS(L"SkyboxPS.cso");
+	skybox_pso_->SetVS(L"skybox_vs.cso");
+	skybox_pso_->SetPS(L"skybox_ps.cso");
 	skybox_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	skybox_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
@@ -732,8 +722,8 @@ bool Scene::PreparePSO()
 	outline_pso_ = pm->Create("Outline");
 	outline_pso_->SetInputLayout(Vertex::InputLayout);
 	outline_pso_->SetRootSignature(mesh_root_signature_->Get());
-	outline_pso_->SetVS(L"OutlineVS.cso");
-	outline_pso_->SetPS(L"OutlinePS.cso");
+	outline_pso_->SetVS(L"outline_vs.cso");
+	outline_pso_->SetPS(L"outline_ps.cso");
 	outline_pso_->SetCullMode(D3D12_CULL_MODE_BACK);
 	outline_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	outline_pso_->Create();
@@ -745,8 +735,8 @@ bool Scene::PreparePSO()
 	shadow_pso_ = pm->Create("Shadow");
 	shadow_pso_->SetInputLayout(Vertex::InputLayout);
 	shadow_pso_->SetRootSignature(mesh_root_signature_->Get());
-	shadow_pso_->SetVS(L"ShadowVS.cso");
-	shadow_pso_->SetPS(L"ShadowPS.cso");
+	shadow_pso_->SetVS(L"shadow_vs.cso");
+	shadow_pso_->SetPS(L"shadow_ps.cso");
 	shadow_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	shadow_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 	shadow_pso_->Create();
@@ -759,8 +749,8 @@ bool Scene::PreparePSO()
 	depth_pso_ = pm->Create("Depth");
 	depth_pso_->SetInputLayout(Vertex::InputLayout);
 	depth_pso_->SetRootSignature(mesh_root_signature_->Get());
-	depth_pso_->SetVS(L"SimpleVS.cso");
-	depth_pso_->SetPS(L"DepthPS.cso");
+	depth_pso_->SetVS(L"simple_vs.cso");
+	depth_pso_->SetPS(L"depth_ps.cso");
 	depth_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	depth_pso_->SetRTVFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 
@@ -778,8 +768,8 @@ bool Scene::PreparePSO()
 	gbuffer_pso_ = pm->Create("GBuffer");
 	gbuffer_pso_->SetInputLayout(Vertex::InputLayout);
 	gbuffer_pso_->SetRootSignature(mesh_root_signature_->Get());
-	gbuffer_pso_->SetVS(L"SimpleVS.cso");
-	gbuffer_pso_->SetPS(L"GBufferPS.cso");
+	gbuffer_pso_->SetVS(L"simple_vs.cso");
+	gbuffer_pso_->SetPS(L"gbuffer_ps.cso");
 	gbuffer_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 
 	desc = gbuffer_pso_->GetDesc();

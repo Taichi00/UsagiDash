@@ -590,75 +590,63 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Shaders\FXAA3.cginc">
-      <Filter>リソース ファイル</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\SimpleVS.hlsl">
+    <FxCompile Include="shader\simple_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SimplePS.hlsl">
+    <FxCompile Include="shader\outline_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\OutlineVS.hlsl">
+    <FxCompile Include="shader\outline_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\OutlinePS.hlsl">
+    <FxCompile Include="shader\shadow_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\AlphaPS.hlsl">
+    <FxCompile Include="shader\shadow_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ShadowVS.hlsl">
+    <FxCompile Include="shader\gbuffer_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ShadowPS.hlsl">
+    <FxCompile Include="shader\deferred_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SoftPS.hlsl">
+    <FxCompile Include="shader\screen_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\GBufferPS.hlsl">
+    <FxCompile Include="shader\fxaa_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DeferredPS.hlsl">
+    <FxCompile Include="shader\skybox_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\ScreenVS.hlsl">
+    <FxCompile Include="shader\skybox_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\FXAA.hlsl">
+    <FxCompile Include="shader\postprocess_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SkyboxVS.hlsl">
+    <FxCompile Include="shader\depth_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SkyboxPS.hlsl">
+    <FxCompile Include="shader\ssao_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\PostProcessPS.hlsl">
+    <FxCompile Include="shader\gaussian_blur_horizontal.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\DepthPS.hlsl">
+    <FxCompile Include="shader\gaussian_blur_vertical.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SSAO.hlsl">
+    <FxCompile Include="shader\pbr_ps.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\GaussianBlurHorizontal.hlsl">
+    <FxCompile Include="shader\particle_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\GaussianBlurVertical.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\PBR.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\ParticleVS.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\ParticleShadowVS.hlsl">
+    <FxCompile Include="shader\particle_shadow_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>

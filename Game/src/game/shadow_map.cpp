@@ -240,8 +240,8 @@ bool ShadowMap::PreparePSO()
 	blur_horizontal_pso_ = pm->Create("GaussianBlurHorizontal");
 	blur_horizontal_pso_->SetInputLayout({ nullptr, 0 });
 	blur_horizontal_pso_->SetRootSignature(root_signature_->Get());
-	blur_horizontal_pso_->SetVS(L"ScreenVS.cso");
-	blur_horizontal_pso_->SetPS(L"GaussianBlurHorizontal.cso");
+	blur_horizontal_pso_->SetVS(L"screen_vs.cso");
+	blur_horizontal_pso_->SetPS(L"gaussian_blur_horizontal.cso");
 	blur_horizontal_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	blur_horizontal_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
@@ -258,8 +258,8 @@ bool ShadowMap::PreparePSO()
 	blur_vertical_pso_ = pm->Create("GaussianBlurVertical");
 	blur_vertical_pso_->SetInputLayout({ nullptr, 0 });
 	blur_vertical_pso_->SetRootSignature(root_signature_->Get());
-	blur_vertical_pso_->SetVS(L"ScreenVS.cso");
-	blur_vertical_pso_->SetPS(L"GaussianBlurVertical.cso");
+	blur_vertical_pso_->SetVS(L"screen_vs.cso");
+	blur_vertical_pso_->SetPS(L"gaussian_blur_vertical.cso");
 	blur_vertical_pso_->SetCullMode(D3D12_CULL_MODE_FRONT);
 	blur_vertical_pso_->SetRTVFormat(DXGI_FORMAT_R32G32B32A32_FLOAT);
 
