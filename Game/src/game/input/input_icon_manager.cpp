@@ -1,6 +1,6 @@
 #include "input_icon_manager.h"
 #include "game/game.h"
-#include "game/string_methods.h"
+#include "util/string_methods.h"
 
 InputIconManager::InputIconManager()
 {

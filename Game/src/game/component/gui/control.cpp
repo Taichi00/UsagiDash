@@ -53,6 +53,11 @@ void Control::Transform()
 	offset_.bottom = -position_.y - (1 - pivot_.y) * size_.y;
 }
 
+Vec2 Control::WorldPosition() const
+{
+	return Vec2(world_matrix_.m31, world_matrix_.m32);
+}
+
 void Control::Layout()
 {
 	auto ratio = engine_->RenderTargetSize().y / 720.0;

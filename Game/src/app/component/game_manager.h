@@ -11,11 +11,13 @@ class PlayerController;
 class Label;
 class AudioSource;
 class Animator;
+class Transition;
+class CameraController;
 
 class GameManager : public Component
 {
 public:
-	GameManager(PlayerController* player, Label* coin_label);
+	GameManager(PlayerController* player, CameraController* camera, Label* coin_label);
 	~GameManager() = default;
 
 	static GameManager* Get()
@@ -48,8 +50,10 @@ private:
 	static GameManager* instance_;
 
 	PlayerController* player_;
+	CameraController* camera_;
 	Label* coin_label_;
 	Animator* coin_label_animator_ = nullptr;
+	Transition* transition_ = nullptr;
 
 	AudioSource* audio_source_ = nullptr;
 
@@ -61,4 +65,7 @@ private:
 
 	// スタート位置
 	Vec3 start_position_;
+
+	// リスポーン中
+	bool respawning_ = false;
 };

@@ -114,7 +114,7 @@
     <ClCompile Include="src\game\component\transform.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\game_camera.cpp">
+    <ClCompile Include="src\app\component\camera_controller.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="src\app\main.cpp">
@@ -127,9 +127,6 @@
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
     <ClCompile Include="src\app\scene\level1_scene.cpp">
-      <Filter>ソース ファイル\App</Filter>
-    </ClCompile>
-    <ClCompile Include="src\app\floating_player.cpp">
       <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="src\game\component\collider\collider.cpp">
@@ -216,7 +213,7 @@
     <ClCompile Include="src\game\component\collider\polygon_collider.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\map_file_parser.cpp">
+    <ClCompile Include="src\app\util\map_file_parser.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\app\component\map_loader.cpp">
@@ -283,6 +280,33 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\game\particle_renderer_mesh.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\resource\transition_effect.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\reader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\transition.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\scene\title_scene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\cursor_area.h">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\cursor_area.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\button.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\gui_manager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\gui\button_base.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -365,7 +389,7 @@
     <ClInclude Include="src\math\easing.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\game_camera.h">
+    <ClInclude Include="src\app\component\camera_controller.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\mesh_renderer.h">
@@ -384,9 +408,6 @@
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
     <ClInclude Include="src\app\scene\level1_scene.h">
-      <Filter>ヘッダー ファイル\App</Filter>
-    </ClInclude>
-    <ClInclude Include="src\app\floating_player.h">
       <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\collider\collider.h">
@@ -452,7 +473,7 @@
     <ClInclude Include="src\math\color.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\game\string_methods.h">
+    <ClInclude Include="src\util\string_methods.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\engine\d3dx12.h">
@@ -503,10 +524,7 @@
     <ClInclude Include="src\math\octree.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\map_file_parser.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\parser.h">
+    <ClInclude Include="src\app\util\map_file_parser.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\component\map_loader.h">
@@ -515,7 +533,7 @@
     <ClInclude Include="src\game\audio_engine.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\state.h">
+    <ClInclude Include="src\app\util\state.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\game\resource\bitmap.h">
@@ -587,9 +605,40 @@
     <ClInclude Include="src\game\particle_renderer_mesh.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\game\resource\transition_effect.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\reader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\transition.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\scene\title_scene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\all_components.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\resource\all_resources.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\component\title_scene_controller.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\button_base.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\gui\button.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\gui_manager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader\simple_vs.hlsl">
@@ -649,5 +698,6 @@
     <FxCompile Include="shader\particle_shadow_vs.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="shader\transition_ps.hlsl" />
   </ItemGroup>
 </Project>

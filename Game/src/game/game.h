@@ -20,6 +20,7 @@ class CollisionManager;
 class AudioEngine;
 class InputIconManager;
 class LayerManager;
+class GUIManager;
 
 class Game
 {
@@ -77,6 +78,7 @@ public:
 	CollisionManager* GetCollisionManager() const { return collision_manager_.get(); }
 	ResourceManager* GetResourceManager() const { return resource_manager_.get(); }
 	LayerManager* GetLayerManager() const { return layer_manager_.get(); }
+	GUIManager* GetGUIManager() const { return gui_manager_.get(); }
 
 	double DeltaTime() const;
 
@@ -98,6 +100,7 @@ private:
 	std::unique_ptr<AudioEngine> audio_;
 	std::unique_ptr<InputIconManager> input_icon_manager_;
 	std::unique_ptr<LayerManager> layer_manager_;
+	std::unique_ptr<GUIManager> gui_manager_;
 
 	float delta_time_ = 0.0001f;
 };

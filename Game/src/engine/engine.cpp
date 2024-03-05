@@ -745,10 +745,18 @@ std::unique_ptr<ConstantBuffer> Engine::CreateConstantBuffer(const unsigned long
 	return std::move(cb);
 }
 
-void Engine::CreateShaderResourceView(const Texture2D& texture, const DescriptorHandle& handle)
+void Engine::CreateShaderResourceView2D(const Texture2D& texture, const DescriptorHandle& handle)
 {
 	auto resource = texture.Resource();
-	auto desc = texture.ViewDesc();
+	auto desc = texture.ViewDesc2D();
+
+	device_->CreateShaderResourceView(resource, &desc, handle.HandleCPU());
+}
+
+void Engine::CreateShaderResourceViewCube(const Texture2D& texture, const DescriptorHandle& handle)
+{
+	auto resource = texture.Resource();
+	auto desc = texture.ViewDescCube();
 
 	device_->CreateShaderResourceView(resource, &desc, handle.HandleCPU());
 }

@@ -13,6 +13,7 @@
 #include "game/audio_engine.h"
 #include "game/input/input_icon_manager.h"
 #include "game/layer_manager.h"
+#include "game/gui_manager.h"
 #include <chrono>
 
 Game* Game::instance_ = nullptr;
@@ -194,6 +195,9 @@ void Game::Init(const GameSettings& settings)
 	{
 		input_icon_manager_->AddInputIcon(action.first, action.second);
 	}
+
+	// GUIManager ÇÃê∂ê¨
+	gui_manager_ = std::make_unique<GUIManager>();
 }
 
 void Game::Update()
@@ -202,6 +206,8 @@ void Game::Update()
 	Input::Get()->Update();
 
 	input_icon_manager_->Update();
+
+	gui_manager_->Update();
 }
 
 void Game::End()

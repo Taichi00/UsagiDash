@@ -1,7 +1,7 @@
 #pragma once
 
 #include "game/component/component.h"
-#include "app/state.h"
+#include "app/util/state.h"
 #include "math/vec.h"
 #include <memory>
 

@@ -60,6 +60,9 @@ public:
 	void DrawRectangle(const Rect2& rect, const Color& color, const float radius) const;
 	void DrawFillRectangle(const Rect2& rect, const Color& color, const float radius) const;
 
+	// トランジション用の矩形を描画する
+	void DrawTransition(const Color& color, const float time, const Vec2 direction, const bool inverse) const;
+
 	// 画像を描画する
 	void DrawBitmap(const Bitmap* bitmap);
 
@@ -71,7 +74,7 @@ public:
 	void RegisterSolidColorBrush(const Color& color);
 	void RegisterTextFormat(const std::wstring& font_name);
 
-	float AspectRatio() const { return aspect_ratio_; }
+	float RenderTargetScale() const { return render_target_scale_; }
 
 private:
 	bool CreateD3D11Device();		// D3D11Deviceを生成
@@ -88,7 +91,8 @@ private:
 	ComPtr<ID3D11Device> d3d11_device_;					// D3D11のデバイス
 	ComPtr<IDWriteFactory5> dwrite_factory_;			// DirectWriteのファクトリ
 	ComPtr<IDWriteFontSetBuilder1> font_set_builder_;	// フォントセットの生成用
-	ComPtr<ID2D1DeviceContext> d2d_device_context_;		// D2D1のデバイスコンテキスト
+	ComPtr<ID2D1DeviceContext> d2d_device_context_;		// D2Dのデバイスコンテキスト
+	ComPtr<ID2D1Factory3> d2d_factory_;					// D2Dのファクトリ
 
 	ComPtr<IDWriteFontCollection1> font_collection_;	// フォントコレクション
 
@@ -99,7 +103,7 @@ private:
 	ComPtr<ID2D1Bitmap1> d2d_render_targets_[Engine::FRAME_BUFFER_COUNT];
 
 	const float DEFAULT_HEIGHT = 720.0f;
-	float aspect_ratio_ = 1.f;
+	float render_target_scale_ = 1.f; // default height に対する現在の render target height の倍率
 
 	unsigned int render_target_width_;
 	unsigned int render_target_height_;

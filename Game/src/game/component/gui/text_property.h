@@ -1,5 +1,6 @@
 #pragma once
 
+#include "math/color.h"
 #include <string>
 
 struct TextProperty
@@ -32,6 +33,7 @@ struct TextProperty
 
 	std::wstring font = L"MS Gothic";
 	float font_size = 24.f;
+	Color color = Color::White();
 	FontWeight font_weight = WEIGHT_NORMAL;
 	HorizontalAlignment horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT;
 	VerticalAlignment vertical_alignment = VERTICAL_ALIGNMENT_TOP;

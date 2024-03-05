@@ -90,7 +90,6 @@ private:
 	std::vector<Entity*> entity_list_;
 
 	Camera* main_camera_ = nullptr;
-	//std::unique_ptr<ShadowMap> m_pShadowMap;
 
 	std::unique_ptr<RootSignature> root_signature_;		// ルートシグネチャ
 	std::unique_ptr<RootSignature> mesh_root_signature_;
@@ -109,20 +108,20 @@ private:
 	std::unique_ptr<ConstantBuffer> transform_cb_[Engine::FRAME_BUFFER_COUNT];	// Transform Constant Buffer
 	std::unique_ptr<ConstantBuffer> scene_cb_[Engine::FRAME_BUFFER_COUNT];		// Scene Constant Buffer
 
-	Mesh skybox_mesh_;					// スカイボックスのメッシュデータ
-	std::unique_ptr<Texture2D> skybox_tex_;			// スカイボックスのテクスチャ
-	DescriptorHandle skybox_handle_;	// スカイボックスのDescriptorHandle
-	PipelineState* skybox_pso_;		// スカイボックス用PSO
-	std::unique_ptr<RootSignature> skybox_root_signature_;	// スカイボックス用ルートシグネチャ
+	Mesh skybox_mesh_; // スカイボックスのメッシュデータ
+	std::shared_ptr<Texture2D> skybox_tex_; // スカイボックスのテクスチャ
+	DescriptorHandle skybox_handle_; // スカイボックスのDescriptorHandle
+	PipelineState* skybox_pso_; // スカイボックス用PSO
+	std::unique_ptr<RootSignature> skybox_root_signature_; // スカイボックス用ルートシグネチャ
 
-	std::unique_ptr<Texture2D> diffusemap_tex_;			// DiffuseMap のテクスチャ
-	DescriptorHandle diffusemap_handle_;	// DiffuseMap の DescriptorHandle
+	std::shared_ptr<Texture2D> diffusemap_tex_; // DiffuseMap のテクスチャ
+	DescriptorHandle diffusemap_handle_; // DiffuseMap の DescriptorHandle
 
-	std::unique_ptr<Texture2D> specularmap_tex_;			// SpecularMap のテクスチャ
-	DescriptorHandle specularmap_handle_;	// SpecularMap の DescriptorHandle
+	std::shared_ptr<Texture2D> specularmap_tex_; // SpecularMap のテクスチャ
+	DescriptorHandle specularmap_handle_; // SpecularMap の DescriptorHandle
 
-	std::unique_ptr<Texture2D> brdf_tex_;					// BRDF のテクスチャ
-	DescriptorHandle brdf_handle_;		// BRDF の DescriptorHandle
+	std::shared_ptr<Texture2D> brdf_tex_; // BRDF のテクスチャ
+	DescriptorHandle brdf_handle_; // BRDF の DescriptorHandle
 
 	std::shared_ptr<DescriptorHeap> rtv_heap_;
 	std::shared_ptr<DescriptorHeap> dsv_heap_;

@@ -1,23 +1,9 @@
+#include "game/component/all_components.h"
 #include "app/component/game_manager.h"
 #include "app/component/map_loader.h"
 #include "app/component/player_controller.h"
 #include "app/entity/player.h"
-#include "app/game_camera.h"
-#include "game/component/animator.h"
-#include "game/component/audio/audio_listener.h"
-#include "game/component/camera.h"
-#include "game/component/capsule_mesh.h"
-#include "game/component/collider/collider.h"
-#include "game/component/collider/mesh_collider.h"
-#include "game/component/collider/sphere_collider.h"
-#include "game/component/gui/control.h"
-#include "game/component/gui/label.h"
-#include "game/component/gui/panel.h"
-#include "game/component/gui/picture.h"
-#include "game/component/gui/text_property.h"
-#include "game/component/mesh_renderer.h"
-#include "game/component/rigidbody.h"
-#include "game/component/sphere_mesh.h"
+#include "app/component/camera_controller.h"
 #include "game/entity.h"
 #include "game/game.h"
 #include "game/input/input.h"
@@ -59,7 +45,7 @@ bool Level1Scene::Init()
 	{
 		camera->AddComponent(new Camera());
 		camera->AddComponent(new AudioListener());
-		camera->AddComponent(new GameCamera(player));
+		camera->AddComponent(new CameraController(player));
 		CreateEntity(camera);
 		SetMainCamera(camera);
 	}
@@ -135,54 +121,55 @@ bool Level1Scene::Init()
 		CreateEntity(map);
 	}
 
-	auto panel = new Entity();
+	auto coin_gui = new Entity("coin_gui");
 	{
-		panel->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 8), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.4f)));
-		auto control = panel->GetComponent<Control>();
+		coin_gui->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 8), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.4f)));
+		auto control = coin_gui->GetComponent<Control>();
 		control->SetRotation(4);
-	}
 
-	auto coin_label = new Entity("coin_label");
-	{
-		TextProperty coin_label_prop{};
-		coin_label_prop.font = L"Koruri";
-		coin_label_prop.font_size = 28;
-		coin_label_prop.font_weight = TextProperty::WEIGHT_EXTRA_BOLD;
+		auto coin_label = new Entity("coin_label");
+		{
+			TextProperty coin_label_prop{};
+			coin_label_prop.font = L"Koruri";
+			coin_label_prop.font_size = 28;
+			coin_label_prop.color = Color(1, 1, 1);
+			coin_label_prop.font_weight = TextProperty::WEIGHT_EXTRA_BOLD;
 
-		auto animation = std::make_shared<Animation>("get");
-		auto channel = new Animation::GUIChannel{};
-		channel->type = Animation::TYPE_GUI;
-		channel->position_keys = {
-			{ 0, Easing::Linear, Vec2(40, -10) },
-			{ 0.2f, Easing::OutCubic, Vec2(40, -13) },
-			{ 0.6f, Easing::InCubic, Vec2(40, -10) },
-		};
-		channel->color_keys = {
-			{ 0, Easing::Linear, Color(1, 0.75f, 0) },
-			{ 1, Easing::InCubic, Color(1, 1, 1) }
-		};
-		animation->AddChannel(channel);
-		animation->SetDuration(1);
-		animation->SetTicksPerSecond(3);
+			auto animation = std::make_shared<Animation>("get");
+			auto channel = new Animation::GUIChannel{};
+			channel->type = Animation::TYPE_GUI;
+			channel->position_keys = {
+				{ 0, Easing::Linear, Vec2(40, -10) },
+				{ 0.2f, Easing::OutCubic, Vec2(40, -13) },
+				{ 0.6f, Easing::InCubic, Vec2(40, -10) },
+			};
+			channel->color_keys = {
+				{ 0, Easing::Linear, Color(1, 0.75f, 0) },
+				{ 1, Easing::InCubic, Color(1, 1, 1) }
+			};
+			animation->AddChannel(channel);
+			animation->SetDuration(1);
+			animation->SetTicksPerSecond(3);
 
-		coin_label->AddComponent(new Label("0000", coin_label_prop, {}, Color(1, 1, 1)));
-		coin_label->AddComponent(new Animator(animation));
-		auto control = coin_label->GetComponent<Control>();
-		control->SetTransform(Vec2(40, -10), Vec2(100, 28), Vec2(0.5, 1), Vec2(0.5, 0));
+			coin_label->AddComponent(new Label("0000", coin_label_prop, {}));
+			coin_label->AddComponent(new Animator(animation));
+			auto control = coin_label->GetComponent<Control>();
+			control->SetTransform(Vec2(40, -10), Vec2(100, 28), Vec2(0.5, 1), Vec2(0.5, 0));
 
-		coin_label->SetParent(panel);
-	}
+			coin_label->SetParent(coin_gui);
+		}
 
-	auto coin_icon = new Entity("coin_icon");
-	{
-		coin_icon->AddComponent(new Picture(LoadResource<Bitmap>(L"assets/image/coin_icon.png")));
-		auto control = coin_icon->GetComponent<Control>();
-		control->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
-		control->SetScale(Vec2(0.32f, 0.32f));
+		auto coin_icon = new Entity("coin_icon");
+		{
+			coin_icon->AddComponent(new Picture(LoadResource<Bitmap>(L"assets/image/coin_icon.png")));
+			auto control = coin_icon->GetComponent<Control>();
+			control->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
+			control->SetScale(Vec2(0.32f, 0.32f));
 
-		coin_icon->SetParent(panel);
+			coin_icon->SetParent(coin_gui);
+		}
 
-		CreateEntity(panel);
+		CreateEntity(coin_gui);
 	}
 
 	auto tutorial_label = new Entity("tutorial_label");
@@ -190,6 +177,7 @@ bool Level1Scene::Init()
 		TextProperty text_prop{};
 		text_prop.font = L"Koruri";
 		text_prop.font_size = 22;
+		text_prop.color = Color(0.35f, 0.3f, 0.3f);
 		text_prop.font_weight = TextProperty::WEIGHT_BOLD;
 		text_prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
 		text_prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
@@ -199,18 +187,29 @@ bool Level1Scene::Init()
 		panel_prop.radius = 22;
 		panel_prop.padding = { 24, 6, 24, 6 };
 
-		tutorial_label->AddComponent(new Label("", text_prop, panel_prop, Color(0.35f, 0.3f, 0.3f), true));
+		tutorial_label->AddComponent(new Label("", text_prop, panel_prop, true));
 		auto control = tutorial_label->GetComponent<Control>();
 		control->SetTransform(Vec2(0, 130), Vec2(200, 46), Vec2(0.5, 0.5), Vec2(0.5, 0));
 
 		CreateEntity(tutorial_label);
 	}
 
+	auto transition = new Entity("transition");
+	{
+		transition->AddComponent(new Transition(
+			Color(0.1f, 0.1f, 0.15f),
+			Vec2(1, 1))
+		);
+
+		CreateEntity(transition);
+	}
+
 	auto game_manager = new Entity("game_manager");
 	{
 		game_manager->AddComponent(new GameManager(
 			player->GetComponent<PlayerController>(),
-			coin_label->GetComponent<Label>()
+			camera->GetComponent<CameraController>(),
+			coin_gui->GetChild("coin_label")->GetComponent<Label>()
 		));
 		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/y014_m.wav"), 100.f));
 

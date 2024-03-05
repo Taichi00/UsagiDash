@@ -41,6 +41,8 @@ public:
 	Matrix3x2 WorldMatrix() const { return world_matrix_; }
 	Color GetColor() const { return color_; }
 
+	Vec2 WorldPosition() const;
+
 protected:
 	void Layout();
 

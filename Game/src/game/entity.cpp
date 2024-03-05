@@ -34,9 +34,7 @@ void Entity::Destroy()
 
 Component* Entity::AddComponent(Component* component)
 {
-	std::string key = typeid(*component).name();
-
-	component_map_[key].push_back(std::unique_ptr<Component>(component));
+	component_map_[typeid(*component)].push_back(std::unique_ptr<Component>(component));
 
 	component->RegisterEntity(this);
 

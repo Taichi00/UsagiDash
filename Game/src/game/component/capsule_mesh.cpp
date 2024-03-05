@@ -174,9 +174,9 @@ std::unique_ptr<Model> CapsuleMesh::Load(float radius, float height, float r, fl
         mat.pbr_handle = model->descriptor_heap->Alloc();
         mat.normal_handle = model->descriptor_heap->Alloc();
 
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.albedo_texture, mat.albedo_handle);
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.pbr_texture, mat.pbr_handle);
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.normal_texture, mat.normal_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.albedo_texture, mat.albedo_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.pbr_texture, mat.pbr_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.normal_texture, mat.normal_handle);
     }
 
     return std::move(model);

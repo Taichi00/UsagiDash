@@ -141,25 +141,25 @@ struct ParticleEmitterProperty
 	
 	struct ColorPropertyPVA
 	{
-		Color color = Color(1, 1, 1, 1);// 色
-		Color color_range;				// 色の乱数範囲
-		Color velocity;					// 速度
-		Color velocity_range;			// 速度の乱数範囲
-		Color acceleration;				// 加速度
-		Color acceleration_range;		// 加速度の乱数範囲
+		Color color					= Color(1, 1, 1, 1); // 色
+		Color color_range			= Color(0, 0, 0, 0); // 色の乱数範囲
+		Color velocity				= Color(0, 0, 0, 0); // 速度
+		Color velocity_range		= Color(0, 0, 0, 0); // 速度の乱数範囲
+		Color acceleration			= Color(0, 0, 0, 0); // 加速度
+		Color acceleration_range	= Color(0, 0, 0, 0); // 加速度の乱数範囲
 	} color_pva;
 
 	struct ColorPropertyEasing
 	{
-		Color start = Color(1, 1, 1, 1);// 開始色
-		Color start_range;				// 開始色の乱数範囲
-		Color end = Color(1, 1, 1, 1);	// 終了色
-		Color end_range;				// 終了色の乱数範囲
-		EasingType type = EASE_LINEAR;	// 補間のタイプ
-		bool middle_enabled = false;	// 中間点を使用するか
-		Color middle = Color(1, 1, 1, 1);// 中間色
-		Color middle_range;				// 中間色の乱数範囲
-		bool keep_aspect = false;		// アスペクト比を維持するか
+		Color start			= Color(1, 1, 1, 1); // 開始色
+		Color start_range	= Color(0, 0, 0, 0); // 開始色の乱数範囲
+		Color end			= Color(1, 1, 1, 1); // 終了色
+		Color end_range		= Color(0, 0, 0, 0); // 終了色の乱数範囲
+		EasingType type		= EASE_LINEAR;		 // 補間のタイプ
+		bool middle_enabled = false;			 // 中間点を使用するか
+		Color middle		= Color(1, 1, 1, 1); // 中間色
+		Color middle_range	= Color(0, 0, 0, 0); // 中間色の乱数範囲
+		bool keep_aspect	= false;			 // アスペクト比を維持するか
 	} color_easing;
 
 	ParticleType particle_type = PARTICLE_TYPE_SPRITE;

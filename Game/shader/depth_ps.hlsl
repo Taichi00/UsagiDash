@@ -9,6 +9,7 @@ struct VSOutput
     float3 binormal : BINORMAL;
     float4 color : COLOR;
     float2 uv : TEXCOORD;
+    float4 instanceColor : INSTANCE_COLOR;
 };
 
 cbuffer Transform : register(b0)

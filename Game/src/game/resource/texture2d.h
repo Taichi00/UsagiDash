@@ -30,8 +30,15 @@ public:
 
 	bool IsValid();	// 正常に読み込まれているかどうかを返す
 
-	ID3D12Resource* Resource() const;	// リソースを返す
-	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc() const;	// シェーダーリソースビューの設定を返す
+	// リソースを返す
+	ID3D12Resource* Resource() const;
+
+	// 2Dテクスチャ用の SRV desc を返す
+	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc2D() const;
+
+	// texture cube 用の SRV desc を返す
+	D3D12_SHADER_RESOURCE_VIEW_DESC ViewDescCube() const;
+
 	DXGI_FORMAT Format() const;
 	DirectX::TexMetadata Metadata() const;
 

@@ -17,7 +17,6 @@ public:
 		const std::string& text, 
 		const TextProperty& text_prop, 
 		const PanelProperty& panel_prop, 
-		const Color& color,
 		const bool fit = false
 	);
 
@@ -34,9 +33,7 @@ private:
 
 private:
 	Text text_;
-	//TextProperty text_prop_;
 	PanelProperty panel_prop_;
-	Color text_color_;
 	bool fit_;
 
 	std::string color_key_;

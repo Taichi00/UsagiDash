@@ -5,6 +5,7 @@
 #include "game/game.h"
 #include "game/resource/bitmap.h"
 #include "game/resource/inline_image.h"
+#include "game/resource/transition_effect.h"
 
 Engine2D::Engine2D()
 {
@@ -54,6 +55,9 @@ bool Engine2D::Init()
 		return false;
 	}
 
+	// カスタムエフェクトを登録
+	auto hr = TransitionEffect::Register(d2d_factory_.Get());
+	
 	printf("2D描画エンジンの初期化に成功\n");
 	return true;
 }
@@ -278,6 +282,46 @@ void Engine2D::DrawFillRectangle(const Rect2& rect, const Color& color, const fl
 	}
 }
 
+void Engine2D::DrawTransition(const Color& color, const float time, const Vec2 direction, const bool inverse) const
+{
+	// 現在の transform 行列を保存しておく
+	D2D1_MATRIX_3X2_F transform;
+	d2d_device_context_->GetTransform(&transform);
+
+	// 一時レンダーターゲットを生成
+	ComPtr<ID2D1BitmapRenderTarget> bitmap_render_target;
+	d2d_device_context_->CreateCompatibleRenderTarget(
+		{ (float)render_target_width_, (float)render_target_height_ },
+		&bitmap_render_target
+	);
+
+	bitmap_render_target->BeginDraw();
+	bitmap_render_target->Clear({ 0, 0, 0, 0 });
+	bitmap_render_target->EndDraw();
+
+	ComPtr<ID2D1Bitmap> render_bitmap;
+	bitmap_render_target->GetBitmap(&render_bitmap);
+
+	// エフェクトを生成
+	ComPtr<ID2D1Effect> effect;
+	auto hr = d2d_device_context_->CreateEffect(CLSID_TransitionEffect, &effect);
+	
+	D2D1_VECTOR_4F color_vec = { color.r, color.g, color.b, color.a };
+	D2D1_VECTOR_2F dir = { direction.x, direction.y };
+	effect->SetValue(TRANSITION_PROP_COLOR, color_vec);
+	effect->SetValue(TRANSITION_PROP_TIME, time);
+	effect->SetValue(TRANSITION_PROP_ASPECT, (float)render_target_height_ / (float)render_target_width_);
+	effect->SetValue(TRANSITION_PROP_DIRECTION, dir);
+	effect->SetValue(TRANSITION_PROP_INVERSE, (float)inverse);
+	effect->SetInput(0, render_bitmap.Get());
+	
+	d2d_device_context_->SetTransform(D2D1::Matrix3x2F::Identity());
+	d2d_device_context_->DrawImage(effect.Get());
+
+	// transform 行列を元に戻す
+	d2d_device_context_->SetTransform(transform);
+}
+
 void Engine2D::DrawBitmap(const Bitmap* bitmap)
 {
 	d2d_device_context_->DrawBitmap(
@@ -343,14 +387,13 @@ bool Engine2D::CreateD3D11Device()
 
 bool Engine2D::CreateD2DDeviceContext()
 {
-	ComPtr<ID2D1Factory3> d2dfactory = nullptr;
 	constexpr D2D1_FACTORY_OPTIONS factoryOptions{};
 
 	auto hr = D2D1CreateFactory(
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
 		__uuidof(ID2D1Factory3),
 		&factoryOptions,
-		&d2dfactory
+		&d2d_factory_
 	);
 	if (FAILED(hr))
 	{
@@ -365,7 +408,7 @@ bool Engine2D::CreateD2DDeviceContext()
 	}
 
 	ComPtr<ID2D1Device> d2dDevice = nullptr;
-	hr = d2dfactory->CreateDevice(
+	hr = d2d_factory_->CreateDevice(
 		dxgiDevice.Get(),
 		d2dDevice.ReleaseAndGetAddressOf()
 	);
@@ -373,7 +416,7 @@ bool Engine2D::CreateD2DDeviceContext()
 	{
 		return false;
 	}
-
+	
 	hr = d2dDevice->CreateDeviceContext(
 		D2D1_DEVICE_CONTEXT_OPTIONS_NONE,
 		d2d_device_context_.ReleaseAndGetAddressOf()
@@ -549,7 +592,7 @@ bool Engine2D::CreateD2DRenderTarget()
 	render_target_width_ = (unsigned int)size.width;
 	render_target_height_ = (unsigned int)size.height;
 
-	aspect_ratio_ = render_target_height_ / DEFAULT_HEIGHT;
+	render_target_scale_ = render_target_height_ / DEFAULT_HEIGHT;
 
 	return true;
 }

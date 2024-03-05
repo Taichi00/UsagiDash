@@ -11,8 +11,8 @@ public:
 	~Particle();
 
 public:
-	float time_to_live;	// ¶‘¶ŠÔ
-	float time;			// Œo‰ßŠÔ
+	float time_to_live = 0;	// ¶‘¶ŠÔ
+	float time = 0;			// Œo‰ßŠÔ
 
 	Vec3 position;		// ˆÊ’u
 	Vec3 position_velocity;

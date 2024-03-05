@@ -94,7 +94,8 @@ public:
 	std::unique_ptr<VertexBuffer> CreateVertexBuffer(const std::vector<Vertex>& vertices); // 頂点バッファを生成
 	std::unique_ptr<IndexBuffer> CreateIndexBuffer(const std::vector<uint32_t>& indices); // インデックスバッファを生成
 	std::unique_ptr<ConstantBuffer> CreateConstantBuffer(const unsigned long long size); // 定数バッファを生成
-	void CreateShaderResourceView(const Texture2D& texture, const DescriptorHandle& handle); // SRVを生成
+	void CreateShaderResourceView2D(const Texture2D& texture, const DescriptorHandle& handle); // SRVを生成
+	void CreateShaderResourceViewCube(const Texture2D& texture, const DescriptorHandle& handle);
 	std::unique_ptr<DescriptorHeap> CreateDescriptorHeap(const unsigned int num); // ディスクリプタヒープを生成
 
 	void ResizeWindow(const unsigned int width, const unsigned int height);

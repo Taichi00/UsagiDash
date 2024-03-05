@@ -124,6 +124,7 @@
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <ObjectFileOutput>$(ProjectDir)assets\shader\%(Filename).cso</ObjectFileOutput>
+      <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath)</AdditionalIncludeDirectories>
     </FxCompile>
     <PostBuildEvent>
       <Command>robocopy "$(ProjectDir)assets" "$(OutDir)assets" * /xo /E /COPY:DT
@@ -150,6 +151,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <ObjectFileOutput>$(ProjectDir)assets\shader\%(Filename).cso</ObjectFileOutput>
+      <AdditionalIncludeDirectories>$(WindowsSDK_IncludePath)</AdditionalIncludeDirectories>
     </FxCompile>
     <PostBuildEvent>
       <Command>robocopy "$(ProjectDir)assets" "$(OutDir)assets" * /xo /E /COPY:DT
@@ -167,8 +169,15 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\app\entity\coin.cpp" />
     <ClCompile Include="src\app\entity\player.cpp" />
     <ClCompile Include="src\app\entity\tutorial.cpp" />
+    <ClCompile Include="src\app\scene\title_scene.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
+    <ClCompile Include="src\game\component\gui\button.cpp" />
+    <ClCompile Include="src\game\component\gui\button_base.cpp" />
+    <ClCompile Include="src\game\component\gui\cursor_area.cpp" />
+    <ClCompile Include="src\game\component\gui\cursor_area.h" />
     <ClCompile Include="src\game\component\gui\text.cpp" />
+    <ClCompile Include="src\game\component\gui\transition.cpp" />
+    <ClCompile Include="src\game\gui_manager.cpp" />
     <ClCompile Include="src\game\input\input_icon_manager.cpp" />
     <ClCompile Include="src\game\layer_manager.cpp" />
     <ClCompile Include="src\game\particle_renderer.cpp" />
@@ -201,10 +210,9 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\gui\picture.cpp" />
     <ClCompile Include="src\game\component\gui\panel.cpp" />
     <ClCompile Include="src\game\entity.cpp" />
-    <ClCompile Include="src\app\floating_player.cpp" />
     <ClCompile Include="src\game\component\collider\floor_collider.cpp" />
     <ClCompile Include="src\game\game.cpp" />
-    <ClCompile Include="src\app\game_camera.cpp" />
+    <ClCompile Include="src\app\component\camera_controller.cpp" />
     <ClCompile Include="src\engine\buffer.cpp" />
     <ClCompile Include="src\engine\buffer_manager.cpp" />
     <ClCompile Include="src\engine\index_buffer.cpp" />
@@ -214,7 +222,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\collider\mesh_collider.cpp" />
     <ClCompile Include="src\game\component\mesh_renderer.cpp" />
     <ClCompile Include="src\game\component\gui\label.cpp" />
-    <ClCompile Include="src\app\map_file_parser.cpp" />
+    <ClCompile Include="src\app\util\map_file_parser.cpp" />
     <ClCompile Include="src\game\input\x_input.cpp" />
     <ClCompile Include="src\game\resource\audio.cpp" />
     <ClCompile Include="src\game\resource\collision_model.cpp" />
@@ -229,6 +237,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\rigidbody.cpp" />
     <ClCompile Include="src\engine\root_signature.cpp" />
     <ClCompile Include="src\game\resource\resource.cpp" />
+    <ClCompile Include="src\game\resource\transition_effect.cpp" />
     <ClCompile Include="src\game\resource_manager.cpp" />
     <ClCompile Include="src\game\scene.cpp" />
     <ClCompile Include="src\game\shadow_map.cpp" />
@@ -239,9 +248,11 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\game\component\transform.cpp" />
     <ClCompile Include="src\engine\vertex_buffer.cpp" />
     <ClCompile Include="src\engine\window.cpp" />
+    <ClCompile Include="src\util\reader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app\component\checkpoint_controller.h" />
+    <ClInclude Include="src\app\component\title_scene_controller.h" />
     <ClInclude Include="src\app\component\tutorial_text_display.h" />
     <ClInclude Include="src\app\component\game_manager.h" />
     <ClInclude Include="src\app\component\coin_script.h" />
@@ -250,16 +261,23 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\app\entity\coin.h" />
     <ClInclude Include="src\app\entity\player.h" />
     <ClInclude Include="src\app\entity\tutorial.h" />
-    <ClInclude Include="src\app\state.h" />
+    <ClInclude Include="src\app\scene\title_scene.h" />
+    <ClInclude Include="src\app\util\state.h" />
     <ClInclude Include="src\engine\d3dx12.h" />
     <ClInclude Include="src\engine\font_collection.h" />
+    <ClInclude Include="src\game\component\all_components.h" />
+    <ClInclude Include="src\game\component\gui\button.h" />
+    <ClInclude Include="src\game\component\gui\button_base.h" />
     <ClInclude Include="src\game\component\gui\panel_property.h" />
+    <ClInclude Include="src\game\component\gui\transition.h" />
+    <ClInclude Include="src\game\gui_manager.h" />
     <ClInclude Include="src\game\input\input_icon_manager.h" />
     <ClInclude Include="src\game\layer_manager.h" />
     <ClInclude Include="src\game\particle_renderer.h" />
     <ClInclude Include="src\game\particle_renderer_mesh.h" />
     <ClInclude Include="src\game\particle_renderer_opaque.h" />
     <ClInclude Include="src\game\particle_renderer_sprite.h" />
+    <ClInclude Include="src\game\resource\all_resources.h" />
     <ClInclude Include="src\game\resource\inline_image.h" />
     <ClInclude Include="src\engine\pipeline_state_manager.h" />
     <ClInclude Include="src\game\audio_engine.h" />
@@ -271,15 +289,15 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\gui\panel.h" />
     <ClInclude Include="src\game\component\gui\text_property.h" />
     <ClInclude Include="src\game\game_settings.h" />
-    <ClInclude Include="src\app\map_file_parser.h" />
+    <ClInclude Include="src\app\util\map_file_parser.h" />
     <ClInclude Include="src\game\input\direct_input.h" />
     <ClInclude Include="src\game\input\x_input.h" />
-    <ClInclude Include="src\game\parser.h" />
     <ClInclude Include="src\game\resource\audio.h" />
     <ClInclude Include="src\game\resource\collision_model.h" />
     <ClInclude Include="src\game\resource\font.h" />
     <ClInclude Include="src\game\resource\bitmap.h" />
     <ClInclude Include="src\game\component\gui\text.h" />
+    <ClInclude Include="src\game\resource\transition_effect.h" />
     <ClInclude Include="src\math\aabb.h" />
     <ClInclude Include="src\math\color.h" />
     <ClInclude Include="src\game\component\gui\label.h" />
@@ -304,10 +322,9 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\math\easing.h" />
     <ClInclude Include="src\engine\engine.h" />
     <ClInclude Include="src\game\entity.h" />
-    <ClInclude Include="src\app\floating_player.h" />
     <ClInclude Include="src\game\component\collider\floor_collider.h" />
     <ClInclude Include="src\game\game.h" />
-    <ClInclude Include="src\app\game_camera.h" />
+    <ClInclude Include="src\app\component\camera_controller.h" />
     <ClInclude Include="src\engine\buffer.h" />
     <ClInclude Include="src\engine\buffer_manager.h" />
     <ClInclude Include="src\engine\index_buffer.h" />
@@ -340,9 +357,11 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\math\vec.h" />
     <ClInclude Include="src\engine\vertex_buffer.h" />
     <ClInclude Include="src\engine\window.h" />
-    <ClInclude Include="src\game\string_methods.h" />
+    <ClInclude Include="src\util\string_methods.h" />
+    <ClInclude Include="src\util\reader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -450,6 +469,14 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="shader\transition_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(WindowsSDK_IncludePath)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(WindowsSDK_IncludePath)</AdditionalIncludeDirectories>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

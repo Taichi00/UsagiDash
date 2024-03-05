@@ -29,7 +29,7 @@ HRESULT __stdcall InlineImage::Draw(
     BOOL isRightToLeft,
     IUnknown* clientDrawingEffect)
 {
-    float ratio = engine_->AspectRatio();
+    float ratio = engine_->RenderTargetScale();
 
     auto bitmap_size = bitmap_->Size();
     auto scale = size_ / bitmap_size.y;

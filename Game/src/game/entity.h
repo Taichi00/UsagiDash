@@ -7,6 +7,7 @@
 #include <string>
 #include <string>
 #include <type_traits>
+#include <typeindex>
 #include <typeinfo>
 #include <vector>
 
@@ -26,32 +27,37 @@ public:
 
 	virtual ~Entity();
 
+	// entity を破棄する
 	void Destroy();
 	
+	// コンポーネントを追加する
 	Component* AddComponent(Component* component);
+
+	template <typename T>
+	T* AddComponent(T* component)
+	{
+		component_map_[typeid(T)].push_back(std::unique_ptr<Component>(component));
+
+		component->RegisterEntity(this);
+
+		return component;
+	}
 
 	template <typename T, typename... Args>
 	T* AddComponent(Args&&... args)
 	{
-		std::string key = typeid(T).name();
-
 		auto component = new T(std::forward<Args>(args)...);
-		component_map_[key].push_back(std::unique_ptr<Component>(component));
+		component_map_[typeid(T)].push_back(std::unique_ptr<Component>(component));
 
 		component->RegisterEntity(this);
 
 		return component;
 	}
 	
+	// コンポーネントを取得する
 	template<class T>
 	T* GetComponent()
 	{
-		/*auto& components = component_map_[typeid(T).name()];
-		if (components.empty())
-		{
-			return nullptr;
-		}*/
-
 		T* component = nullptr;
 
 		for (auto& components : component_map_)
@@ -60,7 +66,6 @@ public:
 			if (component) break;
 		}
 
-		//return (T*)components[0].get();
 		return component;
 	}
 
@@ -154,7 +159,6 @@ protected:
 
 	Entity* parent_;								// 親Entity
 	std::vector<std::unique_ptr<Entity>> children_;	// 子Entity
-	//std::map<std::string, Entity*> children_map_;	// 子Entityの名前マップ
 	
-	std::map<std::string, std::vector<std::unique_ptr<Component>>> component_map_;
+	std::map<std::type_index, std::vector<std::unique_ptr<Component>>> component_map_; // コンポーネントのマップ
 };

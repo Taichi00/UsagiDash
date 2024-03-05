@@ -1,7 +1,7 @@
 #pragma once
 
 #include "game/component/component.h"
-#include "app/map_file_parser.h"
+#include "app/util/map_file_parser.h"
 #include <string>
 #include <memory>
 #include <map>

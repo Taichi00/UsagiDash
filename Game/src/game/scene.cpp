@@ -136,6 +136,9 @@ bool Scene::Init()
 		ptr->camera_position = { 0, 0, 1 };
 	}
 
+	// デフォルトスカイボックスを設定
+	SetSkybox(L"assets/skybox/default/");
+
     return true;
 }
 
@@ -144,20 +147,20 @@ void Scene::Update(const float delta_time)
 	UpdateEntityList();
 
 	// Cameraの更新
-	for (auto& entity : entity_list_) { entity->BeforeCameraUpdate(delta_time); };
-	for (auto& entity : entity_list_) { entity->CameraUpdate(delta_time); };
+	for (auto& entity : entity_list_) entity->BeforeCameraUpdate(delta_time);
+	for (auto& entity : entity_list_) entity->CameraUpdate(delta_time);
 
 	// エンティティの更新
-	for (auto& entity : entity_list_) { entity->Update(delta_time); };
+	for (auto& entity : entity_list_) entity->Update(delta_time);
 
 	// 物理の更新
-	for (auto& entity : entity_list_) { entity->PhysicsUpdate(delta_time); };
+	for (auto& entity : entity_list_) entity->PhysicsUpdate(delta_time);
 
 	// 衝突判定
 	Game::Get()->GetCollisionManager()->Update(delta_time);
 
 	// 変換行列の更新
-	for (auto& entity : entity_list_) { entity->TransformUpdate(delta_time); };
+	for (auto& entity : entity_list_) entity->TransformUpdate(delta_time);
 
 	// 定数バッファの更新
 	UpdateCB();
@@ -177,9 +180,8 @@ void Scene::Draw()
 	engine->InitRender();
 
 	// シャドウマップの描画
-	/*auto start = std::chrono::system_clock::now();*/
 	engine->GetShadowMap()->BeginRender();
-	for (auto& entity : entity_list_) { entity->DrawShadow(); };
+	for (auto& entity : entity_list_) entity->DrawShadow();
 	engine->GetShadowMap()->EndRender();
 	
 	// レンダリングの開始
@@ -187,11 +189,11 @@ void Scene::Draw()
 
 	// デプスプリパス
 	engine->DepthPrePath();
-	for (auto& entity : entity_list_) { entity->DrawDepth(); };
+	for (auto& entity : entity_list_) entity->DrawDepth();
 
 	// G-Bufferへの書き込み
 	engine->GBufferPath();
-	for (auto& entity : entity_list_) { entity->DrawGBuffer(); };
+	for (auto& entity : entity_list_) entity->DrawGBuffer();
 
 	// ライティングパス
 	engine->LightingPath();
@@ -211,7 +213,7 @@ void Scene::Draw()
 	//DrawBlurVertical();
 	
 	// アウトライン描画（フォワードレンダリング）
-	for (auto& entity : entity_list_) { entity->DrawOutline(); };
+	for (auto& entity : entity_list_) entity->DrawOutline();
 
 	// ポストプロセス
 	engine->PostProcessPath();
@@ -222,13 +224,10 @@ void Scene::Draw()
 	DrawFXAA();
 	
 	engine->EndRenderD3D();
-	/*auto end = std::chrono::system_clock::now();
-	double time = (double)(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0);
-	printf("Draw3D:\t%lf[ms]\n", time);*/
-
+	
 	// 2D描画
 	engine->GetEngine2D()->BeginRenderD2D();
-	for (auto& entity : entity_list_) { entity->Draw2D(); };
+	for (auto& entity : entity_list_) entity->Draw2D();
 	engine->GetEngine2D()->EndRenderD2D();
 
 	// レンダリングの終了
@@ -488,61 +487,24 @@ Camera* Scene::GetMainCamera()
 
 void Scene::SetSkybox(const std::wstring& path)
 {
-	auto device = Game::Get()->GetEngine()->Device();
+	auto engine = Game::Get()->GetEngine();
+	auto heap = engine->SrvHeap();
 
-	skybox_tex_ = Texture2D::Load(path + L"EnvHDR.dds");
+	skybox_tex_ = LoadResource<Texture2D>(path + L"EnvHDR.dds");
+	skybox_handle_ = heap->Alloc();
+	engine->CreateShaderResourceViewCube(*skybox_tex_, skybox_handle_);
 
-	// SRVを作成
-	D3D12_SHADER_RESOURCE_VIEW_DESC skyboxDesc{};
-	skyboxDesc.Format = skybox_tex_->Format();
-	skyboxDesc.TextureCube.MipLevels = (UINT)skybox_tex_->Metadata().mipLevels;
-	skyboxDesc.TextureCube.MostDetailedMip = 0;
-	skyboxDesc.TextureCube.ResourceMinLODClamp = 0;
-	skyboxDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	skyboxDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	diffusemap_tex_ = LoadResource<Texture2D>(path + L"DiffuseHDR.dds");
+	diffusemap_handle_ = heap->Alloc();
+	engine->CreateShaderResourceViewCube(*diffusemap_tex_, diffusemap_handle_);
 
-	skybox_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();	// GBufferHeapに追加
-	device->CreateShaderResourceView(skybox_tex_->Resource(), &skyboxDesc, skybox_handle_.HandleCPU());	// シェーダーリソースビュー作成
+	specularmap_tex_ = LoadResource<Texture2D>(path + L"SpecularHDR.dds");
+	specularmap_handle_ = heap->Alloc();
+	engine->CreateShaderResourceViewCube(*specularmap_tex_, specularmap_handle_);
 
-	// DiffuseMap
-	diffusemap_tex_ = Texture2D::Load(path + L"DiffuseHDR.dds");
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC diffuseDesc{};
-	diffuseDesc.Format = diffusemap_tex_->Format();
-	diffuseDesc.TextureCube.MipLevels = (UINT)diffusemap_tex_->Metadata().mipLevels;
-	diffuseDesc.TextureCube.MostDetailedMip = 0;
-	diffuseDesc.TextureCube.ResourceMinLODClamp = 0;
-	diffuseDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	diffuseDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-
-	diffusemap_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
-	device->CreateShaderResourceView(diffusemap_tex_->Resource(), &diffuseDesc, diffusemap_handle_.HandleCPU());
-
-	// SpecularMap
-	specularmap_tex_ = Texture2D::Load(path + L"SpecularHDR.dds");
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC specularDesc{};
-	specularDesc.Format = specularmap_tex_->Format();
-	specularDesc.TextureCube.MipLevels = (UINT)specularmap_tex_->Metadata().mipLevels;
-	specularDesc.TextureCube.MostDetailedMip = 0;
-	specularDesc.TextureCube.ResourceMinLODClamp = 0;
-	specularDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	specularDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-
-	specularmap_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
-	device->CreateShaderResourceView(specularmap_tex_->Resource(), &specularDesc, specularmap_handle_.HandleCPU());
-
-	// brdfLUT
-	brdf_tex_ = Texture2D::Load(path + L"Brdf.dds");
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC brdfDesc{};
-	brdfDesc.Format = brdf_tex_->Format();
-	brdfDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	brdfDesc.Texture2D.MipLevels = (UINT)brdf_tex_->Metadata().mipLevels;
-	brdfDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-
-	brdf_handle_ = Game::Get()->GetEngine()->SrvHeap()->Alloc();
-	device->CreateShaderResourceView(brdf_tex_->Resource(), &brdfDesc, brdf_handle_.HandleCPU());
+	brdf_tex_ = LoadResource<Texture2D>(path + L"Brdf.dds");
+	brdf_handle_ = heap->Alloc();
+	engine->CreateShaderResourceView2D(*brdf_tex_, brdf_handle_);
 
 
 	// Meshを作成
@@ -571,26 +533,9 @@ void Scene::SetSkybox(const std::wstring& path)
 	skybox_mesh_.vertices = vertices;
 	skybox_mesh_.indices = indices;
 
-	// 頂点バッファの生成
-	auto vSize = sizeof(Vertex) * skybox_mesh_.vertices.size();
-	auto stride = sizeof(Vertex);
-	auto pVB = std::make_unique<VertexBuffer>(vSize, stride, vertices.data());
-	if (!pVB->IsValid())
-	{
-		printf("頂点バッファの生成に失敗\n");
-		return;
-	}
-	skybox_mesh_.vertex_buffer = std::move(pVB);
-
-	// インデックスバッファの生成
-	auto iSize = sizeof(uint32_t) * skybox_mesh_.indices.size();
-	auto pIB = std::make_unique<IndexBuffer>(iSize, indices.data());
-	if (!pIB->IsValid())
-	{
-		printf("インデックスバッファの生成に失敗\n");
-		return;
-	}
-	skybox_mesh_.index_buffer = std::move(pIB);
+	// 頂点バッファ、インデックスバッファの生成
+	skybox_mesh_.vertex_buffer = engine->CreateVertexBuffer(vertices);
+	skybox_mesh_.index_buffer = engine->CreateIndexBuffer(indices);
 }
 
 bool Scene::PreparePSO()

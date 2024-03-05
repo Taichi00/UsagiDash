@@ -4,6 +4,7 @@
 #include "math/vec.h"
 #include "math/color.h"
 #include "math/rect.h"
+#include <string>
 
 class Panel : public Control
 {

@@ -2,7 +2,7 @@
 #include "math/color.h"
 #include "engine/engine.h"
 #include "engine/engine2d.h"
-#include "game/string_methods.h"
+#include "util/string_methods.h"
 #include "game/component/transform.h"
 #include "game/game.h"
 
@@ -11,7 +11,6 @@ Label::Label() : Control()
 	text_ = Text{};
 	//text_prop_ = TextProperty{};
 	panel_prop_ = PanelProperty{};
-	text_color_ = Color::White();
 }
 
 Label::Label(const std::string& text) : Label()
@@ -19,12 +18,11 @@ Label::Label(const std::string& text) : Label()
 	text_.string = StringMethods::GetWideString(text);
 }
 
-Label::Label(const std::string& text, const TextProperty& text_prop, const PanelProperty& panel_prop, const Color& color, const bool fit)
+Label::Label(const std::string& text, const TextProperty& text_prop, const PanelProperty& panel_prop, const bool fit)
 {
 	text_.string = StringMethods::GetWideString(text);
 	text_.prop = text_prop;
 	panel_prop_ = panel_prop;
-	text_color_ = color;
 	fit_ = fit;
 }
 
@@ -37,8 +35,8 @@ bool Label::Init()
 	Control::Init();
 
 	engine_->RegisterTextFormat(text_.prop.font);
-	engine_->RegisterSolidColorBrush(text_color_);
-	engine_->RegisterSolidColorBrush(panel_prop_.color);
+	//engine_->RegisterSolidColorBrush(text_color_);
+	//engine_->RegisterSolidColorBrush(panel_prop_.color);
 
 	text_.Parse();
 
@@ -55,7 +53,7 @@ void Label::Update(const float delta_time)
 
 void Label::Draw2D()
 {
-	auto ratio = engine_->AspectRatio();
+	auto ratio = engine_->RenderTargetScale();
 
 	auto padding = panel_prop_.padding;
 
@@ -71,7 +69,7 @@ void Label::Draw2D()
 
 	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
 	engine_->DrawFillRectangle(panel_rect, panel_prop_.color * GetColor(), panel_prop_.radius);
-	engine_->DrawText(text_, rect, text_color_ * GetColor());
+	engine_->DrawText(text_, rect, text_.prop.color * GetColor());
 }
 
 void Label::SetText(const std::string& text)

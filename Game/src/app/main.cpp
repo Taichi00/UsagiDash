@@ -1,6 +1,7 @@
 #include "game/game.h"
 #include "game/game_settings.h"
 #include "app/scene/level1_scene.h"
+#include "app/scene/title_scene.h"
 #include "engine/comptr.h"
 
 int wmain(int argc, wchar_t** argv, wchar_t** envp)
@@ -79,7 +80,8 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 
 	Game::Create();
 
-	Game::Get()->Run(new Level1Scene(), settings);
+	//Game::Get()->Run(new Level1Scene(), settings);
+	Game::Get()->Run(new TitleScene(), settings);
 
 	Game::Destroy();
 

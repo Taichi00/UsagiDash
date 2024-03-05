@@ -6,12 +6,15 @@
 #include "app/component/player_controller.h"
 #include "game/component/rigidbody.h"
 #include "app/entity/checkpoint.h"
+#include "game/component/gui/transition.h"
+#include "app/component/camera_controller.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
-GameManager::GameManager(PlayerController* player, Label* coin_label)
+GameManager::GameManager(PlayerController* player, CameraController* camera, Label* coin_label)
 {
 	player_ = player;
+	camera_ = camera;
 	coin_label_ = coin_label;
 }
 
@@ -20,6 +23,7 @@ bool GameManager::Init()
 	if (instance_ && instance_ != this)
 	{
 		instance_->player_ = player_;
+		instance_->camera_ = camera_;
 		instance_->coin_label_ = coin_label_;
 		instance_->current_checkpoint_ = nullptr;
 
@@ -31,23 +35,31 @@ bool GameManager::Init()
 	instance_ = this;
 	GetScene()->DontDestroyOnLoad(GetEntity());
 
+	// audio source ‚ðŽæ“¾
 	audio_source_ = GetEntity()->GetComponent<AudioSource>();
 
 	// BGM ‚ðÄ¶
 	if (audio_source_)
 		audio_source_->Play(0.3f, true);
 
-	// coin label ‚Ì‰Šú‰»
-	coin_label_->SetText(GetCoinText(num_coins_));
+	if (coin_label_)
+	{
+		// coin label ‚Ì‰Šú‰»
+		coin_label_->SetText(GetCoinText(num_coins_));
 
-	coin_label_animator_ = coin_label_->GetEntity()->GetComponent<Animator>();
+		coin_label_animator_ = coin_label_->GetEntity()->GetComponent<Animator>();
+	}
+
+	// ƒgƒ‰ƒ“ƒWƒVƒ‡ƒ“
+	transition_ = GetScene()->FindEntity("transition")->GetComponent<Transition>();
 
 	return true;
 }
 
 void GameManager::Update(const float delta_time)
 {
-	PlayerFallen();
+	if (player_)
+		PlayerFallen();
 }
 
 void GameManager::AddCoin(const int n)
@@ -70,9 +82,24 @@ std::string GameManager::GetCoinText(const int n)
 
 void GameManager::PlayerFallen()
 {
-	if (player_->transform->position.y < -50)
+	if (!respawning_)
 	{
-		RespawnPlayer();
+		if (player_->transform->position.y < -50)
+		{
+			respawning_ = true;
+			transition_->FadeIn(4, Easing::IN_QUAD);
+		}
+	}
+	else
+	{
+		if (!transition_->IsFadingIn())
+		{
+			respawning_ = false;
+			transition_->FadeOut(4, Easing::OUT_QUAD);
+
+			RespawnPlayer();
+			camera_->ForceMove();
+		}
 	}
 }
 

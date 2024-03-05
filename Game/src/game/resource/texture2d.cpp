@@ -1,7 +1,7 @@
 #include "texture2d.h"
 #include "engine/engine.h"
 #include "stb_image.h"
-#include "game/string_methods.h"
+#include "util/string_methods.h"
 #include "game/game.h"
 
 #pragma comment(lib, "DirectXTex.lib")
@@ -84,13 +84,25 @@ ID3D12Resource* Texture2D::Resource() const
 	return resource_.Get();
 }
 
-D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDesc() const
+D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDesc2D() const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
 	desc.Format = format_;
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D; //2Dテクスチャ
 	desc.Texture2D.MipLevels = 1; //ミップマップは使用しないので1
+	return desc;
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC Texture2D::ViewDescCube() const
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
+	desc.Format = format_;
+	desc.TextureCube.MipLevels = (UINT)metadata_.mipLevels;
+	desc.TextureCube.MostDetailedMip = 0;
+	desc.TextureCube.ResourceMinLODClamp = 0;
+	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 	return desc;
 }
 

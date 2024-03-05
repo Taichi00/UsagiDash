@@ -15,7 +15,7 @@
 #include "math/quaternion.h"
 #include "game/resource/model.h"
 #include "game/resource/collision_model.h"
-#include "game/string_methods.h"
+#include "util/string_methods.h"
 #include "math/aabb.h"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -128,9 +128,9 @@ std::unique_ptr<Model> AssimpLoader::Load(const std::wstring& path)
         mat.pbr_handle = model->descriptor_heap->Alloc();
         mat.normal_handle = model->descriptor_heap->Alloc();
 
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.albedo_texture, mat.albedo_handle);
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.pbr_texture, mat.pbr_handle);
-        Game::Get()->GetEngine()->CreateShaderResourceView(*mat.normal_texture, mat.normal_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.albedo_texture, mat.albedo_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.pbr_texture, mat.pbr_handle);
+        Game::Get()->GetEngine()->CreateShaderResourceView2D(*mat.normal_texture, mat.normal_handle);
     }
 
     // AABBÇÃê›íË
