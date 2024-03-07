@@ -46,23 +46,18 @@ void Game::Run(Scene* scene, const GameSettings& settings)
 		{
 			window_->TickTime();
 			delta_time_ = (float)window_->DeltaTime();
-			
+
+			if (next_scene_)
+			{
+				LoadNextScene();
+			}
+
 			Update();
 
 			if (current_scene_)
 			{
-				//auto start = std::chrono::system_clock::now();
 				current_scene_->Update(delta_time_);
-				/*auto end = std::chrono::system_clock::now();
-				double time = (double)(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0);
-				printf("Update:\t%lf[ms]\n", time);*/
-
-				//start = end;
 				current_scene_->Draw();
-				/*end = std::chrono::system_clock::now();
-				time = (double)(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0);
-				printf("Draw: \t%lf[ms]\n", time);*/
-
 				current_scene_->AfterUpdate();
 			}
 		}
@@ -70,6 +65,11 @@ void Game::Run(Scene* scene, const GameSettings& settings)
 	}
 
 	End();
+}
+
+void Game::Quit()
+{
+	PostQuitMessage(0);
 }
 
 Engine* Game::GetEngine()
@@ -95,28 +95,8 @@ void Game::ToggleFullscreen()
 
 Scene* Game::LoadScene(Scene* scene)
 {
-	Game::Get()->GetEngine()->WaitGPU();
-
-	std::vector<std::unique_ptr<Entity>> dont_destroy_entities;
-
-	if (current_scene_)
-	{
-		// 破棄しないエンティティを避難させる
-		dont_destroy_entities = current_scene_->MoveDontDestroyEntities();
-	}
-
-	// 新しいシーンの読み込み
-	current_scene_.reset(scene);
-	scene->Awake();
-	scene->Init();
-	
-	// dont destroy entities を新しいシーンに生成
-	for (auto& entity : dont_destroy_entities)
-	{
-		scene->CreateEntity(entity.release());
-	}
-
-	return scene;
+	next_scene_ = std::unique_ptr<Scene>(scene);
+	return next_scene_.get();
 }
 
 Scene* Game::GetCurrentScene()
@@ -217,5 +197,31 @@ void Game::End()
 
 	// input を解放
 	Input::Destroy();
+}
+
+void Game::LoadNextScene()
+{
+	Game::Get()->GetEngine()->WaitGPU();
+
+	std::vector<std::unique_ptr<Entity>> dont_destroy_entities;
+
+	if (current_scene_)
+	{
+		// 破棄しないエンティティを避難させる
+		dont_destroy_entities = current_scene_->MoveDontDestroyEntities();
+	}
+
+	current_scene_.reset();
+
+	// 新しいシーンの読み込み
+	current_scene_ = std::move(next_scene_);
+	current_scene_->Awake();
+	current_scene_->Init();
+
+	// dont destroy entities を新しいシーンに生成
+	for (auto& entity : dont_destroy_entities)
+	{
+		current_scene_->CreateEntity(entity.release());
+	}
 }
 

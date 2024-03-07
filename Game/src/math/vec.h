@@ -34,6 +34,11 @@ public:
 		return v * n;
 	}
 
+	const Vec2 operator *(const Vec2& v) const
+	{
+		return Vec2(x * v.x, y * v.y);
+	}
+
 	const Vec2 operator /(const float n) const
 	{
 		return Vec2(x / n, y / n);

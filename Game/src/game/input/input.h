@@ -7,9 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "game/input/direct_input.h"
-#include "game/input/x_input.h"
-
+class DirectInput;
+class XInput;
 class Window;
 
 class Input
@@ -25,67 +24,67 @@ public:
 
 	enum Button
 	{
-		KEY_ESCAPE = DIK_ESCAPE,
-		KEY_RETURN = DIK_RETURN,
-		KEY_SPACE = DIK_SPACE,
-		KEY_LSHIFT = DIK_LSHIFT,
-		KEY_RSHIFT = DIK_RSHIFT,
+		KEY_ESCAPE,
+		KEY_RETURN,
+		KEY_SPACE,
+		KEY_LSHIFT,
+		KEY_RSHIFT,
 
-		KEY_UP = DIK_UP,
-		KEY_DOWN = DIK_DOWN,
-		KEY_LEFT = DIK_LEFT,
-		KEY_RIGHT = DIK_RIGHT,
+		KEY_UP,
+		KEY_DOWN,
+		KEY_LEFT,
+		KEY_RIGHT,
 
-		KEY_1 = DIK_1,
-		KEY_2 = DIK_2,
-		KEY_3 = DIK_3,
-		KEY_4 = DIK_4,
-		KEY_5 = DIK_5,
-		KEY_6 = DIK_6,
-		KEY_7 = DIK_7,
-		KEY_8 = DIK_8,
-		KEY_9 = DIK_9,
-		KEY_0 = DIK_0,
+		KEY_1,
+		KEY_2,
+		KEY_3,
+		KEY_4,
+		KEY_5,
+		KEY_6,
+		KEY_7,
+		KEY_8,
+		KEY_9,
+		KEY_0,
 
-		KEY_A = DIK_A,
-		KEY_B = DIK_B,
-		KEY_C = DIK_C,
-		KEY_D = DIK_D,
-		KEY_E = DIK_E,
-		KEY_F = DIK_F,
-		KEY_G = DIK_G,
-		KEY_H = DIK_H,
-		KEY_I = DIK_I,
-		KEY_J = DIK_J,
-		KEY_K = DIK_K,
-		KEY_L = DIK_L,
-		KEY_M = DIK_M,
-		KEY_N = DIK_N,
-		KEY_O = DIK_O,
-		KEY_P = DIK_P,
-		KEY_Q = DIK_Q,
-		KEY_R = DIK_R,
-		KEY_S = DIK_S,
-		KEY_T = DIK_T,
-		KEY_U = DIK_U,
-		KEY_V = DIK_V,
-		KEY_W = DIK_W,
-		KEY_X = DIK_X,
-		KEY_Y = DIK_Y,
-		KEY_Z = DIK_Z,
+		KEY_A,
+		KEY_B,
+		KEY_C,
+		KEY_D,
+		KEY_E,
+		KEY_F,
+		KEY_G,
+		KEY_H,
+		KEY_I,
+		KEY_J,
+		KEY_K,
+		KEY_L,
+		KEY_M,
+		KEY_N,
+		KEY_O,
+		KEY_P,
+		KEY_Q,
+		KEY_R,
+		KEY_S,
+		KEY_T,
+		KEY_U,
+		KEY_V,
+		KEY_W,
+		KEY_X,
+		KEY_Y,
+		KEY_Z,
 
-		PAD_UP = XINPUT_GAMEPAD_DPAD_UP,
-		PAD_DOWN = XINPUT_GAMEPAD_DPAD_DOWN,
-		PAD_LEFT = XINPUT_GAMEPAD_DPAD_LEFT,
-		PAD_RIGHT = XINPUT_GAMEPAD_DPAD_RIGHT,
+		PAD_UP,
+		PAD_DOWN,
+		PAD_LEFT,
+		PAD_RIGHT,
 
-		PAD_LB = XINPUT_GAMEPAD_LEFT_SHOULDER,
-		PAD_RB = XINPUT_GAMEPAD_RIGHT_SHOULDER,
+		PAD_LB,
+		PAD_RB,
 		
-		PAD_A = XINPUT_GAMEPAD_A,
-		PAD_B = XINPUT_GAMEPAD_B,
-		PAD_X = XINPUT_GAMEPAD_X,
-		PAD_Y = XINPUT_GAMEPAD_Y,
+		PAD_A,
+		PAD_B,
+		PAD_X,
+		PAD_Y,
 
 		PAD_LSTICK_UP,
 		PAD_LSTICK_DOWN,
@@ -160,6 +159,8 @@ public:
 	static bool GetButtonDown(const std::string& key);
 	// ボタンを離した瞬間
 	static bool GetButtonUp(const std::string& key);
+	// リピート
+	static bool GetButtonRepeat(const std::string& key);
 
 	// 軸の値
 	static float GetAxis(const std::string& key);
@@ -171,6 +172,8 @@ public:
 
 private:
 	void CheckActions();
+
+	void InitButtonMap();
 
 private:
 	// ウィンドウ
@@ -185,10 +188,12 @@ private:
 	std::unordered_map<std::string, std::vector<ButtonActionInfo>> button_action_map_;
 	std::unordered_map<std::string, std::vector<AxisActionInfo>> axis_action_map_;
 
-	// button action の状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間）
+	// button action の状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間, b4 = キーリピート）
 	std::unordered_map<std::string, int> button_action_state_;
 	// axis action の状態
 	std::unordered_map<std::string, float> axis_action_state_;
+
+	std::unordered_map<Button, int> button_map_;
 	
 	static Input* instance_;
 };

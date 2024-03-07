@@ -6,23 +6,24 @@
 #include "game/component/transform.h"
 #include "game/game.h"
 
-Label::Label() : Control()
+Label::Label(const std::string& text, const TextProperty& text_prop)
 {
-	text_ = Text{};
-	//text_prop_ = TextProperty{};
-	panel_prop_ = PanelProperty{};
-}
+	Text t = {};
+	t.string = StringMethods::GetWideString(text);
+	t.prop = text_prop;
 
-Label::Label(const std::string& text) : Label()
-{
-	text_.string = StringMethods::GetWideString(text);
+	AddElement<LabelElement>("label", new LabelElement(t, this))->SetZIndex(1);
+	fit_ = true;
 }
 
 Label::Label(const std::string& text, const TextProperty& text_prop, const PanelProperty& panel_prop, const bool fit)
 {
-	text_.string = StringMethods::GetWideString(text);
-	text_.prop = text_prop;
-	panel_prop_ = panel_prop;
+	Text t = {};
+	t.string = StringMethods::GetWideString(text);
+	t.prop = text_prop;
+
+	AddElement<PanelElement>("panel", new PanelElement(panel_prop, this))->SetZIndex(0);
+	AddElement<LabelElement>("label", new LabelElement(t, this))->SetZIndex(1);
 	fit_ = fit;
 }
 
@@ -33,12 +34,6 @@ Label::~Label()
 bool Label::Init()
 {
 	Control::Init();
-
-	engine_->RegisterTextFormat(text_.prop.font);
-	//engine_->RegisterSolidColorBrush(text_color_);
-	//engine_->RegisterSolidColorBrush(panel_prop_.color);
-
-	text_.Parse();
 
 	return true;
 }
@@ -53,36 +48,18 @@ void Label::Update(const float delta_time)
 
 void Label::Draw2D()
 {
-	auto ratio = engine_->RenderTargetScale();
-
-	auto padding = panel_prop_.padding;
-
-	auto rect = GetRect();
-	Rect2 panel_rect = { 
-		rect.left - padding.left, 
-		rect.top - padding.top, 
-		rect.right + padding.right, 
-		rect.bottom + padding.bottom
-	};
-
-	auto world_matrix = WorldMatrix();
-
-	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
-	engine_->DrawFillRectangle(panel_rect, panel_prop_.color * GetColor(), panel_prop_.radius);
-	engine_->DrawText(text_, rect, text_.prop.color * GetColor());
+	Control::Draw2D();
 }
 
 void Label::SetText(const std::string& text)
 {
-	text_.string = StringMethods::GetWideString(text);
-	text_.Parse();
-
+	GetElement<LabelElement>("label")->SetText(text);
 	Update(0);
 }
 
 void Label::FitSize()
 {
-	auto size = engine_->GetTextSize(text_);
+	auto size = GetElement<LabelElement>("label")->GetTextSize();
 	SetSize(size);
 	Transform();
 }

@@ -161,20 +161,23 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\app\component\checkpoint_controller.cpp" />
+    <ClCompile Include="src\game\component\gui\animated_button.cpp" />
     <ClCompile Include="src\app\component\tutorial_text_display.cpp" />
     <ClCompile Include="src\app\component\game_manager.cpp" />
     <ClCompile Include="src\app\component\coin_script.cpp" />
     <ClCompile Include="src\app\component\map_loader.cpp" />
     <ClCompile Include="src\app\entity\checkpoint.cpp" />
     <ClCompile Include="src\app\entity\coin.cpp" />
+    <ClCompile Include="src\app\entity\custom_button.cpp" />
     <ClCompile Include="src\app\entity\player.cpp" />
     <ClCompile Include="src\app\entity\tutorial.cpp" />
     <ClCompile Include="src\app\scene\title_scene.cpp" />
     <ClCompile Include="src\engine\engine2d.cpp" />
     <ClCompile Include="src\game\component\gui\button.cpp" />
     <ClCompile Include="src\game\component\gui\button_base.cpp" />
-    <ClCompile Include="src\game\component\gui\cursor_area.cpp" />
-    <ClCompile Include="src\game\component\gui\cursor_area.h" />
+    <ClCompile Include="src\game\component\gui\element\element.cpp" />
+    <ClCompile Include="src\game\component\gui\element\label_element.cpp" />
+    <ClCompile Include="src\game\component\gui\element\panel_element.cpp" />
     <ClCompile Include="src\game\component\gui\text.cpp" />
     <ClCompile Include="src\game\component\gui\transition.cpp" />
     <ClCompile Include="src\game\gui_manager.cpp" />
@@ -252,6 +255,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app\component\checkpoint_controller.h" />
+    <ClInclude Include="src\game\component\gui\animated_button.h" />
     <ClInclude Include="src\app\component\title_scene_controller.h" />
     <ClInclude Include="src\app\component\tutorial_text_display.h" />
     <ClInclude Include="src\app\component\game_manager.h" />
@@ -259,6 +263,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\app\component\map_loader.h" />
     <ClInclude Include="src\app\entity\checkpoint.h" />
     <ClInclude Include="src\app\entity\coin.h" />
+    <ClInclude Include="src\app\entity\custom_button.h" />
     <ClInclude Include="src\app\entity\player.h" />
     <ClInclude Include="src\app\entity\tutorial.h" />
     <ClInclude Include="src\app\scene\title_scene.h" />
@@ -268,6 +273,9 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\game\component\all_components.h" />
     <ClInclude Include="src\game\component\gui\button.h" />
     <ClInclude Include="src\game\component\gui\button_base.h" />
+    <ClInclude Include="src\game\component\gui\element\element.h" />
+    <ClInclude Include="src\game\component\gui\element\label_element.h" />
+    <ClInclude Include="src\game\component\gui\element\panel_element.h" />
     <ClInclude Include="src\game\component\gui\panel_property.h" />
     <ClInclude Include="src\game\component\gui\transition.h" />
     <ClInclude Include="src\game\gui_manager.h" />

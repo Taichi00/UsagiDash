@@ -1,18 +1,17 @@
 #pragma once
 
 #include "game/component/gui/control.h"
-#include "math/color.h"
-#include "game/component/gui/text_property.h"
-#include "game/component/gui/panel_property.h"
-#include "game/component/gui/text.h"
+#include "game/component/gui/element/label_element.h"
+#include "game/component/gui/element/panel_element.h"
 #include <string>
-#include <memory>
 
 class Label : public Control
 {
 public:
-	Label();
-	Label(const std::string& text);
+	Label(
+		const std::string& text,
+		const TextProperty& text_prop
+	);
 	Label(
 		const std::string& text, 
 		const TextProperty& text_prop, 
@@ -32,10 +31,5 @@ private:
 	void FitSize(); // テキストのサイズに合わせる
 
 private:
-	Text text_;
-	PanelProperty panel_prop_;
 	bool fit_;
-
-	std::string color_key_;
-	std::string font_key_;
 };

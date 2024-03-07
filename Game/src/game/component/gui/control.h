@@ -1,10 +1,14 @@
 #pragma once
 
 #include "game/component/component.h"
+#include "game/component/gui/element/element.h"
 #include "math/vec.h"
 #include "math/rect.h"
 #include "math/matrix3x2.h"
 #include "math/color.h"
+#include <map>
+#include <memory>
+#include <vector>
 
 class Engine2D;
 
@@ -32,6 +36,8 @@ public:
 	void SetAnchor(const Rect2& anchor) { anchor_ = anchor; }
 	void SetColor(const Color& color) { color_ = color; }
 
+	Vec2 Size() const { return Vec2(rect_.Width(), rect_.Height()); }
+	Vec2 Pivot() const { return pivot_; }
 	float Rotation() const { return rotation_; }
 	Vec2 Scale() const { return scale_; }
 	Rect2 Offset() const { return offset_; }
@@ -43,10 +49,27 @@ public:
 
 	Vec2 WorldPosition() const;
 
+	// UI要素を取得する
+	template <typename T>
+	T* GetElement(const std::string& name)
+	{
+		return (T*)element_map_[name].get();
+	}
+
+	Element* GetElement(const std::string& name) { return element_map_[name].get(); }
+
 protected:
 	void Layout();
 
 	Vec2 ParentSize() const { return parent_size_; }
+
+	// UI要素を追加する
+	template <typename T>
+	T* AddElement(const std::string& name, T* element)
+	{
+		element_map_[name] = std::unique_ptr<Element>(element);
+		return element;
+	}
 
 protected:
 	Engine2D* engine_ = nullptr;
@@ -70,4 +93,20 @@ private:
 	Rect2 rect_;
 
 	Matrix3x2 world_matrix_;
+
+	// UI要素のマップ
+	std::map<std::string, std::unique_ptr<Element>> element_map_;
+
+	// z index 順に並べ替えるためのリスト
+	struct ElementInfo
+	{
+		Element* element = nullptr;
+		int z_index = 0;
+
+		bool operator<(const ElementInfo& info) const
+		{
+			return z_index < info.z_index;
+		}
+	};
+	std::vector<ElementInfo> element_z_list_;
 };

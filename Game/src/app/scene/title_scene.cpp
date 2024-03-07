@@ -9,6 +9,8 @@ bool TitleScene::Init()
 {
     Scene::Init();
 
+	SetSkybox(L"assets/skybox/default/");
+
 	auto camera = new Entity("camera");
 	{
 		camera->AddComponent(new Camera());
@@ -31,20 +33,16 @@ bool TitleScene::Init()
 			prop, {},
 			true
 		));
-		label->SetPosition(Vec2(0, 0));
+		label->SetAnchorPoint(Vec2(0.3f, 0.5f));
 		label->SetPivot(Vec2(0.5f, 0.5f));
-		label->SetAnchorPoint(Vec2(0.5f, 0.5f));
+		label->SetPosition(Vec2(0, -100));
+		label->SetRotation(0);
 		label->Transform();
 
 		CreateEntity(title_label);
 	}
 
-	auto cursor_area = new Entity("cursor_area");
 	{
-		auto area = cursor_area->AddComponent<CursorArea>(new CursorArea());
-		area->SetOffset({ 0, 0, 0, 0 });
-		area->SetAnchor({ 0, 0, 1, 1 });
-
 		TextProperty text_prop = {};
 		text_prop.font = L"Koruri";
 		text_prop.font_size = 22;
@@ -55,60 +53,202 @@ bool TitleScene::Init()
 
 		PanelProperty panel_prop = {};
 		panel_prop.color = Color(1, 1, 1, 1);
-		panel_prop.radius = 28;
+		panel_prop.radius = 24;
 		panel_prop.padding = { 24, 6, 24, 6 };
+
+		std::vector<std::shared_ptr<Animation>> animations;
+		{
+			auto animation = std::make_shared<Animation>("press");
+			/*{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "panel";
+				channel.gui.color_keys = {
+					{ 0, Easing::Linear, Color(0.9f, 0.9f, 0.9f) },
+				};
+				animation->AddChannel(channel);
+			}*/
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "control";
+				channel.gui.scale_keys = {
+					{ 0, Easing::Linear, Vec2(0.8f, 0.8f) },
+					{ 0.2f, Easing::OutBack, Vec2(1.1f, 1.1f) }
+				};
+				animation->AddChannel(channel);
+			}
+			animation->SetDuration(1);
+			animation->SetTicksPerSecond(1);
+
+			animations.push_back(animation);
+		}
+		{
+			auto animation = std::make_shared<Animation>("hover");
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "panel";
+				channel.gui.color_keys = {
+					{ 0, Easing::Linear, Color(0.1f, 0.1f, 0.1f) }
+				};
+				animation->AddChannel(channel);
+			}
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "label";
+				channel.gui.color_keys = {
+					{ 0, Easing::Linear, Color(1, 1, 1) }
+				};
+				animation->AddChannel(channel);
+			}
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "control";
+				channel.gui.scale_keys = {
+					{ 0, Easing::Linear, Vec2(1, 1) },
+					{ 0.1f, Easing::OutCubic, Vec2(1.1f, 1.1f) }
+				};
+				animation->AddChannel(channel);
+			}
+			animation->SetDuration(1);
+			animation->SetTicksPerSecond(1);
+
+			animations.push_back(animation);
+		}
+		{
+			auto animation = std::make_shared<Animation>("unhover");
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "panel";
+				channel.gui.color_keys = {
+					{ 0, Easing::Linear, Color(0.1f, 0.1f, 0.1f) },
+					{ 0.1f, Easing::Linear, Color(1, 1, 1) }
+				};
+				animation->AddChannel(channel);
+			}
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "label";
+				channel.gui.color_keys = {
+					{ 0, Easing::Linear, Color(1, 1, 1) },
+					{ 0.1f, Easing::Linear, Color(0.35f, 0.3f, 0.3f) }
+				};
+				animation->AddChannel(channel);
+			}
+			{
+				Animation::Channel channel = {};
+				channel.type = Animation::TYPE_GUI;
+				channel.gui.name = "control";
+				channel.gui.scale_keys = {
+					{ 0, Easing::Linear, Vec2(1.1f, 1.1f) },
+					{ 0.1f, Easing::OutCubic, Vec2(1, 1) }
+				};
+				animation->AddChannel(channel);
+			}
+			animation->SetDuration(1);
+			animation->SetTicksPerSecond(1);
+
+			animations.push_back(animation);
+		}
 
 		auto start_button = new Entity("start_button");
 		{
-			auto button = start_button->AddComponent<Button>(new Button(
-				"Start",
+			auto button = start_button->AddComponent<AnimatedButton>(new AnimatedButton(
+				"はじめる",
 				text_prop,
 				panel_prop,
 				[]() {
-					printf("Start\n");
+					GameManager::Get()->StartGame();
 				},
 				false
 			));
-			button->SetAnchorPoint(Vec2(0.5f, 0.5f));
+			start_button->AddComponent<Animator>(new Animator(animations));
+
+			button->SetAnchorPoint(Vec2(0.25f, 0.5f));
 			button->SetPivot(Vec2(0.5f, 0.5f));
-			button->SetSize(Vec2(200, 40));
-			button->SetPosition(Vec2(0, 200));
+			button->SetSize(Vec2(200, 35));
+			button->SetPosition(Vec2(0, 100));
+			button->SetRotation(-3);
 			button->Transform();
 
-			start_button->SetParent(cursor_area);
+			CreateEntity(start_button);
+		}
+
+		auto option_button = new Entity("option_button");
+		{
+			auto button = option_button->AddComponent<AnimatedButton>(new AnimatedButton(
+				"フルスクリーン",
+				text_prop,
+				panel_prop,
+				[]() {
+					Game::Get()->ToggleFullscreen();
+				},
+				false
+			));
+			option_button->AddComponent<Animator>(new Animator(animations));
+
+			button->SetAnchorPoint(Vec2(0.25f, 0.5f));
+			button->SetPivot(Vec2(0.5f, 0.5f));
+			button->SetSize(Vec2(200, 35));
+			button->SetPosition(Vec2(0, 160));
+			button->SetRotation(-3);
+			button->Transform();
+
+			CreateEntity(option_button);
 		}
 
 		auto exit_button = new Entity("exit_button");
 		{
-			auto button = exit_button->AddComponent<Button>(new Button(
-				"Exit",
+			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
+				"おわる",
 				text_prop,
 				panel_prop,
 				[]() {
-					printf("Exit\n");
+					GameManager::Get()->EndGame();
 				},
 				false
 			));
-			button->SetAnchorPoint(Vec2(0.5f, 0.5f));
+			exit_button->AddComponent<Animator>(new Animator(animations));
+
+			button->SetAnchorPoint(Vec2(0.25f, 0.5f));
 			button->SetPivot(Vec2(0.5f, 0.5f));
-			button->SetSize(Vec2(200, 40));
-			button->SetPosition(Vec2(0, 260));
+			button->SetSize(Vec2(200, 35));
+			button->SetPosition(Vec2(0, 220));
+			button->SetRotation(-3);
 			button->Transform();
 
-			exit_button->SetParent(cursor_area);
+			CreateEntity(exit_button);
 		}
-
-		CreateEntity(cursor_area);
 	}
 
-	auto transition = new Entity("transition");
+	auto guide_label = new Entity("guide_label");
 	{
-		transition->AddComponent(new Transition(
-			Color(0.1f, 0.1f, 0.15f),
-			Vec2(1, 1))
-		);
+		TextProperty prop = {};
+		prop.font = L"Koruri";
+		prop.font_size = 16;
+		prop.font_weight = TextProperty::WEIGHT_SEMI_BOLD;
+		prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
+		prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
 
-		CreateEntity(transition);
+		auto label = guide_label->AddComponent<Label>(new Label(
+			"<bitmap input_move> 選択  <bitmap input_ok> 決定",
+			prop,
+			{},
+			true
+		));
+
+		label->SetAnchorPoint(Vec2(0.25f, 0.5f));
+		label->SetPivot(Vec2(0.5f, 0.5f));
+		label->SetPosition(Vec2(0, 260));
+		label->SetRotation(-3);
+		label->Transform();
+
+		CreateEntity(guide_label);
 	}
 
 	auto game_manager = new Entity("game_manager");
@@ -129,9 +269,4 @@ bool TitleScene::Init()
 void TitleScene::Update(const float delta_time)
 {
 	Scene::Update(delta_time);
-
-	/*if (Input::GetButtonDown("ok"))
-	{
-		Game::Get()->LoadScene(new Level1Scene());
-	}*/
 }

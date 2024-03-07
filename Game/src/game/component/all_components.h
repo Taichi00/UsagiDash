@@ -11,10 +11,10 @@
 #include "collider/ray.h"
 #include "collider/sphere_collider.h"
 
+#include "gui/animated_button.h"
 #include "gui/button.h"
 #include "gui/button_base.h"
 #include "gui/control.h"
-#include "gui/cursor_area.h"
 #include "gui/label.h"
 #include "gui/panel.h"
 #include "gui/panel_property.h"

@@ -11,3 +11,16 @@ ButtonBase::~ButtonBase()
 {
 	Game::Get()->GetGUIManager()->RemoveButton(this);
 }
+
+void ButtonBase::OnPressed()
+{
+	function_();
+}
+
+void ButtonBase::OnHovered()
+{
+}
+
+void ButtonBase::OnUnhovered()
+{
+}

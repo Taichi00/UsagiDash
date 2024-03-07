@@ -6,6 +6,7 @@
 #include "game/entity.h"
 #include "game/component/mesh_renderer.h"
 #include "game/component/gui/control.h"
+#include "game/component/gui/element/element.h"
 
 Animator::Animator()
 {
@@ -19,6 +20,11 @@ Animator::Animator()
 Animator::Animator(const std::shared_ptr<Animation>& animation) : Animator()
 {
 	RegisterAnimation(animation);
+}
+
+Animator::Animator(const std::vector<std::shared_ptr<Animation>>& animations) : Animator()
+{
+	RegisterAnimations(animations);
 }
 
 bool Animator::Init()
@@ -80,15 +86,15 @@ void Animator::Update(const float delta_time)
 		}
 	}
 	
-	for (auto channel : current_animation_->Channels())
+	for (const auto& channel : current_animation_->Channels())
 	{
-		switch (channel->type)
+		switch (channel.type)
 		{
 		case Animation::TYPE_BONE:
-			AnimateBone(static_cast<Animation::BoneChannel*>(channel), anim_time);
+			AnimateBone(channel.bone, anim_time);
 			break;
 		case Animation::TYPE_GUI:
-			AnimateGUI(static_cast<Animation::GUIChannel*>(channel), anim_time);
+			AnimateGUI(channel.gui, anim_time);
 			break;
 		}
 	}
@@ -173,65 +179,102 @@ void Animator::Play(AnimationArgs anim)
 	Play(anim.name, anim.speed, anim.loop, anim.blend_time);
 }
 
-void Animator::AnimateBone(const Animation::BoneChannel* channel, const float current_time)
+void Animator::AnimateBone(const Animation::Channel::BoneChannel& channel, const float current_time)
 {
 	if (!mesh_renderer_)
 		return;
 
-	auto bone = mesh_renderer_->FindBone(channel->name);
+	auto bone = mesh_renderer_->FindBone(channel.name);
 	
 	if (!bone)
 		return;
 
-	if (!channel->position_keys.empty())
+	if (!channel.position_keys.empty())
 	{
-		auto position = CalcCurrentVec3(channel->position_keys, current_time);
+		auto position = CalcCurrentVec3(channel.position_keys, current_time);
 		position = Vec3::Lerp(bone->PositionBuffer(), position, blend_ratio_);
 
 		bone->SetPosition(position);
 	}
 
-	if (!channel->rotation_keys.empty())
+	if (!channel.rotation_keys.empty())
 	{
-		auto rotation = CalcCurrentQuat(channel->rotation_keys, current_time);
+		auto rotation = CalcCurrentQuat(channel.rotation_keys, current_time);
 		rotation = Quaternion::Slerp(bone->RotationBuffer(), rotation, blend_ratio_);
 
 		bone->SetRotation(rotation);
 	}
 
-	if (!channel->scaling_keys.empty())
+	if (!channel.scale_keys.empty())
 	{
-		auto scale = CalcCurrentVec3(channel->scaling_keys, current_time);
+		auto scale = CalcCurrentVec3(channel.scale_keys, current_time);
 		scale = Vec3::Lerp(bone->ScaleBuffer(), scale, blend_ratio_);
 
 		bone->SetScale(scale);
 	}
 }
 
-void Animator::AnimateGUI(const Animation::GUIChannel* channel, const float current_time)
+void Animator::AnimateGUI(const Animation::Channel::GUIChannel& channel, const float current_time)
 {
 	if (!control_)
 		return;
 
-	if (!channel->position_keys.empty())
+	if (channel.name == "control")
 	{
-		auto position = CalcCurrentVec2(channel->position_keys, current_time);
-		control_->SetPosition(position);
-	}
+		if (!channel.position_keys.empty())
+		{
+			auto position = CalcCurrentVec2(channel.position_keys, current_time);
+			control_->SetPosition(position);
+		}
 
-	if (!channel->rotation_keys.empty())
+		if (!channel.rotation_keys.empty())
+		{
+			auto rotation = CalcCurrentFloat(channel.rotation_keys, current_time);
+			control_->SetRotation(rotation);
+		}
+
+		if (!channel.color_keys.empty())
+		{
+			auto color = CalcCurrentColor(channel.color_keys, current_time);
+			control_->SetColor(color);
+		}
+
+		if (!channel.scale_keys.empty())
+		{
+			auto scale = CalcCurrentVec2(channel.scale_keys, current_time);
+			control_->SetScale(scale);
+		}
+
+		control_->Transform();
+	}
+	else
 	{
-		auto rotation = CalcCurrentFloat(channel->rotation_keys, current_time);
-		control_->SetRotation(rotation);
-	}
+		auto element = control_->GetElement(channel.name);
 
-	if (!channel->color_keys.empty())
-	{
-		auto color = CalcCurrentColor(channel->color_keys, current_time);
-		control_->SetColor(color);
-	}
+		if (!channel.position_keys.empty())
+		{
+			auto position = CalcCurrentVec2(channel.position_keys, current_time);
+			element->SetPosition(position);
+		}
 
-	control_->Transform();
+		if (!channel.rotation_keys.empty())
+		{
+			auto rotation = CalcCurrentFloat(channel.rotation_keys, current_time);
+			element->SetRotation(rotation);
+		}
+
+		if (!channel.color_keys.empty())
+		{
+			auto color = CalcCurrentColor(channel.color_keys, current_time);
+			element->SetColor(color);
+		}
+
+		if (!channel.scale_keys.empty())
+		{
+			auto scale = CalcCurrentVec2(channel.scale_keys, current_time);
+			element->SetScale(scale);
+		}
+	}
 }
 
 Vec2 Animator::CalcCurrentVec2(const std::vector<Animation::Vec2Key>& keys, const float current_time)

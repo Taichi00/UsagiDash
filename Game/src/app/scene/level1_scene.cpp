@@ -12,6 +12,7 @@
 #include "game/resource/model.h"
 #include "game/scene.h"
 #include "level1_scene.h"
+#include "app/scene/title_scene.h"
 #include "math/color.h"
 #include "math/vec.h"
 #include "math/easing.h"
@@ -123,9 +124,16 @@ bool Level1Scene::Init()
 
 	auto coin_gui = new Entity("coin_gui");
 	{
-		coin_gui->AddComponent(new Panel(Vec2(-120, 80), Vec2(130, 8), Vec2(0.5, 0.5), Vec2(1, 0), Color(1, 1, 1, 0.4f)));
-		auto control = coin_gui->GetComponent<Control>();
-		control->SetRotation(4);
+		PanelProperty panel_prop = {};
+		panel_prop.color = Color(1, 1, 1, 0.4f);
+
+		auto panel = coin_gui->AddComponent<Panel>(new Panel(panel_prop));
+		panel->SetAnchorPoint(Vec2(1, 0));
+		panel->SetPivot(Vec2(0.5f, 0.5f));
+		panel->SetSize(Vec2(130, 8));
+		panel->SetPosition(Vec2(-120, 80));
+		panel->SetRotation(4);
+		panel->Transform();
 
 		auto coin_label = new Entity("coin_label");
 		{
@@ -136,14 +144,15 @@ bool Level1Scene::Init()
 			coin_label_prop.font_weight = TextProperty::WEIGHT_EXTRA_BOLD;
 
 			auto animation = std::make_shared<Animation>("get");
-			auto channel = new Animation::GUIChannel{};
-			channel->type = Animation::TYPE_GUI;
-			channel->position_keys = {
-				{ 0, Easing::Linear, Vec2(40, -10) },
-				{ 0.2f, Easing::OutCubic, Vec2(40, -13) },
-				{ 0.6f, Easing::InCubic, Vec2(40, -10) },
+			Animation::Channel channel = {};
+			channel.type = Animation::TYPE_GUI;
+			channel.gui.name = "label";
+			channel.gui.position_keys = {
+				{ 0, Easing::Linear, Vec2(0, 0) },
+				{ 0.2f, Easing::OutCubic, Vec2(0, -3) },
+				{ 0.6f, Easing::InCubic, Vec2(0, 0) },
 			};
-			channel->color_keys = {
+			channel.gui.color_keys = {
 				{ 0, Easing::Linear, Color(1, 0.75f, 0) },
 				{ 1, Easing::InCubic, Color(1, 1, 1) }
 			};
@@ -151,20 +160,22 @@ bool Level1Scene::Init()
 			animation->SetDuration(1);
 			animation->SetTicksPerSecond(3);
 
-			coin_label->AddComponent(new Label("0000", coin_label_prop, {}));
+			auto label = coin_label->AddComponent<Label>(new Label("0000", coin_label_prop));
 			coin_label->AddComponent(new Animator(animation));
-			auto control = coin_label->GetComponent<Control>();
-			control->SetTransform(Vec2(40, -10), Vec2(100, 28), Vec2(0.5, 1), Vec2(0.5, 0));
+
+			label->SetAnchorPoint(Vec2(0.5f, 1));
+			label->SetPivot(Vec2(0.5f, 1));
+			label->SetPosition(Vec2(22, -4));
+			label->Transform();
 
 			coin_label->SetParent(coin_gui);
 		}
 
 		auto coin_icon = new Entity("coin_icon");
 		{
-			coin_icon->AddComponent(new Picture(LoadResource<Bitmap>(L"assets/image/coin_icon.png")));
-			auto control = coin_icon->GetComponent<Control>();
-			control->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
-			control->SetScale(Vec2(0.32f, 0.32f));
+			auto picture = coin_icon->AddComponent<Picture>(new Picture(LoadResource<Bitmap>(L"assets/image/coin_icon.png")));
+			picture->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
+			picture->SetScale(Vec2(0.32f, 0.32f));
 
 			coin_icon->SetParent(coin_gui);
 		}
@@ -192,16 +203,6 @@ bool Level1Scene::Init()
 		control->SetTransform(Vec2(0, 130), Vec2(200, 46), Vec2(0.5, 0.5), Vec2(0.5, 0));
 
 		CreateEntity(tutorial_label);
-	}
-
-	auto transition = new Entity("transition");
-	{
-		transition->AddComponent(new Transition(
-			Color(0.1f, 0.1f, 0.15f),
-			Vec2(1, 1))
-		);
-
-		CreateEntity(transition);
 	}
 
 	auto game_manager = new Entity("game_manager");
@@ -261,7 +262,7 @@ void Level1Scene::Update(const float delta_time)
 
 	if (Input::GetKeyDown(DIK_R))
 	{
-		Game::Get()->LoadScene(new Level1Scene());
+		Game::Get()->LoadScene(new TitleScene());
 	}
 
 	if (Input::GetKeyDown(DIK_F))

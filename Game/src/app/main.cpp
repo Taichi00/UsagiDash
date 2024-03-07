@@ -60,6 +60,10 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_wasd.png" },
 		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_r.png" }
 	};
+	settings.action_icons["ok"] = {
+		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_space.png" },
+		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_button_a.png" }
+	};
 
 	// ÉåÉCÉÑÅ[ÇÃê›íË
 	settings.layers = {

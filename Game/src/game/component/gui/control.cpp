@@ -3,6 +3,8 @@
 #include "game/game.h"
 #include "engine/engine.h"
 #include "engine/engine2d.h"
+#include "game/component/gui/element/element.h"
+#include<algorithm>
 
 Control::Control()
 {
@@ -22,16 +24,35 @@ bool Control::Init()
 {
 	parent_control_ = GetEntity()->GetParent()->GetComponent<Control>();
 
+	for (auto& element : element_map_)
+	{
+		element.second->Init();
+	}
+
 	return true;
 }
 
 void Control::Update(const float delta_time)
 {
 	Layout();
+
+	element_z_list_.clear();
+	for (auto& element : element_map_)
+	{
+		element.second->Update();
+		element_z_list_.push_back({ element.second.get(), element.second->ZIndex() });
+	}
+
+	// z index ‚Åƒ\[ƒg‚·‚é
+	std::sort(element_z_list_.begin(), element_z_list_.end());
 }
 
 void Control::Draw2D()
 {
+	for (auto& info : element_z_list_)
+	{
+		info.element->Draw();
+	}
 }
 
 void Control::SetTransform(const Vec2& position, const Vec2& size, const Vec2& pivot, const Vec2& anchor_pos)

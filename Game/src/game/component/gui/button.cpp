@@ -9,9 +9,13 @@ Button::Button(
 	const std::function<void()>& function,
 	const bool fit) : ButtonBase()
 {
-	text_.string = StringMethods::GetWideString(text);
-	text_.prop = text_prop;
-	panel_prop_ = panel_prop;
+	Text t = {};
+	t.string = StringMethods::GetWideString(text);
+	t.prop = text_prop;
+
+	AddElement<PanelElement>("panel", new PanelElement(panel_prop, this))->SetZIndex(0);
+	AddElement<LabelElement>("label", new LabelElement(t, this))->SetZIndex(1);
+
 	function_ = function;
 	fit_ = fit;
 }
@@ -23,8 +27,6 @@ Button::~Button()
 bool Button::Init()
 {
 	Control::Init();
-
-	engine_->RegisterTextFormat(text_.prop.font);
 
 	return false;
 }
@@ -39,23 +41,7 @@ void Button::Update(const float delta_time)
 
 void Button::Draw2D()
 {
-	auto ratio = engine_->RenderTargetScale();
-
-	auto padding = panel_prop_.padding;
-
-	auto rect = GetRect();
-	Rect2 panel_rect = {
-		rect.left - padding.left,
-		rect.top - padding.top,
-		rect.right + padding.right,
-		rect.bottom + padding.bottom
-	};
-
-	auto world_matrix = WorldMatrix();
-
-	engine_->SetTransform(world_matrix * Matrix3x2::Scale(Vec2(1, 1) * ratio));
-	engine_->DrawFillRectangle(panel_rect, panel_prop_.color * GetColor(), panel_prop_.radius);
-	engine_->DrawText(text_, rect, text_.prop.color * GetColor());
+	Control::Draw2D();
 }
 
 void Button::OnPressed()
@@ -63,9 +49,21 @@ void Button::OnPressed()
 	function_();
 }
 
+void Button::OnHovered()
+{
+	//panel_color_ = panel_prop_.color.Inverse();
+	//text_color_ = text_.prop.color.Inverse();
+}
+
+void Button::OnUnhovered()
+{
+	//panel_color_ = panel_prop_.color;
+	//text_color_ = text_.prop.color;
+}
+
 void Button::FitSize()
 {
-	auto size = engine_->GetTextSize(text_);
+	auto size = GetElement<LabelElement>("label")->GetTextSize();
 	SetSize(size);
 	Transform();
 }

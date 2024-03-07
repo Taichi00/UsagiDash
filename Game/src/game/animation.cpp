@@ -13,17 +13,8 @@ Animation::Animation(std::string name) : Animation()
 	channels_.clear();
 }
 
-void Animation::AddChannel(Channel* channel)
+void Animation::AddChannel(const Channel& channel)
 {
-	channels_.push_back(std::unique_ptr<Channel>(channel));
+	channels_.push_back(channel);
 }
 
-std::vector<Animation::Channel*> Animation::Channels()
-{
-	std::vector<Channel*> channels;
-	for (auto& channel : channels_)
-	{
-		channels.push_back(channel.get());
-	}
-	return channels;
-}

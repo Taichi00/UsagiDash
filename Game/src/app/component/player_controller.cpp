@@ -444,28 +444,6 @@ void PlayerController::Animate(const float delta_time)
 	transform->scale = Vec3::Lerp(transform->scale, scale, 0.3f);
 }
 
-Vec2 PlayerController::GetInputDirection()
-{
-	Vec2 v = Vec2::Zero();
-	if (Input::GetKey(DIK_UP))
-	{
-		v.y -= 1;
-	}
-	else if (Input::GetKey(DIK_DOWN))
-	{
-		v.y += 1;
-	}
-	if (Input::GetKey(DIK_LEFT))
-	{
-		v.x -= 1;
-	}
-	else if (Input::GetKey(DIK_RIGHT))
-	{
-		v.x += 1;
-	}
-	return v.Normalized();
-}
-
 //void Player::IdleState::Enter()
 //{
 //	std::cout << "IdleState enter." << std::endl;

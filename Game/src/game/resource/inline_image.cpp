@@ -34,10 +34,6 @@ HRESULT __stdcall InlineImage::Draw(
     auto bitmap_size = bitmap_->Size();
     auto scale = size_ / bitmap_size.y;
     
-    /*auto color = static_cast<ID2D1SolidColorBrush*>(clientDrawingEffect)->GetColor();
-    printf("%f\n", color.r);*/
-    //D2D1_RECT_F rect = {originX, originY, originX + size_.x, originY + size_.y};
-    
     // F•ÏŠ·
     D2D1_MATRIX_5X4_F matrix = D2D1::Matrix5x4F(
         color_.r, 0, 0, 0,
@@ -58,16 +54,13 @@ HRESULT __stdcall InlineImage::Draw(
     D2D1_MATRIX_3X2_F curr_transform = {};
     device_context_->GetTransform(&curr_transform);
     transform = D2D1::Matrix3x2F::Scale(scale, scale)
-        * curr_transform
-        * D2D1::Matrix3x2F::Translation(originX * ratio, originY * ratio);
+        * D2D1::Matrix3x2F::Translation(originX, originY)
+        * curr_transform;
 
     device_context_->SetTransform(transform);
-
     device_context_->DrawImage(effect.Get());
 
     device_context_->SetTransform(curr_transform);
-
-    //device_context_->DrawBitmap(bitmap_->Data().Get(), rect);
 
     return S_OK;
 }

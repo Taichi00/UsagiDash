@@ -28,4 +28,5 @@ private:
 
 	// Œ»İ‘I‘ğ‚³‚ê‚Ä‚¢‚éƒ{ƒ^ƒ“
 	ButtonBase* current_picked_button_ = nullptr;
+	ButtonBase* prev_picked_button_ = nullptr;
 };

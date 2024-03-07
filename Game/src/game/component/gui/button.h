@@ -1,16 +1,19 @@
 #pragma once
 
 #include "game/component/gui/button_base.h"
-#include "game/component/gui/text.h"
 #include "game/component/gui/panel_property.h"
+#include "game/component/gui/element/label_element.h"
+#include "game/component/gui/element/panel_element.h"
 #include <functional>
 #include <string>
+
+class LabelElement;
 
 class Button : public ButtonBase
 {
 public:
 	Button(
-		const std::string& text, 
+		const std::string& text,
 		const TextProperty& text_prop, 
 		const PanelProperty& panel_prop,
 		const std::function<void()>& function,
@@ -23,17 +26,15 @@ public:
 	void Draw2D() override;
 
 	// ボタンを押されたとき
-	void OnPressed() override;
+	virtual void OnPressed() override;
+	// カーソルが合ったとき
+	virtual void OnHovered() override;
+	// カーソルが外れたとき
+	virtual void OnUnhovered() override;
 
 private:
 	void FitSize();
 
 private:
-	Text text_;
-	PanelProperty panel_prop_;
-
-	// 押されたときに実行する関数
-	std::function<void()> function_;
-
 	bool fit_;
 };

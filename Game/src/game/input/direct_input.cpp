@@ -11,6 +11,9 @@ DirectInput::DirectInput(Window* window)
 	direct_input_ = nullptr;
 	direct_input_device_ = nullptr;
 
+	repeat_start_ = 20;
+	repeat_interval_ = 3;
+
 	// 0で初期化
 	memset(&keys_, 0, sizeof(keys_));
 	memset(&prev_keys_, 0, sizeof(prev_keys_));
@@ -33,34 +36,62 @@ void DirectInput::Update()
 	// 前フレームのキー情報をコピー
 	memcpy(&prev_keys_, &keys_, sizeof(prev_keys_));
 
+	BYTE keys[KEY_MAX] = {};
+
 	// 現在のキー情報を取得
-	auto hr = direct_input_device_->GetDeviceState(sizeof(keys_), &keys_);
+	auto hr = direct_input_device_->GetDeviceState(sizeof(keys), &keys);
 	if (FAILED(hr))
 	{
 		// フォーカスが失われているので再び取得
 		direct_input_device_->Acquire();
-		direct_input_device_->GetDeviceState(sizeof(keys_), &keys_);
+		direct_input_device_->GetDeviceState(sizeof(keys), &keys);
+	}
+
+	// キー情報を更新
+	for (int i = 0; i < KEY_MAX; i++)
+	{
+		if (keys[i] & 0x80)
+		{
+			keys_[i]++;
+		}
+		else
+		{
+			keys_[i] = 0;
+		}
 	}
 }
 
 bool DirectInput::GetKey(UINT index)
 {
-	return keys_[index] & 0x80;
+	return keys_[index];
 }
 
 bool DirectInput::GetKeyDown(UINT index)
 {
-	return keys_[index] & 0x80 && !(prev_keys_[index] & 0x80);
+	return keys_[index] && !prev_keys_[index];
 }
 
 bool DirectInput::GetKeyUp(UINT index)
 {
-	return !(keys_[index] & 0x80) && prev_keys_[index] & 0x80;
+	return !keys_[index] && prev_keys_[index];
+}
+
+bool DirectInput::GetKeyRepeat(UINT index)
+{
+	int k = keys_[index];
+
+	if (k == 1) return true;
+	if (k <= repeat_start_) return k == repeat_start_;
+	return (k - repeat_start_) % repeat_interval_ == 0;
 }
 
 int DirectInput::GetKeyState(UINT index)
 {
-	return (int)GetKey(index) | (int)GetKeyDown(index) << 1 | (int)GetKeyUp(index) << 2;
+	return 
+		(int)GetKey(index) | 
+		(int)GetKeyDown(index) << 1 | 
+		(int)GetKeyUp(index) << 2 | 
+		(int)GetKeyRepeat(index) << 3;
 }
 
 HRESULT DirectInput::CreateInput(void)

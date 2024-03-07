@@ -121,6 +121,11 @@ struct Color
 		return false;
 	}
 
+	Color Inverse() const
+	{
+		return Color(1 - r, 1 - g, 1 - b, a);
+	}
+
 	static Color Lerp(const Color& c1, const Color& c2, const float t)
 	{
 		return c1 * (1 - t) + c2 * t;

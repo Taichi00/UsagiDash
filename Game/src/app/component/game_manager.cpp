@@ -8,6 +8,7 @@
 #include "app/entity/checkpoint.h"
 #include "game/component/gui/transition.h"
 #include "app/component/camera_controller.h"
+#include "app/scene/level1_scene.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
@@ -51,7 +52,15 @@ bool GameManager::Init()
 	}
 
 	// トランジション
-	transition_ = GetScene()->FindEntity("transition")->GetComponent<Transition>();
+	if (!transition_)
+	{
+		auto entity = new Entity("transition");
+		transition_ = entity->AddComponent<Transition>(new Transition(
+			Color(0.1f, 0.1f, 0.15f),
+			Vec2(1, 1)
+		));
+		GetEntity()->AddChild(entity);
+	}
 
 	return true;
 }
@@ -60,6 +69,9 @@ void GameManager::Update(const float delta_time)
 {
 	if (player_)
 		PlayerFallen();
+
+	if (is_starting_game_)
+		UpdateGameStart();
 }
 
 void GameManager::AddCoin(const int n)
@@ -82,11 +94,11 @@ std::string GameManager::GetCoinText(const int n)
 
 void GameManager::PlayerFallen()
 {
-	if (!respawning_)
+	if (!is_respawning_)
 	{
 		if (player_->transform->position.y < -50)
 		{
-			respawning_ = true;
+			is_respawning_ = true;
 			transition_->FadeIn(4, Easing::IN_QUAD);
 		}
 	}
@@ -94,12 +106,25 @@ void GameManager::PlayerFallen()
 	{
 		if (!transition_->IsFadingIn())
 		{
-			respawning_ = false;
+			is_respawning_ = false;
 			transition_->FadeOut(4, Easing::OUT_QUAD);
 
 			RespawnPlayer();
 			camera_->ForceMove();
 		}
+	}
+}
+
+void GameManager::UpdateGameStart()
+{
+	if (!transition_->IsFadingIn())
+	{
+		is_starting_game_ = false;
+
+		// 最初のシーンをロードする
+		Game::Get()->LoadScene(new Level1Scene());
+
+		transition_->FadeOut(1);
 	}
 }
 
@@ -115,4 +140,15 @@ void GameManager::RespawnPlayer()
 	}
 
 	player_->GetEntity()->GetComponent<Rigidbody>()->velocity = Vec3(0, 0.1f, 0);
+}
+
+void GameManager::StartGame()
+{
+	transition_->FadeIn(1);
+	is_starting_game_ = true;
+}
+
+void GameManager::EndGame()
+{
+	Game::Get()->Quit();
 }

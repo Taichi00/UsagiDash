@@ -21,8 +21,10 @@ public:
 	bool GetKeyDown(UINT index); 
 	// 離した瞬間
 	bool GetKeyUp(UINT index);
+	// キーリピート
+	bool GetKeyRepeat(UINT index);
 
-	// キーの状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間）
+	// キーの状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間, b4 = キーリピート）
 	int GetKeyState(UINT index);
 
 private:
@@ -45,7 +47,12 @@ private:
 	// インプットデバイス
 	LPDIRECTINPUTDEVICE8 direct_input_device_;
 	// キー情報
-	BYTE keys_[KEY_MAX];
+	int keys_[KEY_MAX];
 	// 前のキー情報
-	BYTE prev_keys_[KEY_MAX];
+	int prev_keys_[KEY_MAX];
+
+	// リピート開始時間
+	int repeat_start_;
+	// リピート間隔
+	int repeat_interval_;
 };

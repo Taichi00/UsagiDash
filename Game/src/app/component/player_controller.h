@@ -56,8 +56,6 @@ private:
 	void Move(const float delta_time);
 	void Animate(const float delta_time);
 
-	Vec2 GetInputDirection();
-
 private:
 	Vec3 move_direction_;
 	float speed_;

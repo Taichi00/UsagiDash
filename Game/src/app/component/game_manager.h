@@ -38,13 +38,21 @@ public:
 	void SetCurrentCheckpoint(Entity* checkpoint) { current_checkpoint_ = checkpoint; }
 	Entity* CurrentCheckpoint() const { return current_checkpoint_; }
 
+	// プレイヤーをリスポーンさせる
 	void RespawnPlayer();
+
+	// ゲームの開始処理
+	void StartGame();
+	// ゲームの終了処理
+	void EndGame();
 
 private:
 	// コインの枚数テキストを取得する
 	std::string GetCoinText(const int n);
 
 	void PlayerFallen();
+
+	void UpdateGameStart();
 
 private:
 	static GameManager* instance_;
@@ -67,5 +75,7 @@ private:
 	Vec3 start_position_;
 
 	// リスポーン中
-	bool respawning_ = false;
+	bool is_respawning_ = false;
+	// ゲームスタート演出中
+	bool is_starting_game_ = false;
 };

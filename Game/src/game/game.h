@@ -56,25 +56,30 @@ public:
 	}
 
 	void Run(Scene* scene, const GameSettings& settings);
+	void Quit();
 
-	Engine* GetEngine();
-	AudioEngine* GetAudioEngine() { return audio_.get(); }
-
-	void SetWindowSize(unsigned int width, unsigned int height);
-	void SetWindowTitle(std::wstring title);
-
-	void ToggleFullscreen();
-
+	// シーンを読み込む
 	Scene* LoadScene(Scene* scene);
+	// 現在のシーンへのポインタを取得する
 	Scene* GetCurrentScene();
 
+	// ウィンドウの大きさを変更する
+	void SetWindowSize(unsigned int width, unsigned int height);
 	Vec2 GetWindowSize();
+	// ウィンドウのタイトルを変更する
+	void SetWindowTitle(std::wstring title);
 
-	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	// リソースを読み込む
+	// フルスクリーン切り替え
+	void ToggleFullscreen();
+
+	// リソースを読み込む
+	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	
 	{
 		return resource_manager_->Load<T>(path);
 	}
 
+	Engine* GetEngine();
+	AudioEngine* GetAudioEngine() { return audio_.get(); }
 	CollisionManager* GetCollisionManager() const { return collision_manager_.get(); }
 	ResourceManager* GetResourceManager() const { return resource_manager_.get(); }
 	LayerManager* GetLayerManager() const { return layer_manager_.get(); }
@@ -87,6 +92,8 @@ protected:
 	virtual void Update();
 	virtual void End();
 
+	void LoadNextScene();
+
 private:
 	std::shared_ptr<Window> window_; // ウィンドウへのポインタ
 	unsigned int window_width_ = 640;
@@ -94,7 +101,10 @@ private:
 	std::wstring window_title_ = L"Game";
 
 	std::unique_ptr<Engine> engine_; // 描画エンジンへのポインタ
+
 	std::unique_ptr<Scene> current_scene_; // 現在のシーンへのポインタ
+	std::unique_ptr<Scene> next_scene_; // 次に読み込むシーンへのポインタ
+
 	std::unique_ptr<ResourceManager> resource_manager_; // ResourceManagerへのポインタ
 	std::unique_ptr<CollisionManager> collision_manager_;
 	std::unique_ptr<AudioEngine> audio_;

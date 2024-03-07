@@ -30,6 +30,7 @@ public:
 
 	Animator();
 	Animator(const std::shared_ptr<Animation>& animation);
+	Animator(const std::vector<std::shared_ptr<Animation>>& animations);
 
 	bool Init() override;
 	void Update(const float delta_time) override;
@@ -56,8 +57,8 @@ public:
 private:
 	void Play(AnimationArgs anim);
 
-	void AnimateBone(const Animation::BoneChannel* channel, const float current_time);
-	void AnimateGUI(const Animation::GUIChannel* channel, const float current_time);
+	void AnimateBone(const Animation::Channel::BoneChannel& channel, const float current_time);
+	void AnimateGUI(const Animation::Channel::GUIChannel& channel, const float current_time);
 
 	Vec2 CalcCurrentVec2(const std::vector<Animation::Vec2Key>& keys, const float current_time);
 	Vec3 CalcCurrentVec3(const std::vector<Animation::Vec3Key>& keys, const float current_time);

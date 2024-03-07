@@ -619,14 +619,14 @@ void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const B
         }
 
         // ƒ`ƒƒƒ“ƒlƒ‹‚ð¶¬‚µ‚Ä’Ç‰Á
-        auto bone_channel = new Animation::BoneChannel{};
-        bone_channel->name = name;
-        bone_channel->scaling_keys = scaling_keys;
-        bone_channel->rotation_keys = rotation_keys;
-        bone_channel->position_keys = position_keys;
-        bone_channel->type = Animation::TYPE_BONE;
+        Animation::Channel ch = {};
+        ch.type = Animation::TYPE_BONE;
+        ch.bone.name = name;
+        ch.bone.scale_keys = scaling_keys;
+        ch.bone.rotation_keys = rotation_keys;
+        ch.bone.position_keys = position_keys;
 
-        animation.AddChannel(bone_channel);
+        animation.AddChannel(ch);
     }
 
 }

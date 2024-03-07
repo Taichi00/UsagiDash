@@ -136,9 +136,6 @@ bool Scene::Init()
 		ptr->camera_position = { 0, 0, 1 };
 	}
 
-	// デフォルトスカイボックスを設定
-	SetSkybox(L"assets/skybox/default/");
-
     return true;
 }
 
