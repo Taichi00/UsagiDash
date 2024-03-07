@@ -143,10 +143,17 @@ void Input::CheckActions()
 			switch (input_info.type)
 			{
 			case InputType::KEYBOARD:
-				state |= direct_input_->GetKeyState(button_map_[input_info.button]);
+				state |= direct_input_->GetKeyState(dinput_map_[input_info.button]);
 				break;
 			case InputType::GAMEPAD:
-				state |= x_input_->GetButtonState(button_map_[input_info.button]);
+				if (x_input_->IsConnected())
+				{
+					state |= x_input_->GetButtonState(xinput_map_[input_info.button]);
+				}
+				else if (direct_input_->IsGamepadConnected())
+				{
+					state |= direct_input_->GetButtonState(dinput_map_[input_info.button]);
+				}
 				break;
 			case InputType::MOUSE:
 				break;
@@ -176,42 +183,63 @@ void Input::CheckActions()
 				{
 				case Axis::KEY_ARROW_X:
 					state = (float)(
-						-(direct_input_->GetKey(button_map_[Button::KEY_LEFT]) & 1) + 
-						 (direct_input_->GetKey(button_map_[Button::KEY_RIGHT]) & 1));
+						-(direct_input_->GetKey(dinput_map_[Button::KEY_LEFT]) & 1) + 
+						 (direct_input_->GetKey(dinput_map_[Button::KEY_RIGHT]) & 1));
 					break;
 				case Axis::KEY_ARROW_Y:
 					state = (float)(
-						(direct_input_->GetKey(button_map_[Button::KEY_UP]) & 1) - 
-						(direct_input_->GetKey(button_map_[Button::KEY_DOWN]) & 1));
+						(direct_input_->GetKey(dinput_map_[Button::KEY_UP]) & 1) - 
+						(direct_input_->GetKey(dinput_map_[Button::KEY_DOWN]) & 1));
 					break;
 				case Axis::KEY_WASD_X:
 					state = (float)(
-						-(direct_input_->GetKey(button_map_[Button::KEY_A]) & 1) + 
-						 (direct_input_->GetKey(button_map_[Button::KEY_D]) & 1));
+						-(direct_input_->GetKey(dinput_map_[Button::KEY_A]) & 1) + 
+						 (direct_input_->GetKey(dinput_map_[Button::KEY_D]) & 1));
 					break;
 				case Axis::KEY_WASD_Y:
 					state = (float)(
-						(direct_input_->GetKey(button_map_[Button::KEY_W]) & 1) - 
-						(direct_input_->GetKey(button_map_[Button::KEY_S]) & 1));
+						(direct_input_->GetKey(dinput_map_[Button::KEY_W]) & 1) - 
+						(direct_input_->GetKey(dinput_map_[Button::KEY_S]) & 1));
 					break;
 				}
 				break;
 
 			case InputType::GAMEPAD:
-				switch (input_info.axis)
+				if (x_input_->IsConnected())
 				{
-				case Axis::PAD_LSTICK_X:
-					state = x_input_->GetLStick().x;
-					break;
-				case Axis::PAD_LSTICK_Y:
-					state = x_input_->GetLStick().y;
-					break;
-				case Axis::PAD_RSTICK_X:
-					state = x_input_->GetRStick().x;
-					break;
-				case Axis::PAD_RSTICK_Y:
-					state = x_input_->GetRStick().y;
-					break;
+					switch (input_info.axis)
+					{
+					case Axis::PAD_LSTICK_X:
+						state = x_input_->GetLStick().x;
+						break;
+					case Axis::PAD_LSTICK_Y:
+						state = x_input_->GetLStick().y;
+						break;
+					case Axis::PAD_RSTICK_X:
+						state = x_input_->GetRStick().x;
+						break;
+					case Axis::PAD_RSTICK_Y:
+						state = x_input_->GetRStick().y;
+						break;
+					}
+				}
+				else if (direct_input_->IsGamepadConnected())
+				{
+					switch (input_info.axis)
+					{
+					case Axis::PAD_LSTICK_X:
+						state = direct_input_->GetLStick().x;
+						break;
+					case Axis::PAD_LSTICK_Y:
+						state = direct_input_->GetLStick().y;
+						break;
+					case Axis::PAD_RSTICK_X:
+						state = direct_input_->GetRStick().x;
+						break;
+					case Axis::PAD_RSTICK_Y:
+						state = direct_input_->GetRStick().y;
+						break;
+					}
 				}
 				break;
 
@@ -226,13 +254,13 @@ void Input::CheckActions()
 			}
 		}
 
-		axis_action_state_[map_info.first] = state;
+		axis_action_state_[map_info.first] = std::min(std::max(state, -1.0f), 1.0f);
 	}
 }
 
 void Input::InitButtonMap()
 {
-	button_map_ =
+	dinput_map_ =
 	{
 		{ KEY_ESCAPE, DIK_ESCAPE },
 		{ KEY_RETURN, DIK_RETURN },
@@ -283,6 +311,35 @@ void Input::InitButtonMap()
 		{ KEY_Y, DIK_Y },
 		{ KEY_Z, DIK_Z },
 
+		{ PAD_UP, DirectInput::UP },
+		{ PAD_DOWN, DirectInput::DOWN },
+		{ PAD_LEFT, DirectInput::LEFT },
+		{ PAD_RIGHT, DirectInput::RIGHT },
+
+		{ PAD_LB, DirectInput::LB },
+		{ PAD_RB, DirectInput::RB },
+
+		{ PAD_A, DirectInput::A },
+		{ PAD_B, DirectInput::B },
+		{ PAD_X, DirectInput::X },
+		{ PAD_Y, DirectInput::Y },
+
+		{ PAD_LSTICK_UP, DirectInput::LSTICK_UP },
+		{ PAD_LSTICK_DOWN, DirectInput::LSTICK_DOWN },
+		{ PAD_LSTICK_LEFT, DirectInput::LSTICK_LEFT },
+		{ PAD_LSTICK_RIGHT, DirectInput::LSTICK_RIGHT },
+		
+		{ PAD_RSTICK_UP, DirectInput::RSTICK_UP },
+		{ PAD_RSTICK_DOWN, DirectInput::RSTICK_DOWN },
+		{ PAD_RSTICK_LEFT, DirectInput::RSTICK_LEFT },
+		{ PAD_RSTICK_RIGHT, DirectInput::RSTICK_RIGHT },
+		
+		{ PAD_LT, DirectInput::LT },
+		{ PAD_RT, DirectInput::RT },
+	};
+
+	xinput_map_ = 
+	{
 		{ PAD_UP, XInput::UP },
 		{ PAD_DOWN, XInput::DOWN },
 		{ PAD_LEFT, XInput::LEFT },
@@ -300,12 +357,12 @@ void Input::InitButtonMap()
 		{ PAD_LSTICK_DOWN, XInput::LSTICK_DOWN },
 		{ PAD_LSTICK_LEFT, XInput::LSTICK_LEFT },
 		{ PAD_LSTICK_RIGHT, XInput::LSTICK_RIGHT },
-		
+
 		{ PAD_RSTICK_UP, XInput::RSTICK_UP },
 		{ PAD_RSTICK_DOWN, XInput::RSTICK_DOWN },
 		{ PAD_RSTICK_LEFT, XInput::RSTICK_LEFT },
 		{ PAD_RSTICK_RIGHT, XInput::RSTICK_RIGHT },
-		
+
 		{ PAD_LT, XInput::LT },
 		{ PAD_RT, XInput::RT },
 	};

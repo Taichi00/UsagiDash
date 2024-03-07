@@ -69,7 +69,7 @@ void XInput::Update()
 		state_.Gamepad.sThumbRY,
 		XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE
 	);
-
+	
 	left_trigger_ = GetTriggerValue(
 		state_.Gamepad.bLeftTrigger,
 		XINPUT_GAMEPAD_TRIGGER_THRESHOLD
@@ -120,65 +120,9 @@ Vec2 XInput::GetLStick() const
 	return left_stick_;
 }
 
-int XInput::GetLStickUpState() const
-{
-	bool curr = left_stick_.y > 0.f;
-	bool prev = prev_left_stick_.y > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetLStickDownState() const
-{
-	bool curr = left_stick_.y < 0.f;
-	bool prev = prev_left_stick_.y < 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetLStickLeftState() const
-{
-	bool curr = left_stick_.x < 0.f;
-	bool prev = prev_left_stick_.x < 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetLStickRightState() const
-{
-	bool curr = left_stick_.x > 0.f;
-	bool prev = prev_left_stick_.x > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
 Vec2 XInput::GetRStick() const
 {
 	return right_stick_;
-}
-
-int XInput::GetRStickUpState() const
-{
-	bool curr = right_stick_.y > 0.f;
-	bool prev = prev_right_stick_.y > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetRStickDownState() const
-{
-	bool curr = right_stick_.y < 0.f;
-	bool prev = prev_right_stick_.y < 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetRStickLeftState() const
-{
-	bool curr = right_stick_.x < 0.f;
-	bool prev = prev_right_stick_.x < 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
-int XInput::GetRStickRightState() const
-{
-	bool curr = right_stick_.x > 0.f;
-	bool prev = prev_right_stick_.x > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
 }
 
 float XInput::GetLTrigger() const
@@ -186,23 +130,9 @@ float XInput::GetLTrigger() const
 	return left_trigger_;
 }
 
-int XInput::GetLTriggerState() const
-{
-	bool curr = left_trigger_ > 0.f;
-	bool prev = prev_left_trigger_ > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
-}
-
 float XInput::GetRTrigger() const
 {
 	return right_trigger_;
-}
-
-int XInput::GetRTriggerState() const
-{
-	bool curr = right_trigger_ > 0.f;
-	bool prev = prev_right_trigger_ > 0.f;
-	return curr << 0 | (curr & !prev) << 1 | (!curr & prev) << 2;
 }
 
 Vec2 XInput::GetStickVec(const SHORT sx, const SHORT sy, const int dead_zone) const

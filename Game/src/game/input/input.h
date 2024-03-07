@@ -124,7 +124,7 @@ public:
 		InputType type;
 		Axis axis;
 	};
-
+	
 private:
 	Input(Window* window);
 	~Input();
@@ -193,7 +193,10 @@ private:
 	// axis action の状態
 	std::unordered_map<std::string, float> axis_action_state_;
 
-	std::unordered_map<Button, int> button_map_;
+	// DirectInputのキーコードとのマップ
+	std::unordered_map<Button, int> dinput_map_;
+	// XInputのキーコードとのマップ
+	std::unordered_map<Button, int> xinput_map_;
 	
 	static Input* instance_;
 };

@@ -61,22 +61,12 @@ public:
 	int GetButtonState(const int index) const;
 
 	Vec2 GetLStick() const;
-	int GetLStickUpState() const;
-	int GetLStickDownState() const;
-	int GetLStickLeftState() const;
-	int GetLStickRightState() const;
-
 	Vec2 GetRStick() const;
-	int GetRStickUpState() const;
-	int GetRStickDownState() const;
-	int GetRStickLeftState() const;
-	int GetRStickRightState() const;
-
+	
 	float GetLTrigger() const;
-	int GetLTriggerState() const;
-
 	float GetRTrigger() const;
-	int GetRTriggerState() const;
+
+	bool IsConnected() const { return is_connected_; }
 
 private:
 	Vec2 GetStickVec(const SHORT sx, const SHORT sy, const int dead_zone) const;

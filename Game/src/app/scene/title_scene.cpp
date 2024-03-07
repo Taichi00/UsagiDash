@@ -29,11 +29,11 @@ bool TitleScene::Init()
 		prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
 
 		auto label = title_label->AddComponent<Label>(new Label(
-			"Star Hopper",
+			"ƒ^ƒCƒgƒ‹",
 			prop, {},
 			true
 		));
-		label->SetAnchorPoint(Vec2(0.3f, 0.5f));
+		label->SetAnchorPoint(Vec2(0.25f, 0.5f));
 		label->SetPivot(Vec2(0.5f, 0.5f));
 		label->SetPosition(Vec2(0, -100));
 		label->SetRotation(0);
