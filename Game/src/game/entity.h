@@ -2,13 +2,11 @@
 #include "game/component/component.h"
 #include "game/component/transform.h"
 #include "math/vec.h"
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <string>
-#include <type_traits>
 #include <typeindex>
-#include <typeinfo>
 #include <vector>
 
 class Scene;
@@ -29,7 +27,7 @@ public:
 
 	// entity を破棄する
 	void Destroy();
-	
+
 	// コンポーネントを追加する
 	Component* AddComponent(Component* component);
 
@@ -68,9 +66,18 @@ public:
 
 		return component;
 	}
-
+	
+	// シーンを登録する
 	void RegisterScene(Scene* scene);
-	Scene* GetScene();
+	// シーンを取得する
+	Scene* GetScene() const { return scene_; }
+
+	// 更新を止める
+	void DisableUpdate() { is_update_enabled_ = false; }
+	// 更新を再開する
+	void EnableUpdate() { is_update_enabled_ = true; }
+
+	bool IsUpdateEnabled() const { return is_update_enabled_; }
 
 	bool Init();
 
@@ -82,6 +89,7 @@ public:
 
 	void OnCollisionEnter(Collider* collider);
 
+	void BeforeDraw();
 	void DrawShadow();
 	void Draw();
 	void DrawAlpha();
@@ -90,16 +98,22 @@ public:
 	void DrawOutline();
 	void Draw2D();
 
-	void SetParent(Entity* parent);
-	Entity* GetParent();
+	void OnDestroy();
 
+	// 親エンティティを設定する
+	void SetParent(Entity* parent);
+	// 子エンティティを追加する
 	void AddChild(Entity* child);
 	void AddChild(std::unique_ptr<Entity> child);
+	// 子エンティティを削除する
 	void RemoveChild(Entity* child);
+	// 子エンティティの所有権を移動させる
 	std::unique_ptr<Entity> MoveChild(Entity* child);
-	Entity* GetChild(const std::string& name) const;
-	std::vector<Entity*> GetChildren() const;
-	std::vector<Entity*> GetAllChildren() const;
+
+	Entity* Parent();
+	Entity* Child(const std::string& name) const;
+	std::vector<Entity*> Children() const;
+	std::vector<Entity*> AllChildren() const;
 
 	// 指定したメソッドを再帰的に実行する（親→子）
 	template<typename Func>
@@ -155,10 +169,17 @@ public:
 	std::string layer;
 
 protected:
-	Scene* scene_;
+	// 登録されているシーンへのポインタ
+	Scene* scene_ = nullptr;
 
-	Entity* parent_;								// 親Entity
-	std::vector<std::unique_ptr<Entity>> children_;	// 子Entity
+	// 親エンティティへのポインタ
+	Entity* parent_ = nullptr;
+	// 子エンティティへのポインタ
+	std::vector<std::unique_ptr<Entity>> children_;
 	
-	std::map<std::type_index, std::vector<std::unique_ptr<Component>>> component_map_; // コンポーネントのマップ
+	// コンポーネントのマップ
+	std::unordered_map<std::type_index, std::vector<std::unique_ptr<Component>>> component_map_;
+
+	// 更新を行うかどうか
+	bool is_update_enabled_ = true;
 };

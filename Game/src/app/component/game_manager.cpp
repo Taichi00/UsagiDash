@@ -9,6 +9,10 @@
 #include "game/component/gui/transition.h"
 #include "app/component/camera_controller.h"
 #include "app/scene/level1_scene.h"
+#include "game/input/input.h"
+#include "app/component/pause_manager.h"
+#include "app/entity/pause_menu.h"
+#include "app/scene/title_scene.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
@@ -62,6 +66,11 @@ bool GameManager::Init()
 		GetEntity()->AddChild(entity);
 	}
 
+	pause_manager_ = PauseManager::Get();
+
+	if (pause_manager_)
+		pause_manager_->Resume();
+
 	return true;
 }
 
@@ -72,6 +81,8 @@ void GameManager::Update(const float delta_time)
 
 	if (is_starting_game_)
 		UpdateGameStart();
+
+	UpdatePause();
 }
 
 void GameManager::AddCoin(const int n)
@@ -120,11 +131,20 @@ void GameManager::UpdateGameStart()
 	if (!transition_->IsFadingIn())
 	{
 		is_starting_game_ = false;
+		scene_state_ = SCENE_GAME;
 
 		// 最初のシーンをロードする
 		Game::Get()->LoadScene(new Level1Scene());
 
-		transition_->FadeOut(1);
+		transition_->FadeOut(2);
+	}
+}
+
+void GameManager::UpdatePause()
+{
+	if (Input::GetButtonDown("menu"))
+	{
+		TogglePause();
 	}
 }
 
@@ -144,11 +164,59 @@ void GameManager::RespawnPlayer()
 
 void GameManager::StartGame()
 {
-	transition_->FadeIn(1);
+	transition_->FadeIn(2);
 	is_starting_game_ = true;
 }
 
 void GameManager::EndGame()
 {
 	Game::Get()->Quit();
+}
+
+void GameManager::Pause()
+{
+	if (!pause_manager_)
+		return;
+
+	if (scene_state_ != SCENE_GAME)
+		return;
+
+	pause_manager_->Pause();
+
+	pause_menu_ = new PauseMenu();
+	GetScene()->CreateEntity(pause_menu_);
+}
+
+void GameManager::Resume()
+{
+	if (!pause_manager_)
+		return;
+
+	if (scene_state_ != SCENE_GAME)
+		return;
+
+	pause_manager_->Resume();
+
+	if (pause_menu_)
+	{
+		pause_menu_->Destroy();
+		pause_menu_ = nullptr;
+	}
+}
+
+void GameManager::TogglePause()
+{
+	if (!pause_manager_)
+		return;
+
+	pause_manager_->IsPaused() ? Resume() : Pause();
+}
+
+void GameManager::LoadTitle()
+{
+	pause_menu_ = nullptr;
+
+	Game::Get()->LoadScene(new TitleScene());
+
+	scene_state_ = SCENE_TITLE;
 }

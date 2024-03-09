@@ -23,10 +23,10 @@ public:
 
 	bool Init() override;
 	void Update(const float delta_time) override;
+	void BeforeDraw() override;
 	void Draw() override;
 	void DrawAlpha() override;
 	void DrawShadow() override;
-
 	void DrawDepth() override;
 	void DrawGBuffer() override;
 	void DrawOutline() override;

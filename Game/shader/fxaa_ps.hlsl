@@ -91,49 +91,12 @@ float4 FXAA(Texture2D tex, float2 uv)
     }
 }
 
-//#define FXAA_PC 1
-//#define FXAA_HLSL_5 1
-////#define FXAA_WUALITY__PRESET 12
-//#include "FXAA3.cginc"
-
-//#define PIXEL_SIZE float2(1.0 / 1280.0, 1.0 / 720.0)
-//#define SUBPIX 0.00001
-//#define EDGE_THRESHOLD 0.1
-//#define EDGE_THRESHOLD_MIN 0
-
 float4 main(VSOutput input) : SV_TARGET
 {
     float2 uv = input.UV;
     
     //float4 color = FXAA(gTex, uv);
     float4 color = gTex.Sample(gSampler, uv);
-
-    //uint dx, dy;
-    //gTex.GetDimensions(dx, dy);
-    //float2 rcpro = rcp(float2(dx, dy));
-    
-    //FxaaTex InputFXAATex;
-    //InputFXAATex.smpl = gSampler;
-    //InputFXAATex.tex = gTex;
-    
-    //float4 color = FxaaPixelShader(
-    //    uv, // FxaaFloat2 pos,
-    //    FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f), // FxaaFloat4 fxaaConsolePosPos,
-    //    InputFXAATex, // FxaaTex tex,
-    //    InputFXAATex, // FxaaTex fxaaConsole360TexExpBiasNegOne,
-    //    InputFXAATex, // FxaaTex fxaaConsole360TexExpBiasNegTwo,
-    //    rcpro, // FxaaFloat2 fxaaQualityRcpFrame,
-    //    FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f), // FxaaFloat4 fxaaConsoleRcpFrameOpt,
-    //    FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f), // FxaaFloat4 fxaaConsoleRcpFrameOpt2,
-    //    FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f), // FxaaFloat4 fxaaConsole360RcpFrameOpt2,
-    //    0.75, // FxaaFloat fxaaQualitySubpix,
-    //    0.125, // FxaaFloat fxaaQualityEdgeThreshold,
-    //    0.0312, // FxaaFloat fxaaQualityEdgeThresholdMin,
-    //    0.0f, // FxaaFloat fxaaConsoleEdgeSharpness,
-    //    0.0f, // FxaaFloat fxaaConsoleEdgeThreshold,
-    //    0.0f, // FxaaFloat fxaaConsoleEdgeThresholdMin,
-    //    FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f) // FxaaFloat fxaaConsole360ConstDir,
-    //);
     
     return color;
 }

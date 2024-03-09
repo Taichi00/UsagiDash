@@ -24,6 +24,7 @@ public:
 
 	virtual void OnCollisionEnter(Collider* collider) {}
 
+	virtual void BeforeDraw() {}
 	virtual void Draw() {}
 	virtual void DrawAlpha() {}
 	virtual void DrawShadow() {}
@@ -31,6 +32,8 @@ public:
 	virtual void DrawGBuffer() {}
 	virtual void DrawOutline() {}
 	virtual void Draw2D() {}
+
+	virtual void OnDestroy() {}
 
 	void RegisterEntity(Entity* entity);
 

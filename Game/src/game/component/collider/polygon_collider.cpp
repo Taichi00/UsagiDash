@@ -17,6 +17,8 @@ PolygonCollider::PolygonCollider(const CollisionPolygon& polygon, MeshCollider* 
 
 	mesh_collider_ = mesh_collider;
 	rigidbody_ = mesh_collider->GetRigidbody();
+
+	type_ = POLYGON;
 }
 
 PolygonCollider::~PolygonCollider()

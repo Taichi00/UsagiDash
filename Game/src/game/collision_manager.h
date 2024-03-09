@@ -36,9 +36,9 @@ private:
 
 	std::vector<std::pair<std::string, std::string>> non_collision_tags_;
 
-	std::set<std::pair<Entity*, Collider*>> collided_entities_;
-
+	// 8分木
 	std::unique_ptr<Octree<Collider>> octree_;
+	// 8分木に登録するオブジェクト
 	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
 
 	LayerManager* layer_manager_ = nullptr;

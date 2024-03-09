@@ -3,6 +3,7 @@
 
 FloorCollider::FloorCollider()
 {
+	type_ = FLOOR;
 }
 
 FloorCollider::~FloorCollider()

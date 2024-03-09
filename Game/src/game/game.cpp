@@ -207,11 +207,13 @@ void Game::LoadNextScene()
 
 	if (current_scene_)
 	{
+		current_scene_->OnDestroy();
+
 		// 破棄しないエンティティを避難させる
 		dont_destroy_entities = current_scene_->MoveDontDestroyEntities();
-	}
 
-	current_scene_.reset();
+		current_scene_.reset();
+	}
 
 	// 新しいシーンの読み込み
 	current_scene_ = std::move(next_scene_);

@@ -77,7 +77,7 @@ float4 main(VSOutput input) : SV_TARGET
     //float outlinePower = 1 - (dot(normalize(input.normal), LightDir) * 0.5 + 0.5);
     //outlinePower = inverseLerp(0.6, 1, outlinePower);
     //float3 outlineColor = lerp(diffuse.rgb * 0.3, lerp(diffuse.rgb, 1.0, 0.5), outlinePower);
-    float3 color = diffuse.rgb * 0.1;
+    float3 color = diffuse.rgb * 0.2;
     
     // fog
     float depth = -input.viewPos.z;

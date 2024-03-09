@@ -22,7 +22,7 @@ Control::~Control()
 
 bool Control::Init()
 {
-	parent_control_ = GetEntity()->GetParent()->GetComponent<Control>();
+	parent_control_ = GetEntity()->Parent()->GetComponent<Control>();
 
 	for (auto& element : element_map_)
 	{

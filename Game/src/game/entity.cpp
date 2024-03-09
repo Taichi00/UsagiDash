@@ -3,9 +3,8 @@
 #include <stdio.h>
 #include <typeinfo>
 
-Entity::Entity() : Entity("No Name")
+Entity::Entity() : Entity("no_name")
 {
-	
 }
 
 Entity::Entity(const std::string& name, const std::string& tag, const std::string& layer)
@@ -14,10 +13,8 @@ Entity::Entity(const std::string& name, const std::string& tag, const std::strin
 	this->tag = tag;
 	this->layer = layer;
 
-	transform = new Transform();
-	AddComponent(transform);
-
-	scene_ = nullptr;
+	// transform コンポーネントを追加
+	transform = AddComponent<Transform>(new Transform());
 
 	printf("New Entity [%s]\n", name.c_str());
 }
@@ -41,15 +38,9 @@ Component* Entity::AddComponent(Component* component)
 	return component;
 }
 
-
 void Entity::RegisterScene(Scene* scene)
 {
 	scene_ = scene;
-}
-
-Scene* Entity::GetScene()
-{
-	return scene_;
 }
 
 bool Entity::Init()
@@ -66,6 +57,9 @@ bool Entity::Init()
 
 void Entity::BeforeCameraUpdate(const float delta_time)
 {
+	if (!is_update_enabled_)
+		return;
+
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
@@ -77,6 +71,9 @@ void Entity::BeforeCameraUpdate(const float delta_time)
 
 void Entity::CameraUpdate(const float delta_time)
 {
+	if (!is_update_enabled_)
+		return;
+
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
@@ -88,6 +85,9 @@ void Entity::CameraUpdate(const float delta_time)
 
 void Entity::Update(const float delta_time)
 {
+	if (!is_update_enabled_)
+		return;
+
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
@@ -99,6 +99,9 @@ void Entity::Update(const float delta_time)
 
 void Entity::PhysicsUpdate(const float delta_time)
 {
+	if (!is_update_enabled_)
+		return;
+
 	for (auto& components: component_map_)
 	{
 		for (auto& component : components.second)
@@ -110,6 +113,9 @@ void Entity::PhysicsUpdate(const float delta_time)
 
 void Entity::TransformUpdate(const float delta_time)
 {
+	if (!is_update_enabled_)
+		return;
+
 	for (auto& components : component_map_)
 	{
 		for (auto& component : components.second)
@@ -126,6 +132,50 @@ void Entity::OnCollisionEnter(Collider* collider)
 		for (auto& component : components.second)
 		{
 			component->OnCollisionEnter(collider);
+		}
+	}
+}
+
+void Entity::Draw()
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->Draw();
+		}
+	}
+}
+
+void Entity::DrawAlpha()
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->DrawAlpha();
+		}
+	}
+}
+
+void Entity::BeforeDraw()
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->BeforeDraw();
+		}
+	}
+}
+
+void Entity::DrawShadow()
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->DrawShadow();
 		}
 	}
 }
@@ -174,6 +224,17 @@ void Entity::Draw2D()
 	}
 }
 
+void Entity::OnDestroy()
+{
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->OnDestroy();
+		}
+	}
+}
+
 void Entity::SetParent(Entity* parent)
 {
 	if (!parent)
@@ -194,7 +255,7 @@ void Entity::SetParent(Entity* parent)
 	}
 }
 
-Entity* Entity::GetParent()
+Entity* Entity::Parent()
 {
 	return parent_;
 }
@@ -241,7 +302,7 @@ std::unique_ptr<Entity> Entity::MoveChild(Entity* child)
 	return nullptr;
 }
 
-Entity* Entity::GetChild(const std::string& name) const
+Entity* Entity::Child(const std::string& name) const
 {
 	for (const auto& child : children_)
 	{
@@ -252,7 +313,7 @@ Entity* Entity::GetChild(const std::string& name) const
 	return nullptr;
 }
 
-std::vector<Entity*> Entity::GetChildren() const
+std::vector<Entity*> Entity::Children() const
 {
 	std::vector<Entity*> children;
 
@@ -264,7 +325,7 @@ std::vector<Entity*> Entity::GetChildren() const
 	return children;
 }
 
-std::vector<Entity*> Entity::GetAllChildren() const
+std::vector<Entity*> Entity::AllChildren() const
 {
 	std::vector<Entity*> children;
 
@@ -275,43 +336,10 @@ std::vector<Entity*> Entity::GetAllChildren() const
 
 void Entity::RecursiveGetChildren(const Entity* entity, std::vector<Entity*>& list) const
 {
-	auto children = entity->GetChildren();
+	auto children = entity->Children();
 	for (const auto& child : children)
 	{
 		list.push_back(child);
 		RecursiveGetChildren(child, list);
-	}
-}
-
-void Entity::Draw()
-{
-	for (auto& components: component_map_)
-	{
-		for (auto& component : components.second)
-		{
-			component->Draw();
-		}
-	}
-}
-
-void Entity::DrawAlpha()
-{
-	for (auto& components: component_map_)
-	{
-		for (auto& component : components.second)
-		{
-			component->DrawAlpha();
-		}
-	}
-}
-
-void Entity::DrawShadow()
-{
-	for (auto& components: component_map_)
-	{
-		for (auto& component : components.second)
-		{
-			component->DrawShadow();
-		}
 	}
 }

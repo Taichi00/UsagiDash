@@ -63,8 +63,11 @@ void ParticleEmitter::Update(const float delta_time)
 	UpdateRotation(prop_, delta_time);
 	UpdateScale(prop_, delta_time);
 	UpdateColor(prop_, delta_time);
-	
-	renderer_->Update();
+}
+
+void ParticleEmitter::BeforeDraw()
+{
+	renderer_->BeforeDraw();
 }
 
 void ParticleEmitter::DrawShadow()

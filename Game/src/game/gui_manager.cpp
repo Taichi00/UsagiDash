@@ -49,11 +49,14 @@ void GUIManager::RemoveButton(ButtonBase* button)
 
 		if (current_picked_button_ == button)
 			current_picked_button_ = nullptr;
+		if (prev_picked_button_ == button)
+			prev_picked_button_ = nullptr;
 	}
 }
 
 void GUIManager::UpdateTarget()
 {
+	// キー入力
 	Vec2 input;
 	if (Input::GetButtonRepeat("up"))
 	{
@@ -83,9 +86,9 @@ void GUIManager::UpdateTarget()
 		{
 			auto engine = Game::Get()->GetEngine();
 
-			// ボタンが選択されていなければ真ん中を現在位置とする
-			current_pos.x = (float)engine->FrameBufferWidth() / 2;
-			current_pos.y = (float)engine->FrameBufferHeight() / 2;
+			// ボタンが選択されていなければ左上のボタンが選択されるようにする
+			current_pos = Vec2(0, 0);
+			input = Vec2(1, 1).Normalized();
 		}
 
 		float min_distance = 1000000;
@@ -96,6 +99,7 @@ void GUIManager::UpdateTarget()
 			auto pos = button->WorldPosition();
 			auto v = pos - current_pos;
 
+			// 入力方向で一番近いボタンを選択する
 			float dot = Vec2::Dot(v.Normalized(), input_normal);
 			if (dot > 0.5f)
 			{
@@ -129,7 +133,7 @@ void GUIManager::UpdateTarget()
 
 void GUIManager::CheckButtonPress()
 {
-	if (Input::GetButtonRepeat("ok"))
+	if (Input::GetButtonDown("ok"))
 	{
 		current_picked_button_->OnPressed();
 	}

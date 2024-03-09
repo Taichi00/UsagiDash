@@ -29,10 +29,10 @@ bool PlayerController::Init()
 	rigidbody_ = GetEntity()->GetComponent<Rigidbody>();
 	audio_source_ = GetEntity()->GetComponent<AudioSource>();
 
-	run_smoke_emitter_ = GetEntity()->GetChild("run_smoke_emitter")->GetComponent<ParticleEmitter>();
-	jump_smoke_emitter_ = GetEntity()->GetChild("jump_smoke_emitter")->GetComponent<ParticleEmitter>();
-	circle_smoke_emitter_ = GetEntity()->GetChild("circle_smoke_emitter")->GetComponent<ParticleEmitter>();
-	wall_slide_smoke_emitter_ = GetEntity()->GetChild("wall_slide_smoke_emitter")->GetComponent<ParticleEmitter>();
+	run_smoke_emitter_ = GetEntity()->Child("run_smoke_emitter")->GetComponent<ParticleEmitter>();
+	jump_smoke_emitter_ = GetEntity()->Child("jump_smoke_emitter")->GetComponent<ParticleEmitter>();
+	circle_smoke_emitter_ = GetEntity()->Child("circle_smoke_emitter")->GetComponent<ParticleEmitter>();
+	wall_slide_smoke_emitter_ = GetEntity()->Child("wall_slide_smoke_emitter")->GetComponent<ParticleEmitter>();
 
 	/*idle_state_ = std::make_unique<IdleState>(this);
 	run_state_ = std::make_unique<RunState>(this);

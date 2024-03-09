@@ -270,11 +270,12 @@ float4 main(VSOutput input) : SV_TARGET
     float2 screenSize;
     gAlbedo.GetDimensions(screenSize.x, screenSize.y);
     
-    // ガンマ補正
-    const float gamma = 2.2;
-    const float exposure = 1;
+    //// 露出
+    //const float exposure = 1;
+    //color = 1.0 - exp(-color * exposure);
     
-    color = 1.0 - exp(-color * exposure);
+    // ガンマ
+    const float gamma = 2.2;
     color = pow(color, 1.0 / gamma);
     
     // アウトライン

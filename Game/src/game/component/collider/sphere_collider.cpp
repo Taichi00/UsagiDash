@@ -12,6 +12,8 @@
 SphereCollider::SphereCollider(const float radius)
 {
 	this->radius = radius;
+
+	type_ = SPHERE;
 }
 
 SphereCollider::~SphereCollider()

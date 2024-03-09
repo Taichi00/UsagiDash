@@ -211,7 +211,7 @@ public:
 
 	bool Init() override;
 	void Update(const float delta_time) override;
-
+	void BeforeDraw() override;
 	void DrawShadow() override;
 	void DrawDepth() override;
 	void DrawGBuffer() override;

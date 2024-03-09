@@ -6,6 +6,7 @@
 #include "game/resource/audio.h"
 #include "app/component/coin_script.h"
 #include "game/component/audio/audio_source.h"
+#include "app/component/pause_behavior.h"
 
 Coin::Coin(const std::string& name) : Entity(name, "coin", "item")
 {
@@ -18,6 +19,7 @@ Coin::Coin(const std::string& name) : Entity(name, "coin", "item")
 	AddComponent(new SphereCollider(1.5f));
 	AddComponent(new AudioSource(se));
 	AddComponent(new CoinScript());
+	AddComponent(new PauseBehavior());
 }
 
 Coin::~Coin()

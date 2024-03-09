@@ -25,7 +25,7 @@ bool ParticleRenderer::Init()
     return true;
 }
 
-void ParticleRenderer::Update()
+void ParticleRenderer::BeforeDraw()
 {
 	UpdateCB();
 }

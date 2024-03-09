@@ -9,6 +9,7 @@
 #include "game/resource/audio.h"
 #include "game/resource/model.h"
 #include "game/resource/texture2d.h"
+#include "app/component/pause_behavior.h"
 #include "player.h"
 
 Player::Player(const std::string& name) : Entity(name, "player", "player")
@@ -121,6 +122,7 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	AddComponent(new Animator());
 	AddComponent(new AudioSource(game->LoadResource<Audio>(L"assets/se/Retro Jump Classic 08.wav")));
 	AddComponent(new PlayerController(20, 1.2f));
+	AddComponent(new PauseBehavior());
 
 	GetComponent<Animator>()->Play("Idle", 2.0f);
 	GetComponent<Collider>()->offset = Vec3(0, 1.5f, 0);
@@ -128,15 +130,19 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 
 	auto run_smoke_emitter = new Entity("run_smoke_emitter");
 	run_smoke_emitter->AddComponent(new ParticleEmitter(run_smoke_prop));
+	run_smoke_emitter->AddComponent(new PauseBehavior());
 
 	auto jump_smoke_emitter = new Entity("jump_smoke_emitter");
 	jump_smoke_emitter->AddComponent(new ParticleEmitter(jump_smoke_prop));
+	jump_smoke_emitter->AddComponent(new PauseBehavior());
 
 	auto circle_smoke_emitter = new Entity("circle_smoke_emitter");
 	circle_smoke_emitter->AddComponent(new ParticleEmitter(circle_smoke_prop));
+	circle_smoke_emitter->AddComponent(new PauseBehavior());
 
 	auto wall_slide_smoke_emitter = new Entity("wall_slide_smoke_emitter");
 	wall_slide_smoke_emitter->AddComponent(new ParticleEmitter(wall_slide_smoke_prop));
+	wall_slide_smoke_emitter->AddComponent(new PauseBehavior());
 
 	AddChild(run_smoke_emitter);
 	AddChild(jump_smoke_emitter);

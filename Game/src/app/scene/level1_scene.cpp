@@ -4,6 +4,8 @@
 #include "app/component/player_controller.h"
 #include "app/entity/player.h"
 #include "app/component/camera_controller.h"
+#include "app/component/pause_behavior.h"
+#include "app/component/pause_manager.h"
 #include "game/entity.h"
 #include "game/game.h"
 #include "game/input/input.h"
@@ -35,7 +37,13 @@ bool Level1Scene::Init()
 	std::mt19937 mt(rd());
 	std::uniform_real_distribution<float> frand(-1, 1);
 
-	SetSkybox(L"assets/skybox/puresky/");
+	SetSkybox(L"assets/skybox/default");
+
+	auto pause_manager = new Entity("pause_manager");
+	{
+		pause_manager->AddComponent<PauseManager>();
+		CreateEntity(pause_manager);
+	}
 
 	player = new Player("player");
 	{
@@ -47,6 +55,7 @@ bool Level1Scene::Init()
 		camera->AddComponent(new Camera());
 		camera->AddComponent(new AudioListener());
 		camera->AddComponent(new CameraController(player));
+		//camera->AddComponent(new PauseBehavior());
 		CreateEntity(camera);
 		SetMainCamera(camera);
 	}
@@ -74,6 +83,7 @@ bool Level1Scene::Init()
 
 			object->AddComponent(new MeshRenderer(model));
 			object->AddComponent(new Rigidbody(0.5f, true, false, 0.1f));
+			object->AddComponent(new PauseBehavior());
 			CreateEntity(object);
 			objects.push_back(object);
 
@@ -88,6 +98,7 @@ bool Level1Scene::Init()
 		movingObj->AddComponent(new MeshRenderer(LoadResource<Model>(L"assets/model/object/rift.obj")));
 		movingObj->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"assets/model/object/rift.obj")));
 		movingObj->AddComponent(new Rigidbody(5, false, true, 0.1f));
+		movingObj->AddComponent(new PauseBehavior());
 
 		movingObj->transform->position = Vec3(0, -10, 25);
 		movingObj->transform->scale = Vec3(10, 10, 10);
@@ -101,6 +112,7 @@ bool Level1Scene::Init()
 		enemy->AddComponent(new SphereCollider(1.5f));
 		enemy->AddComponent(new Rigidbody(0.5, true, false, 0.1f));
 		enemy->AddComponent(new Animator());
+		enemy->AddComponent(new PauseBehavior());
 
 		enemy->GetComponent<Collider>()->offset = Vec3(0, 1.5f, 0);
 		enemy->transform->position = Vec3(-5, 0, -5);
@@ -125,12 +137,13 @@ bool Level1Scene::Init()
 	auto coin_gui = new Entity("coin_gui");
 	{
 		PanelProperty panel_prop = {};
-		panel_prop.color = Color(1, 1, 1, 0.4f);
+		panel_prop.color = Color(0, 0, 0, 0.3f);
+		panel_prop.radius = 20;
 
 		auto panel = coin_gui->AddComponent<Panel>(new Panel(panel_prop));
 		panel->SetAnchorPoint(Vec2(1, 0));
 		panel->SetPivot(Vec2(0.5f, 0.5f));
-		panel->SetSize(Vec2(130, 8));
+		panel->SetSize(Vec2(128, 40));
 		panel->SetPosition(Vec2(-120, 80));
 		panel->SetRotation(4);
 		panel->Transform();
@@ -142,6 +155,7 @@ bool Level1Scene::Init()
 			coin_label_prop.font_size = 28;
 			coin_label_prop.color = Color(1, 1, 1);
 			coin_label_prop.font_weight = TextProperty::WEIGHT_EXTRA_BOLD;
+			coin_label_prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
 
 			auto animation = std::make_shared<Animation>("get");
 			Animation::Channel channel = {};
@@ -163,9 +177,9 @@ bool Level1Scene::Init()
 			auto label = coin_label->AddComponent<Label>(new Label("0000", coin_label_prop));
 			coin_label->AddComponent(new Animator(animation));
 
-			label->SetAnchorPoint(Vec2(0.5f, 1));
-			label->SetPivot(Vec2(0.5f, 1));
-			label->SetPosition(Vec2(22, -4));
+			label->SetAnchorPoint(Vec2(0.5f, 0.5f));
+			label->SetPivot(Vec2(0.5f, 0.5f));
+			label->SetPosition(Vec2(10, -2));
 			label->Transform();
 
 			coin_label->SetParent(coin_gui);
@@ -174,13 +188,43 @@ bool Level1Scene::Init()
 		auto coin_icon = new Entity("coin_icon");
 		{
 			auto picture = coin_icon->AddComponent<Picture>(new Picture(LoadResource<Bitmap>(L"assets/image/coin_icon.png")));
-			picture->SetTransform(Vec2(-35, 0), Vec2(128, 128), Vec2(0.5, 1), Vec2(0.5, 0));
+			picture->SetTransform(Vec2(-46, 0), Vec2(128, 128), Vec2(0.5f, 0.5f), Vec2(0.5, 0.5f));
 			picture->SetScale(Vec2(0.32f, 0.32f));
 
 			coin_icon->SetParent(coin_gui);
 		}
 
 		CreateEntity(coin_gui);
+	}
+
+	auto guide_label = new Entity("guide_label");
+	{
+		TextProperty prop = {};
+		prop.font = L"Koruri";
+		prop.font_size = 16;
+		prop.font_weight = TextProperty::WEIGHT_BOLD;
+		prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
+		prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_BOTTOM;
+
+		PanelProperty panel_prop = {};
+		panel_prop.color = Color(0, 0, 0, 0.3f);
+		panel_prop.padding = { 16, 4, 18, 6 };
+		panel_prop.radius = 16;
+
+		auto label = guide_label->AddComponent<Label>(new Label(
+			"<bitmap input_menu> ƒƒjƒ…[",
+			prop,
+			panel_prop,
+			true
+		));
+
+		label->SetAnchorPoint(Vec2(1, 1));
+		label->SetPivot(Vec2(1, 1));
+		label->SetPosition(Vec2(-48, -30));
+		label->SetRotation(0);
+		label->Transform();
+
+		CreateEntity(guide_label);
 	}
 
 	auto tutorial_label = new Entity("tutorial_label");
@@ -210,7 +254,7 @@ bool Level1Scene::Init()
 		game_manager->AddComponent(new GameManager(
 			player->GetComponent<PlayerController>(),
 			camera->GetComponent<CameraController>(),
-			coin_gui->GetChild("coin_label")->GetComponent<Label>()
+			coin_gui->Child("coin_label")->GetComponent<Label>()
 		));
 		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/y014_m.wav"), 100.f));
 

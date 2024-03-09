@@ -20,16 +20,7 @@ public:
 
 	bool Init();
 
-	/*bool Intersects(SphereCollider* sphere);
-	bool Intersects(CapsuleCollider* capsule);
-	bool Intersects(Ray* ray);*/
-
 private:
-	/*bool SphereIntersectsMesh(
-		const Vec3& center, const float radius,
-		const CollisionMesh& mesh, const CollisionFace& face,
-		Vec3& normal, float& distance, std::vector<Vec3>& collidedPoints);*/
-
 	void PrepareAABB() override;
 
 public:

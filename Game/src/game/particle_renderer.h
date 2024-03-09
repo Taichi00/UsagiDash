@@ -19,7 +19,7 @@ public:
 
 	bool Init();
 
-	void Update();
+	void BeforeDraw();
 
 	virtual void DrawShadow() {}
 	virtual void DrawDepth() {}

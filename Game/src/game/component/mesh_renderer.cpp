@@ -64,6 +64,10 @@ bool MeshRenderer::Init()
 void MeshRenderer::Update(const float delta_time)
 {
 	UpdateBone();
+}
+
+void MeshRenderer::BeforeDraw()
+{
 	UpdateCB();
 }
 
@@ -406,15 +410,6 @@ void MeshRenderer::UpdateCB()
 	auto targetPos = camera->GetFocusPosition();
 	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
 	auto lightWorld = world;
-
-	//if (isShadowFromAbove)
-	//{
-	//	lightWorld = XMMatrixIdentity();
-	//	lightWorld *= XMMatrixScalingFromVector(transform->scale);
-	//	lightWorld *= XMMatrixRotationQuaternion(transform->rotation);
-	//	lightWorld *= XMMatrixRotationQuaternion(Quaternion::FromToRotation((lightPos - targetPos).normalized(), Vec3(0, 1, 0)));
-	//	lightWorld *= XMMatrixTranslationFromVector(transform->position);
-	//}
 
 	currentScene->camera_position = cameraPos;
 	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, {0, 1, 0});

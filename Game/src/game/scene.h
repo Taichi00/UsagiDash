@@ -34,6 +34,8 @@ public:
 	virtual void AfterUpdate();
 	virtual void Draw();
 
+	void OnDestroy();
+
 	void DrawLighting();
 	void DrawSkybox();
 	void DrawSSAO();

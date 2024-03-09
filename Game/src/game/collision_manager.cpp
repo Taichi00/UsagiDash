@@ -8,6 +8,7 @@
 #include "math/aabb.h"
 #include "game/game.h"
 #include "game/layer_manager.h"
+#include <unordered_map>
 
 CollisionManager::CollisionManager()
 {
@@ -19,36 +20,53 @@ CollisionManager::CollisionManager()
 
 void CollisionManager::Update(const float delta_time)
 {
-	collided_entities_.clear();
+	// 衝突検知済みのコライダーのペア
+	std::unordered_map<Collider*, std::unordered_map<Collider*, bool>> collided_map;
 
-	// colliderの準備
-	for (auto& collider : colliders_)
+	std::vector<Collider*> colliders;
+	std::vector<Rigidbody*> rigidbodies;
+
+	for (int i = 0; i < colliders_.size(); i++)
 	{
-		collider->ResetHits();
+		octree_objects_[i]->Remove();
+
+		// 更新停止中なら判定しない
+		if (!colliders_[i]->GetEntity()->IsUpdateEnabled())
+			continue;
+
+		colliders.push_back(colliders_[i]);
+	}
+
+	for (auto rigidbody : rigidbodies_)
+	{
+		// 更新停止中なら判定しない
+		if (!rigidbody->GetEntity()->IsUpdateEnabled())
+			continue;
+
+		rigidbodies.push_back(rigidbody);
 	}
 
 	// rigidbodyの準備
-	for (auto& rigidbody : rigidbodies_)
+	for (auto rigidbody : rigidbodies)
 	{
 		// 重力
 		if (rigidbody->use_gravity)
 		{
 			rigidbody->velocity += Vec3(0.f, -1.08f, 0.f) * delta_time;
 		}
-
 		// 空気抵抗
 		rigidbody->velocity *= 0.995f;
 
 		rigidbody->Prepare(delta_time);
 	}
 
-	// 準備
-	for (auto i = 0; i < colliders_.size(); i++)
+	// colliderの準備
+	for (int i = 0; i < colliders.size(); i++)
 	{
-		colliders_[i]->Prepare();
+		colliders[i]->ResetHits();
+		colliders[i]->Prepare();
 
-		octree_objects_[i]->Remove();
-		octree_objects_[i]->aabb = colliders_[i]->GetAABB();
+		octree_objects_[i]->aabb = colliders[i]->GetAABB();
 		octree_->Regist(octree_objects_[i].get());
 	}
 
@@ -61,27 +79,16 @@ void CollisionManager::Update(const float delta_time)
 		auto& collider1 = collision_list[i];
 		auto& collider2 = collision_list[i + 1];
 
-		/*if (collider1->GetEntity() == collider2->GetEntity())
-		{
-			continue;
-		}*/
-
-		// AABBが衝突していなければ無視
-		/*if (!collider1->GetAABB().Intersects(collider2->GetAABB()))
-		{
-			continue;
-		}*/
-				
 		// 衝突判定
 		if (collider1->Intersects(collider2))
 		{
-			collided_entities_.insert({ collider1->GetEntity(), collider2 });
-			collided_entities_.insert({ collider2->GetEntity(), collider1 });
+			collided_map[collider1][collider2] = true;
+			collided_map[collider2][collider1] = true;
 		}
 	}
 	
 	// 衝突応答
-	for (auto& rigidbody : rigidbodies_)
+	for (auto& rigidbody : rigidbodies)
 	{
 		rigidbody->Resolve();
 	}
@@ -89,12 +96,12 @@ void CollisionManager::Update(const float delta_time)
 	for (int i = 0; i < 2; i++)
 	{
 		// 準備
-		for (auto i = 0; i < colliders_.size(); i++)
+		for (auto i = 0; i < colliders.size(); i++)
 		{
-			colliders_[i]->Prepare();
+			colliders[i]->Prepare();
 
 			octree_objects_[i]->Remove();
-			octree_objects_[i]->aabb = colliders_[i]->GetAABB();
+			octree_objects_[i]->aabb = colliders[i]->GetAABB();
 			octree_->Regist(octree_objects_[i].get());
 		}
 
@@ -107,22 +114,11 @@ void CollisionManager::Update(const float delta_time)
 			auto& collider1 = collision_list[j];
 			auto& collider2 = collision_list[j + 1];
 
-			/*if (collider1->GetEntity() == collider2->GetEntity())
-			{
-				continue;
-			}*/
-
-			// AABBが衝突していなければ無視
-			/*if (!collider1->GetAABB().Intersects(collider2->GetAABB()))
-			{
-				continue;
-			}*/
-
 			// 衝突判定
 			if (collider1->Intersects(collider2))
 			{
-				collided_entities_.insert({ collider1->GetEntity(), collider2 });
-				collided_entities_.insert({ collider2->GetEntity(), collider1 });
+				collided_map[collider1][collider2] = true;
+				collided_map[collider2][collider1] = true;
 			}
 		}
 
@@ -140,9 +136,15 @@ void CollisionManager::Update(const float delta_time)
 		rigidbody->velocity = (rigidbody->position - rigidbody->position_prev);
 	}
 
-	for (auto& p : collided_entities_)
+	// イベント通知
+	for (auto& pair1 : collided_map)
 	{
-		p.first->OnCollisionEnter(p.second);
+		auto entity = pair1.first->GetEntity();
+
+		for (auto& pair2 : collided_map)
+		{
+			entity->OnCollisionEnter(pair2.first);
+		}
 	}
 }
 

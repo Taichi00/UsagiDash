@@ -173,6 +173,8 @@ void Scene::Draw()
 {
 	auto engine = Game::Get()->GetEngine();
 
+	for (auto& entity : entity_list_) entity->BeforeDraw();
+
 	// レンダリングの準備
 	engine->InitRender();
 
@@ -229,6 +231,20 @@ void Scene::Draw()
 
 	// レンダリングの終了
 	engine->EndDeferredRender();
+}
+
+void Scene::OnDestroy()
+{
+	auto& entities = dont_destroy_entities_;
+
+	ExecuteOnAllEntities([&entities](Entity& entity) {
+		auto it = std::find(entities.begin(), entities.end(), &entity);
+
+		if (it == entities.end())
+		{
+			entity.OnDestroy();
+		}
+		});
 }
 
 void Scene::DrawLighting()
@@ -442,7 +458,7 @@ std::vector<std::unique_ptr<Entity>> Scene::MoveDontDestroyEntities()
 			return &entity == dd_entity;
 			});
 
-		auto parent = e->GetParent();
+		auto parent = e->Parent();
 
 		if (!parent)
 			continue;
@@ -487,19 +503,19 @@ void Scene::SetSkybox(const std::wstring& path)
 	auto engine = Game::Get()->GetEngine();
 	auto heap = engine->SrvHeap();
 
-	skybox_tex_ = LoadResource<Texture2D>(path + L"EnvHDR.dds");
+	skybox_tex_ = LoadResource<Texture2D>(path + L"/EnvHDR.dds");
 	skybox_handle_ = heap->Alloc();
 	engine->CreateShaderResourceViewCube(*skybox_tex_, skybox_handle_);
 
-	diffusemap_tex_ = LoadResource<Texture2D>(path + L"DiffuseHDR.dds");
+	diffusemap_tex_ = LoadResource<Texture2D>(path + L"/DiffuseHDR.dds");
 	diffusemap_handle_ = heap->Alloc();
 	engine->CreateShaderResourceViewCube(*diffusemap_tex_, diffusemap_handle_);
 
-	specularmap_tex_ = LoadResource<Texture2D>(path + L"SpecularHDR.dds");
+	specularmap_tex_ = LoadResource<Texture2D>(path + L"/SpecularHDR.dds");
 	specularmap_handle_ = heap->Alloc();
 	engine->CreateShaderResourceViewCube(*specularmap_tex_, specularmap_handle_);
 
-	brdf_tex_ = LoadResource<Texture2D>(path + L"Brdf.dds");
+	brdf_tex_ = LoadResource<Texture2D>(path + L"/Brdf.dds");
 	brdf_handle_ = heap->Alloc();
 	engine->CreateShaderResourceView2D(*brdf_tex_, brdf_handle_);
 
@@ -761,15 +777,15 @@ void Scene::UpdateCB()
 	currentScene->camera_position = cameraPos;
 
 	auto targetPos = camera->GetFocusPosition();
-	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
+	auto lightPos = targetPos + Vec3(0.5f, 3.5f, 2.5f).Normalized() * 500;
 	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
 	currentScene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
-	currentScene->light_color = Vec3(1, 1, 1) * 10;
+	currentScene->light_color = Vec3(1.f, 1.f, 1.f) * 10;
 }
 
 void Scene::UpdateEntityList()
 {
-	entity_list_ = root_entity_->GetAllChildren();
+	entity_list_ = root_entity_->AllChildren();
 }
 
 void Scene::DestroyEntities()
@@ -787,7 +803,11 @@ void Scene::DestroyEntities()
 			return &e == entity;
 			});
 
-		destroy_entity->GetParent()->RemoveChild(destroy_entity);
+		// イベント通知
+		destroy_entity->OnDestroy();
+
+		// 削除
+		destroy_entity->Parent()->RemoveChild(destroy_entity);
 	}
 
 	destroy_entities_.clear();

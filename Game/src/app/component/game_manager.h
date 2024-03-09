@@ -13,10 +13,17 @@ class AudioSource;
 class Animator;
 class Transition;
 class CameraController;
+class PauseManager;
 
 class GameManager : public Component
 {
 public:
+	enum SceneState
+	{
+		SCENE_TITLE,
+		SCENE_GAME,
+	};
+
 	GameManager(PlayerController* player, CameraController* camera, Label* coin_label);
 	~GameManager() = default;
 
@@ -46,6 +53,14 @@ public:
 	// ゲームの終了処理
 	void EndGame();
 
+	// ポーズ
+	void Pause();
+	void Resume();
+	void TogglePause();
+
+	// タイトルに戻る
+	void LoadTitle();
+
 private:
 	// コインの枚数テキストを取得する
 	std::string GetCoinText(const int n);
@@ -53,6 +68,8 @@ private:
 	void PlayerFallen();
 
 	void UpdateGameStart();
+
+	void UpdatePause();
 
 private:
 	static GameManager* instance_;
@@ -62,6 +79,7 @@ private:
 	Label* coin_label_;
 	Animator* coin_label_animator_ = nullptr;
 	Transition* transition_ = nullptr;
+	PauseManager* pause_manager_ = nullptr;
 
 	AudioSource* audio_source_ = nullptr;
 
@@ -78,4 +96,9 @@ private:
 	bool is_respawning_ = false;
 	// ゲームスタート演出中
 	bool is_starting_game_ = false;
+
+	// ポーズメニュー
+	Entity* pause_menu_ = nullptr;
+
+	SceneState scene_state_ = SCENE_TITLE;
 };

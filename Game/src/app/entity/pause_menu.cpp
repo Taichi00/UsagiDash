@@ -1,34 +1,17 @@
-#include "title_scene.h"
+#include "pause_menu.h"
 #include "game/component/all_components.h"
-#include "game/resource/all_resources.h"
 #include "app/component/game_manager.h"
-#include "game/input/input.h"
-#include "app/scene/level1_scene.h"
+#include "app/scene/title_scene.h"
 
-bool TitleScene::Init()
+PauseMenu::PauseMenu() : Entity("pause_menu")
 {
-    Scene::Init();
-
-	SetSkybox(L"assets/skybox/default");
-
-	auto camera = new Entity("camera");
-	{
-		camera->AddComponent(new Camera());
-		camera->AddComponent(new AudioListener());
-		CreateEntity(camera);
-		SetMainCamera(camera);
-	}
-
-	auto background = new Entity("background");
 	{
 		PanelProperty prop = {};
-		prop.color = Color(0.35f, 0.7f, 1);
+		prop.color = Color(0, 0, 0, 0.1f);
 
-		auto panel = background->AddComponent<Panel>(new Panel(prop));
+		auto panel = AddComponent<Panel>(new Panel(prop));
 		panel->SetAnchor({ 0, 0, 1, 1 });
 		panel->SetOffset({ 0, 0, 0, 0 });
-
-		CreateEntity(background);
 	}
 
 	auto title_label = new Entity("title_label");
@@ -41,7 +24,7 @@ bool TitleScene::Init()
 		prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
 
 		auto label = title_label->AddComponent<Label>(new Label(
-			"タイトル",
+			"PAUSE",
 			prop, {},
 			true
 		));
@@ -51,7 +34,7 @@ bool TitleScene::Init()
 		label->SetRotation(0);
 		label->Transform();
 
-		CreateEntity(title_label);
+		AddChild(title_label);
 	}
 
 	{
@@ -71,15 +54,6 @@ bool TitleScene::Init()
 		std::vector<std::shared_ptr<Animation>> animations;
 		{
 			auto animation = std::make_shared<Animation>("press");
-			/*{
-				Animation::Channel channel = {};
-				channel.type = Animation::TYPE_GUI;
-				channel.gui.name = "panel";
-				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(0.9f, 0.9f, 0.9f) },
-				};
-				animation->AddChannel(channel);
-			}*/
 			{
 				Animation::Channel channel = {};
 				channel.type = Animation::TYPE_GUI;
@@ -168,18 +142,18 @@ bool TitleScene::Init()
 			animations.push_back(animation);
 		}
 
-		auto start_button = new Entity("start_button");
+		auto resume_button = new Entity("resume_button");
 		{
-			auto button = start_button->AddComponent<AnimatedButton>(new AnimatedButton(
-				"はじめる",
+			auto button = resume_button->AddComponent<AnimatedButton>(new AnimatedButton(
+				"つづける",
 				text_prop,
 				panel_prop,
 				[]() {
-					GameManager::Get()->StartGame();
+					GameManager::Get()->Resume();
 				},
 				false
 			));
-			start_button->AddComponent<Animator>(new Animator(animations));
+			resume_button->AddComponent<Animator>(new Animator(animations));
 
 			button->SetAnchorPoint(Vec2(0.25f, 0.5f));
 			button->SetPivot(Vec2(0.5f, 0.5f));
@@ -188,7 +162,7 @@ bool TitleScene::Init()
 			button->SetRotation(-3);
 			button->Transform();
 
-			CreateEntity(start_button);
+			AddChild(resume_button);
 		}
 
 		auto option_button = new Entity("option_button");
@@ -211,17 +185,17 @@ bool TitleScene::Init()
 			button->SetRotation(-3);
 			button->Transform();
 
-			CreateEntity(option_button);
+			AddChild(option_button);
 		}
 
 		auto exit_button = new Entity("exit_button");
 		{
 			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
-				"おわる",
+				"タイトルにもどる",
 				text_prop,
 				panel_prop,
 				[]() {
-					GameManager::Get()->EndGame();
+					GameManager::Get()->LoadTitle();
 				},
 				false
 			));
@@ -234,51 +208,7 @@ bool TitleScene::Init()
 			button->SetRotation(-3);
 			button->Transform();
 
-			CreateEntity(exit_button);
+			AddChild(exit_button);
 		}
 	}
-
-	auto guide_label = new Entity("guide_label");
-	{
-		TextProperty prop = {};
-		prop.font = L"Koruri";
-		prop.font_size = 16;
-		prop.font_weight = TextProperty::WEIGHT_SEMI_BOLD;
-		prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
-		prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
-
-		auto label = guide_label->AddComponent<Label>(new Label(
-			"<bitmap input_move> 選択  <bitmap input_ok> 決定",
-			prop,
-			{},
-			true
-		));
-
-		label->SetAnchorPoint(Vec2(0.25f, 0.5f));
-		label->SetPivot(Vec2(0.5f, 0.5f));
-		label->SetPosition(Vec2(0, 260));
-		label->SetRotation(-3);
-		label->Transform();
-
-		CreateEntity(guide_label);
-	}
-
-	auto game_manager = new Entity("game_manager");
-	{
-		game_manager->AddComponent(new GameManager(
-			nullptr,
-			nullptr,
-			nullptr
-		));
-		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/y014_m.wav"), 100.f));
-
-		CreateEntity(game_manager);
-	}
-
-    return true;
-}
-
-void TitleScene::Update(const float delta_time)
-{
-	Scene::Update(delta_time);
 }

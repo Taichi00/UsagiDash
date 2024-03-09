@@ -37,8 +37,6 @@ void Collider::Prepare()
     if (rigidbody_ != nullptr)
     {
         position_ = rigidbody_->position;
-        //position_ += rigidbody_->velocity;
-        //m_extension = m_pRigidbody->isGrounded ? Vec3(0, -0.1, 0) : Vec3::Zero();
     }
 
     // AABBの計算
@@ -50,84 +48,22 @@ void Collider::Prepare()
 
     // 最も近い衝突情報のリセット
     nearest_hit_ = { nullptr, Vec3::Zero(), 0 };
-
-    has_detected_ = false;
-}
-
-Vec3 Collider::GetPosition()
-{
-    return position_;
-}
-
-Vec3 Collider::GetExtension()
-{
-    return extension_;
-}
-
-AABB Collider::GetAABB()
-{
-    return aabb_;
-}
-
-bool Collider::HasDetected()
-{
-    return has_detected_;
-}
-
-void Collider::SetHasDetected(bool flag)
-{
-    has_detected_ = flag;
-}
-
-Rigidbody* Collider::GetRigidbody()
-{
-    return rigidbody_;
 }
 
 bool Collider::Intersects(Collider* collider)
 {
-    if (typeid(*collider) == typeid(SphereCollider))
+    switch (collider->type_)
     {
-        return Intersects((SphereCollider*)collider);
+    case SPHERE:
+        return Intersects(static_cast<SphereCollider*>(collider));
+    case CAPSULE:
+        return Intersects(static_cast<CapsuleCollider*>(collider));
+    case FLOOR:
+        return Intersects(static_cast<FloorCollider*>(collider));
+    case POLYGON:
+        return Intersects(static_cast<PolygonCollider*>(collider));
     }
-    else if (typeid(*collider) == typeid(CapsuleCollider))
-    {
-        return Intersects((CapsuleCollider*)collider);
-    }
-    else if (typeid(*collider) == typeid(FloorCollider))
-    {
-        return Intersects((FloorCollider*)collider);
-    }
-    else if (typeid(*collider) == typeid(PolygonCollider))
-    {
-        return Intersects((PolygonCollider*)collider);
-    }
-    
-    return false;
-}
 
-bool Collider::Intersects(SphereCollider* sphere)
-{
-    return false;
-}
-
-bool Collider::Intersects(CapsuleCollider* sphere)
-{
-    return false;
-}
-
-bool Collider::Intersects(FloorCollider* floor)
-{
-    return false;
-}
-
-bool Collider::Intersects(PolygonCollider* collider)
-{
-    return false;
-}
-
-bool Collider::Intersects(Ray* ray)
-{
     return false;
 }
 
@@ -147,14 +83,3 @@ void Collider::AddHit(const HitInfo& hit)
         nearest_hit_ = hit;
     }
 }
-
-const std::vector<Collider::HitInfo>& Collider::GetHits()
-{
-    return hits_;
-}
-
-const Collider::HitInfo& Collider::GetNearestHit()
-{
-    return nearest_hit_;
-}
-

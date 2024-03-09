@@ -2,10 +2,12 @@
 #include "game/component/collider/polygon_collider.h"
 #include "game/component/collider/sphere_collider.h"
 
-CapsuleCollider::CapsuleCollider(CapsuleColliderProperty prop)
+CapsuleCollider::CapsuleCollider(float radius, float height)
 {
-	radius = prop.radius;
-	height = prop.height;
+	this->radius = radius;
+	this->height = height;
+
+	type_ = CAPSULE;
 }
 
 CapsuleCollider::~CapsuleCollider()

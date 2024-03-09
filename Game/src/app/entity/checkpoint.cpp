@@ -8,6 +8,7 @@
 #include "game/component/animator.h"
 #include "game/resource/audio.h"
 #include "game/component/audio/audio_source.h"
+#include "app/component/pause_behavior.h"
 
 Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 {
@@ -20,6 +21,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 	AddComponent(new Animator());
 	AddComponent(new AudioSource(audio));
 	AddComponent(new CheckpointController());
+	AddComponent(new PauseBehavior());
 
 	auto confetti = new Entity("confetti_emitter");
 	{
@@ -57,6 +59,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 		prop.mesh.pbr_texture = pbr;
 
 		confetti->AddComponent(new ParticleEmitter(prop));
+		confetti->AddComponent(new PauseBehavior());
 	}
 	AddChild(confetti);
 
@@ -95,6 +98,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 		prop.sprite.pbr_texture = pbr;
 
 		smoke->AddComponent(new ParticleEmitter(prop));
+		smoke->AddComponent(new PauseBehavior());
 	}
 	AddChild(smoke);
 }

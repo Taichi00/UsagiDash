@@ -25,7 +25,7 @@ void Transform::TransformUpdate(const float delta_time)
 	world_matrix_ *= XMMatrixRotationQuaternion(rotation);
 	world_matrix_ *= XMMatrixTranslationFromVector(position);
 
-	world_matrix_ *= GetEntity()->GetParent()->transform->world_matrix_;
+	world_matrix_ *= GetEntity()->Parent()->transform->world_matrix_;
 
 	world_position_ = world_matrix_.r[3];
 }
@@ -41,7 +41,7 @@ XMMATRIX Transform::BillboardWorldMatrix()
 	world *= XMMatrixRotationQuaternion(XMQuaternionInverse(viewRot));
 	world *= XMMatrixTranslationFromVector(position);
 
-	world *= GetEntity()->GetParent()->transform->world_matrix_;
+	world *= GetEntity()->Parent()->transform->world_matrix_;
 
 	return world;
 }
@@ -50,12 +50,12 @@ Quaternion Transform::WorldRotation()
 {
 	auto rot = rotation;
 
-	Entity* parent = GetEntity()->GetParent();
+	Entity* parent = GetEntity()->Parent();
 	while (parent != nullptr)
 	{
 		rot = rot * parent->transform->rotation;
 
-		parent = parent->GetParent();
+		parent = parent->Parent();
 	}
 
 	return rot;
@@ -63,14 +63,14 @@ Quaternion Transform::WorldRotation()
 
 void Transform::MulParentWorld(XMMATRIX& world)
 {
-	Entity* parent = GetEntity()->GetParent();
+	Entity* parent = GetEntity()->Parent();
 	while (parent)
 	{
 		world *= XMMatrixScalingFromVector(parent->transform->scale);
 		world *= XMMatrixRotationQuaternion(parent->transform->rotation);
 		world *= XMMatrixTranslationFromVector(parent->transform->position);
 
-		parent = parent->GetParent();
+		parent = parent->Parent();
 	}
 }
 

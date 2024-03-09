@@ -14,8 +14,8 @@ bool CheckpointController::Init()
 {
 	game_manager_ = GameManager::Get();
 
-	confetti_emitter_ = GetEntity()->GetChild("confetti_emitter")->GetComponent<ParticleEmitter>();
-	smoke_emitter_ = GetEntity()->GetChild("smoke_emitter")->GetComponent<ParticleEmitter>();
+	confetti_emitter_ = GetEntity()->Child("confetti_emitter")->GetComponent<ParticleEmitter>();
+	smoke_emitter_ = GetEntity()->Child("smoke_emitter")->GetComponent<ParticleEmitter>();
 	animator_ = GetEntity()->GetComponent<Animator>();
 	audio_ = GetEntity()->GetComponent<AudioSource>();
 

@@ -6,16 +6,10 @@ class FloorCollider;
 class PolygonCollider;
 class SphereCollider;
 
-struct CapsuleColliderProperty
-{
-	float radius;
-	float height;
-};
-
 class CapsuleCollider : public Collider
 {
 public:
-	CapsuleCollider(CapsuleColliderProperty prop);
+	CapsuleCollider(float radius, float height);
 	~CapsuleCollider();
 
 	bool Init();
