@@ -4,6 +4,7 @@
 #include <dinput.h>
 
 #include "math/vec.h"
+#include <unordered_map>
 
 #define DINPUT_KEY_MAX 256 // キー最大数
 #define DINPUT_BUTTON_MAX 24 // ゲームパッドのボタン最大数
@@ -27,13 +28,13 @@ public:
 		RT,
 		START,
 		BACK,
+		LEFT_THUMB,
+		RIGHT_THUMB,
 
 		UP,
 		DOWN,
 		LEFT,
 		RIGHT,
-		LEFT_THUMB,
-		RIGHT_THUMB,
 		LSTICK_UP,
 		LSTICK_DOWN,
 		LSTICK_LEFT,
@@ -42,6 +43,22 @@ public:
 		RSTICK_DOWN,
 		RSTICK_LEFT,
 		RSTICK_RIGHT,
+	};
+
+	enum Axis
+	{
+		LSTICK_X,
+		LSTICK_Y,
+		RSTICK_X,
+		RSTICK_Y,
+	};
+
+	enum GamepadType
+	{
+		UNKNOWN,
+		SWITCH_PRO_CONTROLLER,
+		DUALSHOCK4,
+		DUALSENSE
 	};
 
 	DirectInput(Window* window);
@@ -77,6 +94,8 @@ public:
 
 	bool IsGamepadConnected() const { return is_gamepad_connected_; }
 
+	GamepadType GetGamepadType() const { return pad_type_; }
+
 private:
 	// インプットの生成
 	HRESULT CreateInput();
@@ -84,16 +103,37 @@ private:
 	HRESULT InitKeyDevice();
 	// ゲームパッドデバイスの生成
 	HRESULT InitPadDevice();
+	// マウスデバイスの生成
+	HRESULT InitMouseDevice();
 
 	// ゲームパッドが接続された際に実行されるコールバック関数
 	static BOOL CALLBACK GamepadFindCallBack(LPCDIDEVICEINSTANCE instance, LPVOID ref);
 
 	void UpdateKey();
 	void UpdatePad();
+	void UpdateMouse();
 
 	Vec2 GetStickVec(const LONG sx, const LONG sy);
 
+	void InitPadButtonMap();
+
 private:
+	enum VendorID
+	{
+		VID_SWITCH_PRO_CONTROLLER = 0x057e,
+		VID_DUALSHOCK4_1X = 0x054c,
+		VID_DUALSHOCK4_2X = 0x054c,
+		VID_DUALSENSE = 0x54c,
+	};
+
+	enum ProductID
+	{
+		PID_SWITCH_PRO_CONTROLLER = 0x2009,
+		PID_DUALSHOCK4_1X = 0x05c4,
+		PID_DUALSHOCK4_2X = 0x09cc,
+		PID_DUALSENSE = 0x0ce6,
+	};
+
 	// ウィンドウ
 	Window* window_;
 	// インプット
@@ -101,8 +141,18 @@ private:
 	// インプットデバイス
 	LPDIRECTINPUTDEVICE8 key_device_;
 	LPDIRECTINPUTDEVICE8 pad_device_;
+	LPDIRECTINPUTDEVICE8 mouse_device_;
 	// コールバック関数へ渡す配列
 	LPVOID device_info_array_;
+	// ゲームパッドの種別
+	GamepadType pad_type_ = UNKNOWN;
+
+	struct GamepadInfo
+	{
+		LPDIRECTINPUTDEVICE8 device;
+		DWORD vendor_id;
+		DWORD product_id;
+	};
 
 	// キー情報
 	int keys_[DINPUT_KEY_MAX];
@@ -123,4 +173,7 @@ private:
 
 	// ゲームパッドが接続されているかどうか
 	bool is_gamepad_connected_ = false;
+
+	std::unordered_map<Button, int> pad_button_map_;
+	std::unordered_map<Axis, int> pad_axis_map_;
 };

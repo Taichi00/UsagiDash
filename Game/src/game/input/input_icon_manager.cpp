@@ -9,8 +9,32 @@ InputIconManager::InputIconManager()
 
 void InputIconManager::Update()
 {
+	InputIconType icon_type = KEYBOARD;
+
 	auto input_type = Input::CurrentInputType();
-	if (input_type == current_input_type_)
+
+	// ゲームパッドの場合はメーカーによってアイコンを変える
+	if (input_type == Input::GAMEPAD)
+	{
+		auto pad_type = Input::GetGamepadType();
+		switch (pad_type)
+		{
+		case Input::XBOX_CONTROLLER:
+		case Input::UNKNOWN:
+			icon_type = PAD_XBOX;
+			break;
+		case Input::SWITCH_PRO_CONTROLLER:
+			icon_type = PAD_NSW;
+			break;
+		case Input::DUALSHOCK4:
+		case Input::DUALSENSE:
+			icon_type = PAD_PS;
+			break;
+		}
+	}
+
+	// 現在のアイコン種別と同じならそのまま
+	if (icon_type == current_icon_type_)
 		return;
 
 	// 現在の入力種別の画像をダミーリソースにセットする
@@ -19,15 +43,15 @@ void InputIconManager::Update()
 		auto& action = map.first;
 		auto& dummy = map.second;
 
-		if (action_image_map_[action].contains(input_type))
+		if (action_image_map_[action].contains(icon_type))
 		{
-			auto& image = action_image_map_[action][input_type];
+			auto& image = action_image_map_[action][icon_type];
 			dummy->SetData(image->Data());
 			dummy->SetSize(image->Size());
 		}
 	}
 
-	current_input_type_ = input_type;
+	current_icon_type_ = icon_type;
 }
 
 void InputIconManager::AddInputIcon(const std::string& action, const std::vector<InputIconInfo>& infos)
@@ -47,7 +71,7 @@ void InputIconManager::AddInputIcon(const std::string& action, const std::vector
 		resource_manager_->Add<Bitmap>(StringMethods::GetWideString("input_icon_" + action), dummy);
 		dummy->SetName(StringMethods::GetWideString("input_" + action));
 
-		auto& image = action_image_map_[action][current_input_type_];
+		auto& image = action_image_map_[action][current_icon_type_];
 		dummy->SetData(image->Data());
 		dummy->SetSize(image->Size());
 

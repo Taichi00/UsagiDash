@@ -42,27 +42,47 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ Input::InputType::KEYBOARD, Input::Axis::KEY_WASD_Y },
 		{ Input::InputType::GAMEPAD, Input::Axis::PAD_RSTICK_Y }
 	};
+	settings.button_actions["menu"] = {
+		{ Input::InputType::KEYBOARD, Input::Button::KEY_ESCAPE },
+		{ Input::InputType::GAMEPAD, Input::Button::PAD_START }
+	};
 
 	// ボタンアイコンの設定
 	settings.action_icons["jump"] = {
-		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_space.png" },
-		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_button_a.png" }
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_space.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_button_a.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_a.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_circle.png" },
 	};
 	settings.action_icons["crouch"] = {
-		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_shift.png" },
-		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_lt.png" }
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_shift.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_lt.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_zl.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_trigger_l2.png" },
 	};
 	settings.action_icons["move"] = {
-		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_arrows2.png" },
-		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_l.png" }
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_arrows2.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_stick_l.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_stick_l.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_stick_l.png" },
 	};
 	settings.action_icons["camera"] = {
-		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_wasd.png" },
-		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_stick_r.png" }
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_wasd.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_stick_r.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_stick_r.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_stick_r.png" },
 	};
 	settings.action_icons["ok"] = {
-		{ Input::InputType::KEYBOARD, L"assets/image/button_icon/keyboard_space.png" },
-		{ Input::InputType::GAMEPAD, L"assets/image/button_icon/xbox_button_a.png" }
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_space.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_button_a.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_a.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_circle.png" },
+	};
+	settings.action_icons["menu"] = {
+		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_escape.png" },
+		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_button_menu.png" },
+		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_plus.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_options.png" },
 	};
 
 	// レイヤーの設定

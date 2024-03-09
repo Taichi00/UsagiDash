@@ -12,15 +12,23 @@ class ResourceManager;
 class InputIconManager
 {
 public:
+	enum InputIconType
+	{
+		KEYBOARD,
+		PAD_XBOX,
+		PAD_NSW,
+		PAD_PS,
+	};
+
 	struct InputIconInfo
 	{
-		Input::InputType type; // 入力種別
+		InputIconType type; // アイコン種別
 		std::wstring path; // アイコン画像のパス
 	};
 
 	struct InputIconImage
 	{
-		Input::InputType type;
+		InputIconType type;
 		std::shared_ptr<Bitmap> bitmap; // アイコン画像
 	};
 
@@ -34,8 +42,8 @@ public:
 private:
 	ResourceManager* resource_manager_;
 
-	Input::InputType current_input_type_ = Input::InputType::KEYBOARD;
+	InputIconType current_icon_type_ = KEYBOARD;
 
-	std::unordered_map<std::string, std::unordered_map<Input::InputType, std::shared_ptr<Bitmap>>> action_image_map_;
+	std::unordered_map<std::string, std::unordered_map<InputIconType, std::shared_ptr<Bitmap>>> action_image_map_;
 	std::unordered_map<std::string, std::shared_ptr<Bitmap>> action_dummy_map_;
 };

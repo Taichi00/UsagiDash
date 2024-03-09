@@ -2,6 +2,8 @@
 
 #define NOMINMAX
 #include <windows.h>
+
+#include "math/vec.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -15,11 +17,20 @@ class Input
 {
 public:
 	// 入力種別
-	enum class InputType
+	enum InputType
 	{
 		KEYBOARD,
 		GAMEPAD,
 		MOUSE
+	};
+
+	enum GamepadType
+	{
+		UNKNOWN,
+		XBOX_CONTROLLER,
+		SWITCH_PRO_CONTROLLER,
+		DUALSHOCK4,
+		DUALSENSE
 	};
 
 	enum Button
@@ -98,6 +109,9 @@ public:
 
 		PAD_LT,
 		PAD_RT,
+
+		PAD_START,
+		PAD_BACK,
 	};
 
 	enum Axis
@@ -165,13 +179,20 @@ public:
 	// 軸の値
 	static float GetAxis(const std::string& key);
 
+	// マウスカーソルの座標を取得
+	static Vec2 GetCursorPos();
+
 	// 現在の入力種別を取得
 	static InputType CurrentInputType() { return instance_->current_input_type_; }
 	// 入力種別を設定
 	static void SetCurrentInputType(InputType type) { instance_->current_input_type_ = type; }
 
+	// ゲームパッドの種類を取得
+	static GamepadType GetGamepadType() { return instance_->pad_type_; }
+
 private:
 	void CheckActions();
+	void CheckGamepadType();
 
 	void InitButtonMap();
 
@@ -184,6 +205,9 @@ private:
 
 	// 現在の入力種別
 	InputType current_input_type_;
+
+	// ゲームパッドの種類
+	GamepadType pad_type_ = GamepadType::UNKNOWN;
 
 	std::unordered_map<std::string, std::vector<ButtonActionInfo>> button_action_map_;
 	std::unordered_map<std::string, std::vector<AxisActionInfo>> axis_action_map_;

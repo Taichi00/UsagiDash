@@ -161,6 +161,9 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\app\component\checkpoint_controller.cpp" />
+    <ClCompile Include="src\app\component\pause_behavior.cpp" />
+    <ClCompile Include="src\app\component\pause_manager.cpp" />
+    <ClCompile Include="src\app\entity\pause_menu.cpp" />
     <ClCompile Include="src\game\component\gui\animated_button.cpp" />
     <ClCompile Include="src\app\component\tutorial_text_display.cpp" />
     <ClCompile Include="src\app\component\game_manager.cpp" />
@@ -255,6 +258,9 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app\component\checkpoint_controller.h" />
+    <ClInclude Include="src\app\component\pause_behavior.h" />
+    <ClInclude Include="src\app\component\pause_manager.h" />
+    <ClInclude Include="src\app\entity\pause_menu.h" />
     <ClInclude Include="src\game\component\gui\animated_button.h" />
     <ClInclude Include="src\app\component\title_scene_controller.h" />
     <ClInclude Include="src\app\component\tutorial_text_display.h" />
@@ -369,7 +375,6 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\util\reader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

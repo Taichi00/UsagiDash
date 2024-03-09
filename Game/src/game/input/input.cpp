@@ -82,6 +82,8 @@ void Input::Update()
 	x_input_->Update();
 
 	CheckActions();
+
+	CheckGamepadType();
 }
 
 void Input::AddButtonAction(const std::string& name, const std::vector<ButtonActionInfo>& info_list)
@@ -129,6 +131,11 @@ bool Input::GetButtonRepeat(const std::string& key)
 float Input::GetAxis(const std::string& key)
 {
 	return instance_->axis_action_state_[key];
+}
+
+Vec2 Input::GetCursorPos()
+{
+	return Vec2();
 }
 
 void Input::CheckActions()
@@ -258,6 +265,32 @@ void Input::CheckActions()
 	}
 }
 
+void Input::CheckGamepadType()
+{
+	if (x_input_->IsConnected())
+	{
+		pad_type_ = XBOX_CONTROLLER;
+	}
+	else if (direct_input_->IsGamepadConnected())
+	{
+		switch (direct_input_->GetGamepadType())
+		{
+		case DirectInput::SWITCH_PRO_CONTROLLER:
+			pad_type_ = SWITCH_PRO_CONTROLLER;
+			break;
+		case DirectInput::DUALSHOCK4:
+			pad_type_ = DUALSHOCK4;
+			break;
+		case DirectInput::DUALSENSE:
+			pad_type_ = DUALSENSE;
+			break;
+		case DirectInput::UNKNOWN:
+			pad_type_ = UNKNOWN;
+			break;
+		}
+	}
+}
+
 void Input::InitButtonMap()
 {
 	dinput_map_ =
@@ -336,6 +369,9 @@ void Input::InitButtonMap()
 		
 		{ PAD_LT, DirectInput::LT },
 		{ PAD_RT, DirectInput::RT },
+
+		{ PAD_START, DirectInput::START },
+		{ PAD_BACK, DirectInput::BACK },
 	};
 
 	xinput_map_ = 
@@ -365,5 +401,8 @@ void Input::InitButtonMap()
 
 		{ PAD_LT, XInput::LT },
 		{ PAD_RT, XInput::RT },
+
+		{ PAD_START, XInput::START },
+		{ PAD_BACK, XInput::BACK },
 	};
 }

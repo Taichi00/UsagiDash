@@ -28,10 +28,17 @@ DirectInput::DirectInput(Window* window)
 	CreateInput();
 	InitKeyDevice();
 	InitPadDevice();
+	InitMouseDevice();
 }
 
 DirectInput::~DirectInput()
 {
+	if (mouse_device_)
+	{
+		mouse_device_->Unacquire();
+		mouse_device_->Release();
+	}
+
 	if (pad_device_)
 	{
 		pad_device_->Unacquire();
@@ -51,6 +58,7 @@ void DirectInput::Update()
 {
 	UpdateKey();
 	UpdatePad();
+	UpdateMouse();
 }
 
 bool DirectInput::GetKey(UINT index)
@@ -159,13 +167,18 @@ HRESULT DirectInput::InitKeyDevice()
 
 HRESULT DirectInput::InitPadDevice()
 {
+	GamepadInfo info = {};
+
 	// 接続されているゲームパッドを列挙
 	auto hr = direct_input_->EnumDevices(
 		DI8DEVCLASS_GAMECTRL,
 		GamepadFindCallBack,
-		&pad_device_,
+		&info,
 		DIEDFL_ATTACHEDONLY
 	);
+
+	pad_device_ = info.device;
+	
 	if (FAILED(hr) || !pad_device_)
 		return hr;
 
@@ -177,7 +190,6 @@ HRESULT DirectInput::InitPadDevice()
 	// 軸モードを絶対値モードとして設定
 	{
 		DIPROPDWORD prop;
-		ZeroMemory(&prop, sizeof(prop));
 		prop.diph.dwSize = sizeof(prop);
 		prop.diph.dwHeaderSize = sizeof(prop.diph);
 		prop.diph.dwHow = DIPH_DEVICE;
@@ -188,27 +200,6 @@ HRESULT DirectInput::InitPadDevice()
 		if (FAILED(hr))
 			return hr;
 	}
-
-	// 軸の値の範囲設定
-	/*{
-		DIPROPRANGE prop;
-		ZeroMemory(&prop, sizeof(prop));
-		prop.diph.dwSize = sizeof(prop);
-		prop.diph.dwHeaderSize = sizeof(prop.diph);
-		prop.diph.dwHow = DIPH_BYOFFSET;
-		prop.diph.dwObj = DIJOFS_X;
-		prop.lMin = -DINPUT_STICK_MAX;
-		prop.lMax = DINPUT_STICK_MAX;
-
-		hr = pad_device_->SetProperty(DIPROP_RANGE, &prop.diph);
-		if (FAILED(hr))
-			return hr;
-
-		prop.diph.dwObj = DIJOFS_Y;
-		hr = pad_device_->SetProperty(DIPROP_RANGE, &prop.diph);
-		if (FAILED(hr))
-			return hr;
-	}*/
 
 	// 協調モードの設定
 	hr = pad_device_->SetCooperativeLevel(window_->HWnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
@@ -225,15 +216,86 @@ HRESULT DirectInput::InitPadDevice()
 	if (FAILED(hr))
 		return hr;
 
+	// ゲームパッドの種別を特定
+	if (info.vendor_id == VID_SWITCH_PRO_CONTROLLER && info.product_id == PID_SWITCH_PRO_CONTROLLER)
+	{
+		pad_type_ = SWITCH_PRO_CONTROLLER;
+	}
+	else if ((info.vendor_id == VID_DUALSHOCK4_1X && info.product_id == PID_DUALSHOCK4_1X) ||
+		     (info.vendor_id == VID_DUALSHOCK4_2X && info.product_id == PID_DUALSHOCK4_2X))
+	{
+		pad_type_ = DUALSHOCK4;
+	}
+	else if (info.vendor_id == VID_DUALSENSE && info.product_id == PID_DUALSENSE)
+	{
+		pad_type_ = DUALSENSE;
+	}
+	else
+	{
+		pad_type_ = UNKNOWN;
+	}
+
+	InitPadButtonMap();
+
 	is_gamepad_connected_ = true;
 
 	return S_OK;
 }
 
+HRESULT DirectInput::InitMouseDevice()
+{
+	// デバイスの生成
+	auto hr = direct_input_->CreateDevice(GUID_SysMouse, &mouse_device_, NULL);
+	if (FAILED(hr))
+		return hr;
+
+	// フォーマットの設定
+	hr = mouse_device_->SetDataFormat(&c_dfDIMouse);
+	if (FAILED(hr))
+		return hr;
+
+	// 相対値モードに設定
+	DIPROPDWORD prop;
+	prop.diph.dwSize = sizeof(prop);
+	prop.diph.dwHeaderSize = sizeof(prop.diph);
+	prop.diph.dwHow = DIPH_DEVICE;
+	prop.diph.dwObj = 0;
+	prop.dwData = DIPROPAXISMODE_REL;
+
+	hr = mouse_device_->SetProperty(DIPROP_AXISMODE, &prop.diph);
+	if (FAILED(hr))
+		return hr;
+
+	// 協調レベルの設定
+	hr = mouse_device_->SetCooperativeLevel(window_->HWnd(), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+	if (FAILED(hr))
+		return hr;
+
+	// 入力デバイスへのアクセス権利を取得
+	hr = mouse_device_->Acquire();
+
+	return hr;
+}
+
 BOOL DirectInput::GamepadFindCallBack(LPCDIDEVICEINSTANCE instance, LPVOID ref)
 {
-	direct_input_->CreateDevice(instance->guidInstance, (LPDIRECTINPUTDEVICE8*)ref, NULL);
-	
+	auto info = (GamepadInfo*)ref;
+
+	// デバイスの生成
+	direct_input_->CreateDevice(instance->guidInstance, &info->device, NULL);
+
+	// vendorID と productID の取得
+	DIPROPDWORD prop;
+	prop.diph.dwSize = sizeof(prop);
+	prop.diph.dwHeaderSize = sizeof(prop.diph);
+	prop.diph.dwObj = 0;
+	prop.diph.dwHow = DIPH_DEVICE;
+
+	info->device->GetProperty(DIPROP_VIDPID, &prop.diph);
+
+	info->vendor_id = LOWORD(prop.dwData);
+	info->product_id = HIWORD(prop.dwData);
+
 	return DIENUM_STOP;
 }
 
@@ -262,14 +324,7 @@ void DirectInput::UpdateKey()
 	// キー情報を更新
 	for (int i = 0; i < DINPUT_KEY_MAX; i++)
 	{
-		if (keys[i] & 0x80)
-		{
-			keys_[i]++;
-		}
-		else
-		{
-			keys_[i] = 0;
-		}
+		keys_[i] = keys[i] & 0x80 ? keys_[i] + 1 : 0;
 	}
 }
 
@@ -281,29 +336,29 @@ void DirectInput::UpdatePad()
 	// 前フレームの入力情報をコピー
 	memcpy(&prev_buttons_, &buttons_, sizeof(prev_buttons_));
 
-	DIJOYSTATE pad_data = {};
+	DIJOYSTATE pad_state = {};
 
 	//  現在の入力情報を取得
-	auto hr = pad_device_->GetDeviceState(sizeof(pad_data), &pad_data);
+	auto hr = pad_device_->GetDeviceState(sizeof(pad_state), &pad_state);
 	if (FAILED(hr))
 	{
 		pad_device_->Acquire();
 
-		hr = pad_device_->GetDeviceState(sizeof(pad_data), &pad_data);
+		hr = pad_device_->GetDeviceState(sizeof(pad_state), &pad_state);
 		if (FAILED(hr))
 			return;
 	}
 	
-	// ボタン10まで（A~BACK）の入力を取得
-	for (int i = 0; i < 10; i++)
+	// ボタンの入力を取得
+	for (auto& map : pad_button_map_)
 	{
-		buttons_[i] = pad_data.rgbButtons[i] & 0x80 ? buttons_[i] + 1 : 0;
+		buttons_[map.first] = pad_state.rgbButtons[map.second] & 0x80 ? buttons_[map.second] + 1 : 0;
 	}
-
+	
 	// 十字ボタンの入力を取得
-	if (pad_data.rgdwPOV[0] != 0xFFFFFFFF)
+	if (pad_state.rgdwPOV[0] != 0xFFFFFFFF)
 	{
-		float rad = pad_data.rgdwPOV[0] / 100.0f * (float)PI / 180.0f;
+		float rad = pad_state.rgdwPOV[0] / 100.0f * (float)PI / 180.0f;
 		float x = sinf(rad);
 		float y = cosf(rad);
 
@@ -319,11 +374,22 @@ void DirectInput::UpdatePad()
 		buttons_[UP] = 0;
 		buttons_[DOWN] = 0;
 	}
+	
+	// axis 要素へのポインタを取得
+	LONG* axis_ptr[6] =
+	{
+		&pad_state.lX,
+		&pad_state.lY,
+		&pad_state.lZ,
+		&pad_state.lRx,
+		&pad_state.lRy,
+		&pad_state.lRz,
+	};
 
 	// スティックの入力を取得
-	left_stick_ = GetStickVec(pad_data.lX, pad_data.lY);
-	right_stick_ = GetStickVec(pad_data.lRx, pad_data.lRy);
-	printf("%s\n", left_stick_.GetString().c_str());
+	left_stick_ = GetStickVec(*axis_ptr[pad_axis_map_[LSTICK_X]], *axis_ptr[pad_axis_map_[LSTICK_Y]]);
+	right_stick_ = GetStickVec(*axis_ptr[pad_axis_map_[RSTICK_X]], *axis_ptr[pad_axis_map_[RSTICK_Y]]);
+	
 	buttons_[LSTICK_LEFT]  = left_stick_.x < 0 ? buttons_[LSTICK_LEFT]  + 1 : 0;
 	buttons_[LSTICK_RIGHT] = left_stick_.x > 0 ? buttons_[LSTICK_RIGHT] + 1 : 0;
 	buttons_[LSTICK_UP]    = left_stick_.y > 0 ? buttons_[LSTICK_UP]    + 1 : 0;
@@ -333,6 +399,24 @@ void DirectInput::UpdatePad()
 	buttons_[RSTICK_RIGHT] = right_stick_.x > 0 ? buttons_[RSTICK_RIGHT] + 1 : 0;
 	buttons_[RSTICK_UP]    = right_stick_.y > 0 ? buttons_[RSTICK_UP]    + 1 : 0;
 	buttons_[RSTICK_DOWN]  = right_stick_.y < 0 ? buttons_[RSTICK_DOWN]  + 1 : 0;
+}
+
+void DirectInput::UpdateMouse()
+{
+	if (!mouse_device_)
+		return;
+
+	DIMOUSESTATE state;
+
+	auto hr = mouse_device_->GetDeviceState(sizeof(state), &state);
+	if (FAILED(hr))
+	{
+		mouse_device_->Acquire();
+
+		hr = mouse_device_->GetDeviceState(sizeof(state), &state);
+		if (FAILED(hr))
+			return;
+	}
 }
 
 Vec2 DirectInput::GetStickVec(const LONG sx, const LONG sy)
@@ -356,4 +440,86 @@ Vec2 DirectInput::GetStickVec(const LONG sx, const LONG sy)
 		v.y = -std::min(std::max(v.y, -1.0f), 1.0f);
 	}
 	return v;
+}
+
+void DirectInput::InitPadButtonMap()
+{
+	switch (pad_type_)
+	{
+	case SWITCH_PRO_CONTROLLER:
+		pad_button_map_ =
+		{
+			{ A, 1 },
+			{ B, 0 },
+			{ X, 3 },
+			{ Y, 2 },
+			{ LB, 4 },
+			{ RB, 5 },
+			{ LT, 6 },
+			{ RT, 7 },
+			{ START, 9 },
+			{ BACK, 8 },
+			{ LEFT_THUMB, 10 },
+			{ RIGHT_THUMB, 11 },
+		};
+		pad_axis_map_ =
+		{
+			{ LSTICK_X, 0 },
+			{ LSTICK_Y, 1 },
+			{ RSTICK_X, 3 },
+			{ RSTICK_Y, 4 },
+		};
+		break;
+
+	case DUALSHOCK4:
+	case DUALSENSE:
+		pad_button_map_ =
+		{
+			{ A, 1 },
+			{ B, 0 },
+			{ X, 3 },
+			{ Y, 2 },
+			{ LB, 4 },
+			{ RB, 5 },
+			{ LT, 6 },
+			{ RT, 7 },
+			{ START, 9 },
+			{ BACK, 8 },
+			{ LEFT_THUMB, 10 },
+			{ RIGHT_THUMB, 11 },
+		};
+		pad_axis_map_ =
+		{
+			{ LSTICK_X, 0 },
+			{ LSTICK_Y, 1 },
+			{ RSTICK_X, 2 },
+			{ RSTICK_Y, 5 },
+		};
+		break;
+
+	case UNKNOWN:
+		pad_button_map_ =
+		{
+			{ A, 0 },
+			{ B, 1 },
+			{ X, 2 },
+			{ Y, 3 },
+			{ LB, 4 },
+			{ RB, 5 },
+			{ LT, 6 },
+			{ RT, 7 },
+			{ START, 8 },
+			{ BACK, 9 },
+			{ LEFT_THUMB, 10 },
+			{ RIGHT_THUMB, 11 },
+		};
+		pad_axis_map_ =
+		{
+			{ LSTICK_X, 0 },
+			{ LSTICK_Y, 1 },
+			{ RSTICK_X, 3 },
+			{ RSTICK_Y, 4 },
+		};
+		break;
+	}
 }
