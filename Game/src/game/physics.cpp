@@ -23,6 +23,6 @@ bool Physics::Raycast(const Vec3& origin, const Vec3& direction, const float& ma
     hit.distance = maxDistance - nearest.depth;
     hit.point = origin + direction * hit.distance;
     hit.normal = nearest.normal;
-
+    
     return true;
 }

@@ -112,6 +112,10 @@ public:
 
 		PAD_START,
 		PAD_BACK,
+
+		MOUSE_LEFT,
+		MOUSE_RIGHT,
+		MOUSE_CENTER,
 	};
 
 	enum Axis
@@ -125,6 +129,9 @@ public:
 		PAD_LSTICK_Y,
 		PAD_RSTICK_X,
 		PAD_RSTICK_Y,
+
+		MOUSE_DELTA_X,
+		MOUSE_DELTA_Y,
 	};
 
 	struct ButtonActionInfo
@@ -157,15 +164,25 @@ public:
 	static void Create(Window* win);
 	static void Destroy();
 
+	// デバイスを再検知する
+	static void Refresh();
+
 	void Update();
 
 	void AddButtonAction(const std::string& name, const std::vector<ButtonActionInfo>& info_list);
 	void AddAxisAction(const std::string& name, const std::vector<AxisActionInfo>& info_list);
 
 	// キー入力
-	static bool GetKey(UINT index);
-	// トリガーの入力
-	static bool GetKeyDown(UINT index);
+	static bool GetKey(const int index);
+	static bool GetKeyDown(const int index);
+	static bool GetKeyUp(const int index);
+	static bool GetKeyRepeat(const int index);
+
+	// マウスボタン入力
+	static bool GetMouseButton(const int index);
+	static bool GetMouseButtonDown(const int index);
+	static bool GetMouseButtonUp(const int index);
+	static bool GetMouseButtonRepeat(const int index);
 
 	// ボタン押下中
 	static bool GetButton(const std::string& key);
@@ -180,7 +197,9 @@ public:
 	static float GetAxis(const std::string& key);
 
 	// マウスカーソルの座標を取得
-	static Vec2 GetCursorPos();
+	static Vec2 GetCursorPosition();
+	// マウスカーソルの移動量を取得
+	static Vec2 GetCursorDelta();
 
 	// 現在の入力種別を取得
 	static InputType CurrentInputType() { return instance_->current_input_type_; }

@@ -83,6 +83,20 @@ void Entity::CameraUpdate(const float delta_time)
 	}
 }
 
+void Entity::BeforeUpdate(const float delta_time)
+{
+	if (!is_update_enabled_)
+		return;
+
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			component->BeforeUpdate(delta_time);
+		}
+	}
+}
+
 void Entity::Update(const float delta_time)
 {
 	if (!is_update_enabled_)

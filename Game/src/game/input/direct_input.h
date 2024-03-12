@@ -7,7 +7,9 @@
 #include <unordered_map>
 
 #define DINPUT_KEY_MAX 256 // キー最大数
-#define DINPUT_BUTTON_MAX 24 // ゲームパッドのボタン最大数
+#define DINPUT_PAD_BUTTON_MAX 24 // ゲームパッドのボタン最大数
+#define DINPUT_MOUSE_BUTTON_MAX 3 // マウスのボタン最大数
+
 #define DINPUT_STICK_MAX 32768
 #define DINPUT_STICK_DEADZONE 4587
 
@@ -16,41 +18,41 @@ class Window;
 class DirectInput
 {
 public:
-	enum Button
+	enum GamepadButton
 	{
-		A,
-		B,
-		X,
-		Y,
-		LB,
-		RB,
-		LT,
-		RT,
-		START,
-		BACK,
-		LEFT_THUMB,
-		RIGHT_THUMB,
-
-		UP,
-		DOWN,
-		LEFT,
-		RIGHT,
-		LSTICK_UP,
-		LSTICK_DOWN,
-		LSTICK_LEFT,
-		LSTICK_RIGHT,
-		RSTICK_UP,
-		RSTICK_DOWN,
-		RSTICK_LEFT,
-		RSTICK_RIGHT,
+		PAD_A,
+		PAD_B,
+		PAD_X,
+		PAD_Y,
+		PAD_LB,
+		PAD_RB,
+		PAD_LT,
+		PAD_RT,
+		PAD_START,
+		PAD_BACK,
+		PAD_LEFT_THUMB,
+		PAD_RIGHT_THUMB,
+		
+		PAD_UP,
+		PAD_DOWN,
+		PAD_LEFT,
+		PAD_RIGHT,
+		PAD_LSTICK_UP,
+		PAD_LSTICK_DOWN,
+		PAD_LSTICK_LEFT,
+		PAD_LSTICK_RIGHT,
+		PAD_RSTICK_UP,
+		PAD_RSTICK_DOWN,
+		PAD_RSTICK_LEFT,
+		PAD_RSTICK_RIGHT,
 	};
 
-	enum Axis
+	enum GamepadAxis
 	{
-		LSTICK_X,
-		LSTICK_Y,
-		RSTICK_X,
-		RSTICK_Y,
+		PAD_LSTICK_X,
+		PAD_LSTICK_Y,
+		PAD_RSTICK_X,
+		PAD_RSTICK_Y,
 	};
 
 	enum GamepadType
@@ -61,10 +63,25 @@ public:
 		DUALSENSE
 	};
 
+	enum MouseButton
+	{
+		MOUSE_LEFT,
+		MOUSE_RIGHT,
+		MOUSE_CENTER,
+	};
+
+	enum MouseAxis
+	{
+		MOUSE_DELTA_X,
+		MOUSE_DELTA_Y,
+	};
+
 	DirectInput(Window* window);
 	~DirectInput();
 
 	void Update();
+
+	void Refresh();
 
 	// 押下中
 	bool GetKey(UINT index);
@@ -78,15 +95,26 @@ public:
 	int GetKeyState(UINT index);
 
 	// ボタン押下中
-	bool GetButton(int index);
+	bool GetGamepadButton(int index);
 	// ボタンを押した瞬間
-	bool GetButtonDown(int index);
+	bool GetGamepadButtonDown(int index);
 	// ボタンを離した瞬間
-	bool GetButtonUp(int index);
+	bool GetGamepadButtonUp(int index);
 	// ボタンリピート
-	bool GetButtonRepeat(int index);
+	bool GetGamepadButtonRepeat(int index);
 	// ボタンの状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間, b4 = キーリピート）
-	int GetButtonState(int index);
+	int GetGamepadButtonState(int index);
+
+	// ボタン押下中
+	bool GetMouseButton(int index);
+	// ボタンを押した瞬間
+	bool GetMouseButtonDown(int index);
+	// ボタンを離した瞬間
+	bool GetMouseButtonUp(int index);
+	// ボタンリピート
+	bool GetMouseButtonRepeat(int index);
+	// ボタンの状態（b1 = 押下中, b2 = 押した瞬間, b3 = 離した瞬間, b4 = キーリピート）
+	int GetMouseButtonState(int index);
 
 	// スティックの値を取得
 	Vec2 GetLStick() const;
@@ -95,6 +123,11 @@ public:
 	bool IsGamepadConnected() const { return is_gamepad_connected_; }
 
 	GamepadType GetGamepadType() const { return pad_type_; }
+
+	// マウスカーソルの位置を取得
+	Vec2 GetCursorPosition() const;
+	// マウスカーソルの移動量を取得
+	Vec2 GetCursorDelta() const;
 
 private:
 	// インプットの生成
@@ -159,8 +192,8 @@ private:
 	int prev_keys_[DINPUT_KEY_MAX];
 
 	// ゲームパッドのボタン情報
-	int buttons_[DINPUT_BUTTON_MAX];
-	int prev_buttons_[DINPUT_BUTTON_MAX];
+	int pad_buttons_[DINPUT_PAD_BUTTON_MAX];
+	int prev_pad_buttons_[DINPUT_PAD_BUTTON_MAX];
 
 	// スティック
 	Vec2 left_stick_, prev_left_stick_;
@@ -174,6 +207,16 @@ private:
 	// ゲームパッドが接続されているかどうか
 	bool is_gamepad_connected_ = false;
 
-	std::unordered_map<Button, int> pad_button_map_;
-	std::unordered_map<Axis, int> pad_axis_map_;
+	// 現在のゲームパッドにおけるボタンマップ
+	std::unordered_map<GamepadButton, int> pad_button_map_;
+	std::unordered_map<GamepadAxis, int> pad_axis_map_;
+
+	// マウスカーソルの位置
+	Vec2 cursor_position_;
+	// マウスカーソルの移動量
+	Vec2 cursor_delta_;
+
+	// マウスのボタン情報
+	int mouse_buttons_[DINPUT_MOUSE_BUTTON_MAX];
+	int prev_mouse_buttons_[DINPUT_MOUSE_BUTTON_MAX];
 };

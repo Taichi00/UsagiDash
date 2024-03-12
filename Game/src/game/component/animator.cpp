@@ -142,10 +142,17 @@ void Animator::Playing(std::string name, float speed, bool loop, float blend_tim
 
 	auto animation = animation_map_[name];
 
+	// 同じアニメーションを再生中なら、プロパティだけ更新する
 	if (animation == current_animation_)
-		return;
-
-	Play(name, speed, loop, blend_time);
+	{
+		speed_ = speed;
+		loop_ = loop;
+		blend_time_ = blend_time;
+	}
+	else
+	{
+		Play(name, speed, loop, blend_time);
+	}
 }
 
 void Animator::Push(std::string name, float speed, bool loop, float blend_speed)

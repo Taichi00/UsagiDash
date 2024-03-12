@@ -82,6 +82,24 @@ void XInput::Update()
 	UpdateButton();
 }
 
+void XInput::Refresh()
+{
+	memset(&buttons_, 0, sizeof(buttons_));
+	memset(&prev_buttons_, 0, sizeof(prev_buttons_));
+
+	left_stick_ = Vec2::Zero();
+	right_stick_ = Vec2::Zero();
+	prev_left_stick_ = Vec2::Zero();
+	prev_right_stick_ = Vec2::Zero();
+
+	left_trigger_ = 0.f;
+	right_trigger_ = 0.f;
+	prev_left_trigger_ = 0.f;
+	prev_right_trigger_ = 0.f;
+
+	is_connected_ = false;
+}
+
 bool XInput::GetButton(const int index) const
 {
 	return buttons_[index];

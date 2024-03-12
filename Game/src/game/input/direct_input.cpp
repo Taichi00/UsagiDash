@@ -16,14 +16,16 @@ DirectInput::DirectInput(Window* window)
 	direct_input_ = nullptr;
 	key_device_ = nullptr;
 
+	is_gamepad_connected_ = false;
+
 	repeat_start_ = 20;
 	repeat_interval_ = 3;
 
 	// 0で初期化
 	memset(&keys_, 0, sizeof(keys_));
 	memset(&prev_keys_, 0, sizeof(prev_keys_));
-	memset(&buttons_, 0, sizeof(buttons_));
-	memset(&prev_buttons_, 0, sizeof(prev_buttons_));
+	memset(&pad_buttons_, 0, sizeof(pad_buttons_));
+	memset(&prev_pad_buttons_, 0, sizeof(prev_pad_buttons_));
 
 	CreateInput();
 	InitKeyDevice();
@@ -61,6 +63,24 @@ void DirectInput::Update()
 	UpdateMouse();
 }
 
+void DirectInput::Refresh()
+{
+	key_device_ = nullptr;
+	pad_device_ = nullptr;
+	mouse_device_ = nullptr;
+
+	is_gamepad_connected_ = false;
+
+	InitKeyDevice();
+	InitPadDevice();
+	InitMouseDevice();
+
+	memset(&keys_, 0, sizeof(keys_));
+	memset(&prev_keys_, 0, sizeof(prev_keys_));
+	memset(&pad_buttons_, 0, sizeof(pad_buttons_));
+	memset(&prev_pad_buttons_, 0, sizeof(prev_pad_buttons_));
+}
+
 bool DirectInput::GetKey(UINT index)
 {
 	return keys_[index];
@@ -94,37 +114,70 @@ int DirectInput::GetKeyState(UINT index)
 		(int)GetKeyRepeat(index) << 3;
 }
 
-bool DirectInput::GetButton(int index)
+bool DirectInput::GetGamepadButton(int index)
 {
-	return buttons_[index];
+	return pad_buttons_[index];
 }
 
-bool DirectInput::GetButtonDown(int index)
+bool DirectInput::GetGamepadButtonDown(int index)
 {
-	return buttons_[index] && !prev_buttons_[index];
+	return pad_buttons_[index] && !prev_pad_buttons_[index];
 }
 
-bool DirectInput::GetButtonUp(int index)
+bool DirectInput::GetGamepadButtonUp(int index)
 {
-	return !buttons_[index] && prev_buttons_[index];
+	return !pad_buttons_[index] && prev_pad_buttons_[index];
 }
 
-bool DirectInput::GetButtonRepeat(int index)
+bool DirectInput::GetGamepadButtonRepeat(int index)
 {
-	int b = buttons_[index];
+	int b = pad_buttons_[index];
 
 	if (b == 1) return true;
 	if (b <= repeat_start_) return b == repeat_start_;
 	return (b - repeat_start_) % repeat_interval_ == 0;
 }
 
-int DirectInput::GetButtonState(int index)
+int DirectInput::GetGamepadButtonState(int index)
 {
 	return
-		(int)GetButton(index) |
-		(int)GetButtonDown(index) << 1 |
-		(int)GetButtonUp(index) << 2 |
-		(int)GetButtonRepeat(index) << 3;
+		(int)GetGamepadButton(index) |
+		(int)GetGamepadButtonDown(index) << 1 |
+		(int)GetGamepadButtonUp(index) << 2 |
+		(int)GetGamepadButtonRepeat(index) << 3;
+}
+
+bool DirectInput::GetMouseButton(int index)
+{
+	return mouse_buttons_[index];
+}
+
+bool DirectInput::GetMouseButtonDown(int index)
+{
+	return mouse_buttons_[index] && !prev_mouse_buttons_[index];
+}
+
+bool DirectInput::GetMouseButtonUp(int index)
+{
+	return !mouse_buttons_[index] && prev_mouse_buttons_[index];
+}
+
+bool DirectInput::GetMouseButtonRepeat(int index)
+{
+	int b = mouse_buttons_[index];
+
+	if (b == 1) return true;
+	if (b <= repeat_start_) return b == repeat_start_;
+	return (b - repeat_start_) % repeat_interval_ == 0;
+}
+
+int DirectInput::GetMouseButtonState(int index)
+{
+	return
+		(int)GetMouseButton(index) |
+		(int)GetMouseButtonDown(index) << 1 |
+		(int)GetMouseButtonUp(index) << 2 |
+		(int)GetMouseButtonRepeat(index) << 3;
 }
 
 Vec2 DirectInput::GetLStick() const
@@ -135,6 +188,16 @@ Vec2 DirectInput::GetLStick() const
 Vec2 DirectInput::GetRStick() const
 {
 	return right_stick_;
+}
+
+Vec2 DirectInput::GetCursorPosition() const
+{
+	return cursor_position_;
+}
+
+Vec2 DirectInput::GetCursorDelta() const
+{
+	return cursor_delta_;
 }
 
 HRESULT DirectInput::CreateInput()
@@ -334,7 +397,7 @@ void DirectInput::UpdatePad()
 		return;
 
 	// 前フレームの入力情報をコピー
-	memcpy(&prev_buttons_, &buttons_, sizeof(prev_buttons_));
+	memcpy(&prev_pad_buttons_, &pad_buttons_, sizeof(prev_pad_buttons_));
 
 	DIJOYSTATE pad_state = {};
 
@@ -352,7 +415,7 @@ void DirectInput::UpdatePad()
 	// ボタンの入力を取得
 	for (auto& map : pad_button_map_)
 	{
-		buttons_[map.first] = pad_state.rgbButtons[map.second] & 0x80 ? buttons_[map.second] + 1 : 0;
+		pad_buttons_[map.first] = pad_state.rgbButtons[map.second] & 0x80 ? pad_buttons_[map.second] + 1 : 0;
 	}
 	
 	// 十字ボタンの入力を取得
@@ -362,17 +425,17 @@ void DirectInput::UpdatePad()
 		float x = sinf(rad);
 		float y = cosf(rad);
 
-		buttons_[LEFT] = x < 0 ? buttons_[LEFT] + 1 : 0;
-		buttons_[RIGHT] = x > 0 ? buttons_[RIGHT] + 1 : 0;
-		buttons_[UP] = y > 0 ? buttons_[UP] + 1 : 0;
-		buttons_[DOWN] = y < 0 ? buttons_[DOWN] + 1 : 0;
+		pad_buttons_[PAD_LEFT]  = x < 0 ? pad_buttons_[PAD_LEFT]  + 1 : 0;
+		pad_buttons_[PAD_RIGHT] = x > 0 ? pad_buttons_[PAD_RIGHT] + 1 : 0;
+		pad_buttons_[PAD_UP]    = y > 0 ? pad_buttons_[PAD_UP]    + 1 : 0;
+		pad_buttons_[PAD_DOWN]  = y < 0 ? pad_buttons_[PAD_DOWN]  + 1 : 0;
 	}
 	else
 	{
-		buttons_[LEFT] = 0;
-		buttons_[RIGHT] = 0;
-		buttons_[UP] = 0;
-		buttons_[DOWN] = 0;
+		pad_buttons_[PAD_LEFT]  = 0;
+		pad_buttons_[PAD_RIGHT] = 0;
+		pad_buttons_[PAD_UP]    = 0;
+		pad_buttons_[PAD_DOWN]  = 0;
 	}
 	
 	// axis 要素へのポインタを取得
@@ -387,18 +450,18 @@ void DirectInput::UpdatePad()
 	};
 
 	// スティックの入力を取得
-	left_stick_ = GetStickVec(*axis_ptr[pad_axis_map_[LSTICK_X]], *axis_ptr[pad_axis_map_[LSTICK_Y]]);
-	right_stick_ = GetStickVec(*axis_ptr[pad_axis_map_[RSTICK_X]], *axis_ptr[pad_axis_map_[RSTICK_Y]]);
+	left_stick_  = GetStickVec(*axis_ptr[pad_axis_map_[PAD_LSTICK_X]], *axis_ptr[pad_axis_map_[PAD_LSTICK_Y]]);
+	right_stick_ = GetStickVec(*axis_ptr[pad_axis_map_[PAD_RSTICK_X]], *axis_ptr[pad_axis_map_[PAD_RSTICK_Y]]);
 	
-	buttons_[LSTICK_LEFT]  = left_stick_.x < 0 ? buttons_[LSTICK_LEFT]  + 1 : 0;
-	buttons_[LSTICK_RIGHT] = left_stick_.x > 0 ? buttons_[LSTICK_RIGHT] + 1 : 0;
-	buttons_[LSTICK_UP]    = left_stick_.y > 0 ? buttons_[LSTICK_UP]    + 1 : 0;
-	buttons_[LSTICK_DOWN]  = left_stick_.y < 0 ? buttons_[LSTICK_DOWN]  + 1 : 0;
-
-	buttons_[RSTICK_LEFT]  = right_stick_.x < 0 ? buttons_[RSTICK_LEFT]  + 1 : 0;
-	buttons_[RSTICK_RIGHT] = right_stick_.x > 0 ? buttons_[RSTICK_RIGHT] + 1 : 0;
-	buttons_[RSTICK_UP]    = right_stick_.y > 0 ? buttons_[RSTICK_UP]    + 1 : 0;
-	buttons_[RSTICK_DOWN]  = right_stick_.y < 0 ? buttons_[RSTICK_DOWN]  + 1 : 0;
+	pad_buttons_[PAD_LSTICK_LEFT]  = left_stick_.x  < 0 ? pad_buttons_[PAD_LSTICK_LEFT]  + 1 : 0;
+	pad_buttons_[PAD_LSTICK_RIGHT] = left_stick_.x  > 0 ? pad_buttons_[PAD_LSTICK_RIGHT] + 1 : 0;
+	pad_buttons_[PAD_LSTICK_UP]    = left_stick_.y  > 0 ? pad_buttons_[PAD_LSTICK_UP]    + 1 : 0;
+	pad_buttons_[PAD_LSTICK_DOWN]  = left_stick_.y  < 0 ? pad_buttons_[PAD_LSTICK_DOWN]  + 1 : 0;
+	
+	pad_buttons_[PAD_RSTICK_LEFT]  = right_stick_.x < 0 ? pad_buttons_[PAD_RSTICK_LEFT]  + 1 : 0;
+	pad_buttons_[PAD_RSTICK_RIGHT] = right_stick_.x > 0 ? pad_buttons_[PAD_RSTICK_RIGHT] + 1 : 0;
+	pad_buttons_[PAD_RSTICK_UP]    = right_stick_.y > 0 ? pad_buttons_[PAD_RSTICK_UP]    + 1 : 0;
+	pad_buttons_[PAD_RSTICK_DOWN]  = right_stick_.y < 0 ? pad_buttons_[PAD_RSTICK_DOWN]  + 1 : 0;
 }
 
 void DirectInput::UpdateMouse()
@@ -406,8 +469,12 @@ void DirectInput::UpdateMouse()
 	if (!mouse_device_)
 		return;
 
+	// 前フレームの入力情報をコピー
+	memcpy(&prev_mouse_buttons_, &mouse_buttons_, sizeof(prev_mouse_buttons_));
+
 	DIMOUSESTATE state;
 
+	// マウスの状態を取得
 	auto hr = mouse_device_->GetDeviceState(sizeof(state), &state);
 	if (FAILED(hr))
 	{
@@ -416,6 +483,25 @@ void DirectInput::UpdateMouse()
 		hr = mouse_device_->GetDeviceState(sizeof(state), &state);
 		if (FAILED(hr))
 			return;
+	}
+
+	// マウスカーソルの位置を取得
+	POINT p = {};
+	if (GetCursorPos(&p))
+	{
+		if (ScreenToClient(window_->HWnd(), &p))
+		{
+			cursor_position_ = Vec2((float)p.x, (float)p.y);
+		}
+	}
+
+	// マウスカーソルの移動量を取得
+	cursor_delta_ = Vec2((float)state.lX, (float)-state.lY);
+
+	// ボタンの入力情報を取得
+	for (int i = 0; i < DINPUT_MOUSE_BUTTON_MAX; i++)
+	{
+		mouse_buttons_[i] = state.rgbButtons[i] & 0x80 ? mouse_buttons_[i] + 1 : 0;
 	}
 }
 
@@ -449,25 +535,25 @@ void DirectInput::InitPadButtonMap()
 	case SWITCH_PRO_CONTROLLER:
 		pad_button_map_ =
 		{
-			{ A, 1 },
-			{ B, 0 },
-			{ X, 3 },
-			{ Y, 2 },
-			{ LB, 4 },
-			{ RB, 5 },
-			{ LT, 6 },
-			{ RT, 7 },
-			{ START, 9 },
-			{ BACK, 8 },
-			{ LEFT_THUMB, 10 },
-			{ RIGHT_THUMB, 11 },
+			{ PAD_A, 1 },
+			{ PAD_B, 0 },
+			{ PAD_X, 3 },
+			{ PAD_Y, 2 },
+			{ PAD_LB, 4 },
+			{ PAD_RB, 5 },
+			{ PAD_LT, 6 },
+			{ PAD_RT, 7 },
+			{ PAD_START, 9 },
+			{ PAD_BACK, 8 },
+			{ PAD_LEFT_THUMB, 10 },
+			{ PAD_RIGHT_THUMB, 11 },
 		};
 		pad_axis_map_ =
 		{
-			{ LSTICK_X, 0 },
-			{ LSTICK_Y, 1 },
-			{ RSTICK_X, 3 },
-			{ RSTICK_Y, 4 },
+			{ PAD_LSTICK_X, 0 },
+			{ PAD_LSTICK_Y, 1 },
+			{ PAD_RSTICK_X, 3 },
+			{ PAD_RSTICK_Y, 4 },
 		};
 		break;
 
@@ -475,50 +561,50 @@ void DirectInput::InitPadButtonMap()
 	case DUALSENSE:
 		pad_button_map_ =
 		{
-			{ A, 1 },
-			{ B, 0 },
-			{ X, 3 },
-			{ Y, 2 },
-			{ LB, 4 },
-			{ RB, 5 },
-			{ LT, 6 },
-			{ RT, 7 },
-			{ START, 9 },
-			{ BACK, 8 },
-			{ LEFT_THUMB, 10 },
-			{ RIGHT_THUMB, 11 },
+			{ PAD_A, 1 },
+			{ PAD_B, 0 },
+			{ PAD_X, 3 },
+			{ PAD_Y, 2 },
+			{ PAD_LB, 4 },
+			{ PAD_RB, 5 },
+			{ PAD_LT, 6 },
+			{ PAD_RT, 7 },
+			{ PAD_START, 9 },
+			{ PAD_BACK, 8 },
+			{ PAD_LEFT_THUMB, 10 },
+			{ PAD_RIGHT_THUMB, 11 },
 		};
 		pad_axis_map_ =
 		{
-			{ LSTICK_X, 0 },
-			{ LSTICK_Y, 1 },
-			{ RSTICK_X, 2 },
-			{ RSTICK_Y, 5 },
+			{ PAD_LSTICK_X, 0 },
+			{ PAD_LSTICK_Y, 1 },
+			{ PAD_RSTICK_X, 2 },
+			{ PAD_RSTICK_Y, 5 },
 		};
 		break;
 
 	case UNKNOWN:
 		pad_button_map_ =
 		{
-			{ A, 0 },
-			{ B, 1 },
-			{ X, 2 },
-			{ Y, 3 },
-			{ LB, 4 },
-			{ RB, 5 },
-			{ LT, 6 },
-			{ RT, 7 },
-			{ START, 8 },
-			{ BACK, 9 },
-			{ LEFT_THUMB, 10 },
-			{ RIGHT_THUMB, 11 },
+			{ PAD_A, 0 },
+			{ PAD_B, 1 },
+			{ PAD_X, 2 },
+			{ PAD_Y, 3 },
+			{ PAD_LB, 4 },
+			{ PAD_RB, 5 },
+			{ PAD_LT, 6 },
+			{ PAD_RT, 7 },
+			{ PAD_START, 8 },
+			{ PAD_BACK, 9 },
+			{ PAD_LEFT_THUMB, 10 },
+			{ PAD_RIGHT_THUMB, 11 },
 		};
 		pad_axis_map_ =
 		{
-			{ LSTICK_X, 0 },
-			{ LSTICK_Y, 1 },
-			{ RSTICK_X, 3 },
-			{ RSTICK_Y, 4 },
+			{ PAD_LSTICK_X, 0 },
+			{ PAD_LSTICK_Y, 1 },
+			{ PAD_RSTICK_X, 3 },
+			{ PAD_RSTICK_Y, 4 },
 		};
 		break;
 	}

@@ -93,6 +93,12 @@ void Game::ToggleFullscreen()
 	engine_->ToggleFullscreen();
 }
 
+void Game::RestartInput()
+{
+	if (Input::Get())
+		Input::Refresh();
+}
+
 Scene* Game::LoadScene(Scene* scene)
 {
 	next_scene_ = std::unique_ptr<Scene>(scene);

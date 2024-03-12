@@ -2,6 +2,7 @@
 #include "game/game.h"
 #include <timeapi.h>
 #include <mmsystem.h>
+#include <Dbt.h>
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -10,12 +11,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+
 	case WM_SYSKEYDOWN:
+		// Alt + Enter でフルスクリーン切り替え
 		if ((wp == VK_RETURN) && (lp & (1 << 29)))
 		{
 			Game::Get()->ToggleFullscreen();
 		}
 		break;
+
+	case WM_DEVICECHANGE:
+		// 入力デバイスを再読み込みする
+		Game::Get()->RestartInput();
+		break;
+
 	default:
 		break;
 	}

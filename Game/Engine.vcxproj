@@ -163,6 +163,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\app\component\checkpoint_controller.cpp" />
     <ClCompile Include="src\app\component\pause_behavior.cpp" />
     <ClCompile Include="src\app\component\pause_manager.cpp" />
+    <ClCompile Include="src\app\component\player_controller_2.cpp" />
     <ClCompile Include="src\app\entity\pause_menu.cpp" />
     <ClCompile Include="src\game\component\gui\animated_button.cpp" />
     <ClCompile Include="src\app\component\tutorial_text_display.cpp" />
@@ -260,6 +261,7 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClInclude Include="src\app\component\checkpoint_controller.h" />
     <ClInclude Include="src\app\component\pause_behavior.h" />
     <ClInclude Include="src\app\component\pause_manager.h" />
+    <ClInclude Include="src\app\component\player_controller_2.h" />
     <ClInclude Include="src\app\entity\pause_menu.h" />
     <ClInclude Include="src\game\component\gui\animated_button.h" />
     <ClInclude Include="src\app\component\title_scene_controller.h" />

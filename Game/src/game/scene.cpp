@@ -148,6 +148,7 @@ void Scene::Update(const float delta_time)
 	for (auto& entity : entity_list_) entity->CameraUpdate(delta_time);
 
 	// エンティティの更新
+	for (auto& entity : entity_list_) entity->BeforeUpdate(delta_time);
 	for (auto& entity : entity_list_) entity->Update(delta_time);
 
 	// 物理の更新

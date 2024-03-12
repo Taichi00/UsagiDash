@@ -16,7 +16,7 @@ public:
 	bool Init();
 
 	void Prepare(const float delta_time);
-	void Resolve();
+	void Resolve(const float delta_time);
 
 public:
 	Vec3 position, position_prev;

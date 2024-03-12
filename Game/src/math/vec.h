@@ -323,7 +323,16 @@ public:
 
 	static float Angle(const Vec3& v1, const Vec3& v2)
 	{
-		return acos(Dot(v1.Normalized(), v2.Normalized()));
+		float r = Dot(v1.Normalized(), v2.Normalized());
+
+		if (-1.0f <= r && r <= 1.0f)
+		{
+			return acos(r);
+		}
+		else
+		{
+			return 0.0f;
+		}
 	}
 
 	static Vec3 Lerp(const Vec3& v1, const Vec3& v2, const float& t)

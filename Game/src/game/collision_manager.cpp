@@ -52,7 +52,7 @@ void CollisionManager::Update(const float delta_time)
 		// 重力
 		if (rigidbody->use_gravity)
 		{
-			rigidbody->velocity += Vec3(0.f, -1.08f, 0.f) * delta_time;
+			rigidbody->velocity += Vec3(0.f, -64.8f, 0.f) * delta_time;
 		}
 		// 空気抵抗
 		rigidbody->velocity *= 0.995f;
@@ -90,7 +90,7 @@ void CollisionManager::Update(const float delta_time)
 	// 衝突応答
 	for (auto& rigidbody : rigidbodies)
 	{
-		rigidbody->Resolve();
+		rigidbody->Resolve(delta_time);
 	}
 
 	for (int i = 0; i < 2; i++)
@@ -125,7 +125,7 @@ void CollisionManager::Update(const float delta_time)
 		// 衝突応答
 		for (auto& rigidbody : rigidbodies_)
 		{
-			rigidbody->Resolve();
+			rigidbody->Resolve(delta_time);
 		}
 	}
 
@@ -133,7 +133,7 @@ void CollisionManager::Update(const float delta_time)
 	{
 		// 位置の更新
 		rigidbody->transform->position = rigidbody->position;
-		rigidbody->velocity = (rigidbody->position - rigidbody->position_prev);
+		rigidbody->velocity = (rigidbody->position - rigidbody->position_prev) / delta_time;
 	}
 
 	// イベント通知

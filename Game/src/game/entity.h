@@ -83,6 +83,7 @@ public:
 
 	void BeforeCameraUpdate(const float delta_time);
 	void CameraUpdate(const float delta_time);
+	void BeforeUpdate(const float delta_time);
 	void Update(const float delta_time);
 	void PhysicsUpdate(const float delta_time);
 	void TransformUpdate(const float delta_time);

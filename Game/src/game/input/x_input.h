@@ -48,6 +48,8 @@ public:
 
 	void Update();
 
+	void Refresh();
+
 	// ‰Ÿ‰º’†
 	bool GetButton(const int index) const;
 	// ‰Ÿ‚µ‚½uŠÔ

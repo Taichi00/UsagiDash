@@ -76,6 +76,12 @@ void Input::Destroy()
 	instance_ = nullptr;
 }
 
+void Input::Refresh()
+{
+	instance_->x_input_->Refresh();
+	instance_->direct_input_->Refresh();
+}
+
 void Input::Update()
 {
 	direct_input_->Update();
@@ -96,16 +102,44 @@ void Input::AddAxisAction(const std::string& name, const std::vector<AxisActionI
 	axis_action_map_[name] = info_list;
 }
 
-// キー入力
-bool Input::GetKey(UINT index)
+bool Input::GetKey(const int index)
 {
 	return instance_->direct_input_->GetKey(index);
 }
 
-// トリガーの入力
-bool Input::GetKeyDown(UINT index)
+bool Input::GetKeyDown(const int index)
 {
 	return instance_->direct_input_->GetKeyDown(index);
+}
+
+bool Input::GetKeyUp(const int index)
+{
+	return instance_->direct_input_->GetKeyUp(index);
+}
+
+bool Input::GetKeyRepeat(const int index)
+{
+	return instance_->direct_input_->GetKeyRepeat(index);
+}
+
+bool Input::GetMouseButton(const int index)
+{
+	return instance_->direct_input_->GetMouseButton(index);
+}
+
+bool Input::GetMouseButtonDown(const int index)
+{
+	return instance_->direct_input_->GetMouseButtonDown(index);
+}
+
+bool Input::GetMouseButtonUp(const int index)
+{
+	return instance_->direct_input_->GetMouseButtonUp(index);
+}
+
+bool Input::GetMouseButtonRepeat(const int index)
+{
+	return instance_->direct_input_->GetMouseButtonRepeat(index);
 }
 
 bool Input::GetButton(const std::string& key)
@@ -133,9 +167,14 @@ float Input::GetAxis(const std::string& key)
 	return instance_->axis_action_state_[key];
 }
 
-Vec2 Input::GetCursorPos()
+Vec2 Input::GetCursorPosition()
 {
-	return Vec2();
+	return instance_->direct_input_->GetCursorPosition();
+}
+
+Vec2 Input::GetCursorDelta()
+{
+	return instance_->direct_input_->GetCursorDelta();
 }
 
 void Input::CheckActions()
@@ -159,10 +198,11 @@ void Input::CheckActions()
 				}
 				else if (direct_input_->IsGamepadConnected())
 				{
-					state |= direct_input_->GetButtonState(dinput_map_[input_info.button]);
+					state |= direct_input_->GetGamepadButtonState(dinput_map_[input_info.button]);
 				}
 				break;
 			case InputType::MOUSE:
+				state |= direct_input_->GetMouseButtonState(dinput_map_[input_info.button]);
 				break;
 			}
 
@@ -251,6 +291,15 @@ void Input::CheckActions()
 				break;
 
 			case InputType::MOUSE:
+				switch (input_info.axis)
+				{
+				case Axis::MOUSE_DELTA_X:
+					state = direct_input_->GetCursorDelta().x;
+					break;
+				case Axis::MOUSE_DELTA_Y:
+					state = direct_input_->GetCursorDelta().y;
+					break;
+				}
 				break;
 			}
 
@@ -261,7 +310,14 @@ void Input::CheckActions()
 			}
 		}
 
-		axis_action_state_[map_info.first] = std::min(std::max(state, -1.0f), 1.0f);
+		if (current_input_type_ != Input::MOUSE)
+		{
+			axis_action_state_[map_info.first] = std::min(std::max(state, -1.0f), 1.0f);
+		}
+		else
+		{
+			axis_action_state_[map_info.first] = state;
+		}
 	}
 }
 
@@ -344,34 +400,38 @@ void Input::InitButtonMap()
 		{ KEY_Y, DIK_Y },
 		{ KEY_Z, DIK_Z },
 
-		{ PAD_UP, DirectInput::UP },
-		{ PAD_DOWN, DirectInput::DOWN },
-		{ PAD_LEFT, DirectInput::LEFT },
-		{ PAD_RIGHT, DirectInput::RIGHT },
+		{ PAD_UP, DirectInput::PAD_UP },
+		{ PAD_DOWN, DirectInput::PAD_DOWN },
+		{ PAD_LEFT, DirectInput::PAD_LEFT },
+		{ PAD_RIGHT, DirectInput::PAD_RIGHT },
 
-		{ PAD_LB, DirectInput::LB },
-		{ PAD_RB, DirectInput::RB },
+		{ PAD_LB, DirectInput::PAD_LB },
+		{ PAD_RB, DirectInput::PAD_RB },
 
-		{ PAD_A, DirectInput::A },
-		{ PAD_B, DirectInput::B },
-		{ PAD_X, DirectInput::X },
-		{ PAD_Y, DirectInput::Y },
+		{ PAD_A, DirectInput::PAD_A },
+		{ PAD_B, DirectInput::PAD_B },
+		{ PAD_X, DirectInput::PAD_X },
+		{ PAD_Y, DirectInput::PAD_Y },
 
-		{ PAD_LSTICK_UP, DirectInput::LSTICK_UP },
-		{ PAD_LSTICK_DOWN, DirectInput::LSTICK_DOWN },
-		{ PAD_LSTICK_LEFT, DirectInput::LSTICK_LEFT },
-		{ PAD_LSTICK_RIGHT, DirectInput::LSTICK_RIGHT },
+		{ PAD_LSTICK_UP, DirectInput::PAD_LSTICK_UP },
+		{ PAD_LSTICK_DOWN, DirectInput::PAD_LSTICK_DOWN },
+		{ PAD_LSTICK_LEFT, DirectInput::PAD_LSTICK_LEFT },
+		{ PAD_LSTICK_RIGHT, DirectInput::PAD_LSTICK_RIGHT },
 		
-		{ PAD_RSTICK_UP, DirectInput::RSTICK_UP },
-		{ PAD_RSTICK_DOWN, DirectInput::RSTICK_DOWN },
-		{ PAD_RSTICK_LEFT, DirectInput::RSTICK_LEFT },
-		{ PAD_RSTICK_RIGHT, DirectInput::RSTICK_RIGHT },
+		{ PAD_RSTICK_UP, DirectInput::PAD_RSTICK_UP },
+		{ PAD_RSTICK_DOWN, DirectInput::PAD_RSTICK_DOWN },
+		{ PAD_RSTICK_LEFT, DirectInput::PAD_RSTICK_LEFT },
+		{ PAD_RSTICK_RIGHT, DirectInput::PAD_RSTICK_RIGHT },
 		
-		{ PAD_LT, DirectInput::LT },
-		{ PAD_RT, DirectInput::RT },
+		{ PAD_LT, DirectInput::PAD_LT },
+		{ PAD_RT, DirectInput::PAD_RT },
 
-		{ PAD_START, DirectInput::START },
-		{ PAD_BACK, DirectInput::BACK },
+		{ PAD_START, DirectInput::PAD_START },
+		{ PAD_BACK, DirectInput::PAD_BACK },
+
+		{ MOUSE_LEFT, DirectInput::MOUSE_LEFT },
+		{ MOUSE_RIGHT, DirectInput::MOUSE_RIGHT },
+		{ MOUSE_CENTER, DirectInput::MOUSE_CENTER },
 	};
 
 	xinput_map_ = 

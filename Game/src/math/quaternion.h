@@ -145,7 +145,7 @@ public:
 
 	static Quaternion FromToRotation(const Vec3& from, const Vec3& to)
 	{
-		auto f = -Vec3::Angle(from, to) / 2;
+		auto f = -Vec3::Angle(from, to) / 2.0f;
 		auto u = Vec3::Cross(from, to).Normalized() * sin(f);
 
 		return Quaternion(u.x, u.y, u.z, cos(f));

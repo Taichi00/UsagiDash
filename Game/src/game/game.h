@@ -72,6 +72,9 @@ public:
 	// フルスクリーン切り替え
 	void ToggleFullscreen();
 
+	// 入力デバイスを再読み込みする
+	void RestartInput();
+
 	// リソースを読み込む
 	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	
 	{

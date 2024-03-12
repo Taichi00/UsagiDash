@@ -4,6 +4,7 @@
 #include "game/input/input_icon_manager.h"
 #include <string>
 #include <vector>
+#include <map>
 
 struct GameSettings
 {

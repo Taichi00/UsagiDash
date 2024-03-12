@@ -18,6 +18,7 @@ public:
 
 	virtual void BeforeCameraUpdate(const float delta_time) {}
 	virtual void CameraUpdate(const float delta_time) {}
+	virtual void BeforeUpdate(const float delta_time) {}
 	virtual void Update(const float delta_time) {}
 	virtual void PhysicsUpdate(const float delta_time) {}
 	virtual void TransformUpdate(const float delta_time) {}
@@ -36,11 +37,6 @@ public:
 	virtual void OnDestroy() {}
 
 	void RegisterEntity(Entity* entity);
-
-	/*template<class T> T* GetComponent()
-	{
-		return (T*)(m_pEntity->GetComponent<T>());
-	}*/
 
 	Entity* GetEntity();
 	Scene* GetScene();

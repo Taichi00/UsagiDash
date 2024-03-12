@@ -1,14 +1,9 @@
 #pragma once
+#include "resource/all_resources.h"
 #include <string>
 #include <unordered_map>
-#include <map>
 #include <memory>
 #include <typeindex>
-#include "resource/resource.h"
-
-class Resource;
-class Texture2D;
-class Model;
 
 class ResourceManager {
 public:

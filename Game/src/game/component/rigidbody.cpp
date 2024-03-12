@@ -32,7 +32,7 @@ bool Rigidbody::Init()
 
 void Rigidbody::Prepare(const float delta_time)
 {
-	position = transform->position + velocity;
+	position = transform->position + velocity * delta_time;
 	position_prev = transform->position;
 	velocity_prev = velocity;
 
@@ -45,7 +45,7 @@ void Rigidbody::Prepare(const float delta_time)
 	wall_normal = Vec3::Zero();
 }
 
-void Rigidbody::Resolve()
+void Rigidbody::Resolve(const float delta_time)
 {
 	velocity_prev = velocity;
 
@@ -121,7 +121,7 @@ void Rigidbody::Resolve()
 				k = 0.3f;
 			}
 			
-			position += dp + tangent * B / mass;
+			position += dp + tangent * B / mass * delta_time;
 		}
 	}
 
