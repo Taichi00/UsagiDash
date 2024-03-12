@@ -6,6 +6,6 @@
 class Tutorial : public Entity
 {
 public:
-	Tutorial(const std::string& text, const float radius);
+	Tutorial(const std::string& text, const std::string& task, const float radius);
 	~Tutorial() {}
 };

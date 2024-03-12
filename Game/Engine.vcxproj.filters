@@ -252,7 +252,7 @@
     <ClCompile Include="src\app\entity\player.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\component\tutorial_text_display.cpp">
+    <ClCompile Include="src\app\component\tutorial_text_controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\app\entity\tutorial.cpp">
@@ -328,6 +328,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\app\component\player_controller_2.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\entity\tutorial_label.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\component\tutorial_label_controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -593,7 +599,7 @@
     <ClInclude Include="src\game\component\gui\panel_property.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\component\tutorial_text_display.h">
+    <ClInclude Include="src\app\component\tutorial_text_controller.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\entity\tutorial.h">
@@ -681,6 +687,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\component\player_controller_2.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\entity\tutorial_label.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\component\tutorial_label_controller.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

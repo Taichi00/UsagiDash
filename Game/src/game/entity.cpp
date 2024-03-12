@@ -49,7 +49,8 @@ bool Entity::Init()
 	{
 		for (auto& component : components.second)
 		{
-			component->Init();
+			if (component->enabled)
+				component->Init();
 		}
 	}
 	return true;
@@ -64,7 +65,8 @@ void Entity::BeforeCameraUpdate(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->BeforeCameraUpdate(delta_time);
+			if (component->enabled)
+				component->BeforeCameraUpdate(delta_time);
 		}
 	}
 }
@@ -78,7 +80,8 @@ void Entity::CameraUpdate(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->CameraUpdate(delta_time);
+			if (component->enabled)
+				component->CameraUpdate(delta_time);
 		}
 	}
 }
@@ -92,7 +95,8 @@ void Entity::BeforeUpdate(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->BeforeUpdate(delta_time);
+			if (component->enabled)
+				component->BeforeUpdate(delta_time);
 		}
 	}
 }
@@ -106,7 +110,23 @@ void Entity::Update(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->Update(delta_time);
+			if (component->enabled)
+				component->Update(delta_time);
+		}
+	}
+}
+
+void Entity::AfterUpdate(const float delta_time)
+{
+	if (!is_update_enabled_)
+		return;
+
+	for (auto& components : component_map_)
+	{
+		for (auto& component : components.second)
+		{
+			if (component->enabled)
+				component->AfterUpdate(delta_time);
 		}
 	}
 }
@@ -120,7 +140,8 @@ void Entity::PhysicsUpdate(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->PhysicsUpdate(delta_time);
+			if (component->enabled)
+				component->PhysicsUpdate(delta_time);
 		}
 	}
 }
@@ -134,7 +155,8 @@ void Entity::TransformUpdate(const float delta_time)
 	{
 		for (auto& component : components.second)
 		{
-			component->TransformUpdate(delta_time);
+			if (component->enabled)
+				component->TransformUpdate(delta_time);
 		}
 	}
 }
@@ -145,7 +167,8 @@ void Entity::OnCollisionEnter(Collider* collider)
 	{
 		for (auto& component : components.second)
 		{
-			component->OnCollisionEnter(collider);
+			if (component->enabled)
+				component->OnCollisionEnter(collider);
 		}
 	}
 }
@@ -156,7 +179,8 @@ void Entity::Draw()
 	{
 		for (auto& component : components.second)
 		{
-			component->Draw();
+			if (component->enabled)
+				component->Draw();
 		}
 	}
 }
@@ -167,7 +191,8 @@ void Entity::DrawAlpha()
 	{
 		for (auto& component : components.second)
 		{
-			component->DrawAlpha();
+			if (component->enabled)
+				component->DrawAlpha();
 		}
 	}
 }
@@ -178,7 +203,8 @@ void Entity::BeforeDraw()
 	{
 		for (auto& component : components.second)
 		{
-			component->BeforeDraw();
+			if (component->enabled)
+				component->BeforeDraw();
 		}
 	}
 }
@@ -189,7 +215,8 @@ void Entity::DrawShadow()
 	{
 		for (auto& component : components.second)
 		{
-			component->DrawShadow();
+			if (component->enabled)
+				component->DrawShadow();
 		}
 	}
 }
@@ -200,7 +227,8 @@ void Entity::DrawDepth()
 	{
 		for (auto& component : components.second)
 		{
-			component->DrawDepth();
+			if (component->enabled)
+				component->DrawDepth();
 		}
 	}
 }
@@ -211,7 +239,8 @@ void Entity::DrawGBuffer()
 	{
 		for (auto& component : components.second)
 		{
-			component->DrawGBuffer();
+			if (component->enabled)
+				component->DrawGBuffer();
 		}
 	}
 }
@@ -222,7 +251,8 @@ void Entity::DrawOutline()
 	{
 		for (auto& component : components.second)
 		{
-			component->DrawOutline();
+			if (component->enabled)
+				component->DrawOutline();
 		}
 	}
 }
@@ -233,7 +263,8 @@ void Entity::Draw2D()
 	{
 		for (auto& component : components.second)
 		{
-			component->Draw2D();
+			if (component->enabled)
+				component->Draw2D();
 		}
 	}
 }
@@ -244,7 +275,8 @@ void Entity::OnDestroy()
 	{
 		for (auto& component : components.second)
 		{
-			component->OnDestroy();
+			if (component->enabled)
+				component->OnDestroy();
 		}
 	}
 }

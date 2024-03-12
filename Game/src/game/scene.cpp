@@ -157,6 +157,8 @@ void Scene::Update(const float delta_time)
 	// Õ“Ë”»’è
 	Game::Get()->GetCollisionManager()->Update(delta_time);
 
+	for (auto & entity : entity_list_) entity->AfterUpdate(delta_time);
+
 	// •ÏŠ·s—ñ‚ÌXV
 	for (auto& entity : entity_list_) entity->TransformUpdate(delta_time);
 

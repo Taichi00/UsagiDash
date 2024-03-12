@@ -20,6 +20,7 @@ public:
 	virtual void CameraUpdate(const float delta_time) {}
 	virtual void BeforeUpdate(const float delta_time) {}
 	virtual void Update(const float delta_time) {}
+	virtual void AfterUpdate(const float delta_time) {}
 	virtual void PhysicsUpdate(const float delta_time) {}
 	virtual void TransformUpdate(const float delta_time) {}
 
@@ -43,6 +44,7 @@ public:
 
 public:
 	Transform* transform;
+	bool enabled = true;
 
 private:
 	Entity* entity_;

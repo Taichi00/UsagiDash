@@ -106,6 +106,7 @@ private:
 	PipelineState* shadow_pso_ = nullptr;
 	PipelineState* depth_pso_ = nullptr;
 	PipelineState* gbuffer_pso_ = nullptr;
+	PipelineState* skybox_pso_ = nullptr; // スカイボックス用PSO
 
 	std::unique_ptr<ConstantBuffer> transform_cb_[Engine::FRAME_BUFFER_COUNT];	// Transform Constant Buffer
 	std::unique_ptr<ConstantBuffer> scene_cb_[Engine::FRAME_BUFFER_COUNT];		// Scene Constant Buffer
@@ -113,7 +114,6 @@ private:
 	Mesh skybox_mesh_; // スカイボックスのメッシュデータ
 	std::shared_ptr<Texture2D> skybox_tex_; // スカイボックスのテクスチャ
 	DescriptorHandle skybox_handle_; // スカイボックスのDescriptorHandle
-	PipelineState* skybox_pso_; // スカイボックス用PSO
 	std::unique_ptr<RootSignature> skybox_root_signature_; // スカイボックス用ルートシグネチャ
 
 	std::shared_ptr<Texture2D> diffusemap_tex_; // DiffuseMap のテクスチャ

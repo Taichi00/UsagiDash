@@ -591,7 +591,7 @@ void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const B
             
             scaling_keys[j].time = time;
             scaling_keys[j].value = Vec3(value.x, value.y, value.z);
-            scaling_keys[j].easing = Easing::Linear;
+            scaling_keys[j].easing = Easing::LINEAR;
         }
 
         // 回転キーの読み込み
@@ -603,7 +603,7 @@ void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const B
 
             rotation_keys[j].time = time;
             rotation_keys[j].value = Quaternion(value.x, value.y, value.z, value.w);
-            rotation_keys[j].easing = Easing::Linear;
+            rotation_keys[j].easing = Easing::LINEAR;
         }
         
         // 移動キーの読み込み
@@ -615,7 +615,7 @@ void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const B
 
             position_keys[j].time = time;
             position_keys[j].value = Vec3(value.x, value.y, value.z);
-            position_keys[j].easing = Easing::Linear;
+            position_keys[j].easing = Easing::LINEAR;
         }
 
         // チャンネルを生成して追加

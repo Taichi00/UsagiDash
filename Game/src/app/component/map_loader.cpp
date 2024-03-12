@@ -65,22 +65,28 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 		
 		// エンティティの生成
 		Entity* new_entity = nullptr;
+
+		// スタート位置
 		if (class_name == "info_player_start")
 		{
 			// スタート位置を設定
 			GameManager::Get()->SetStartPosition(position);
 		}
+		// コイン
 		else if (class_name == "item_coin")
 		{
 			new_entity = new Coin("");
 		}
+		// チュートリアル
 		else if (class_name == "tutorial")
 		{
 			new_entity = new Tutorial(
 				pairs.at("text"), 
+				pairs.at("task"),
 				MapFileParser::ToFloat(pairs.at("radius"))
 			);
 		}
+		// チェックポイント
 		else if (class_name == "checkpoint")
 		{
 			new_entity = new Checkpoint();

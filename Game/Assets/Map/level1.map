@@ -678,6 +678,7 @@
 "origin" "0 400 64"
 "radius" "10"
 "text" "<bitmap input_jump>でジャンプ"
+"task" "jump"
 }
 // entity 36
 {
@@ -685,6 +686,7 @@
 "origin" "48 992 256"
 "text" "<bitmap input_camera>でカメラ回転"
 "radius" "10"
+"task" "camera"
 }
 // entity 37
 {
@@ -692,6 +694,7 @@
 "origin" "1072 1064 256"
 "text" "<bitmap input_crouch>+<bitmap input_jump>でダッシュジャンプ"
 "radius" "10"
+"task" "dashjump"
 }
 // entity 38
 {
@@ -699,6 +702,7 @@
 "origin" "2096 1064 256"
 "text" "壁に向かって<bitmap input_jump>で壁ジャンプ"
 "radius" "10"
+"task" "walljump"
 }
 // entity 39
 {
@@ -706,6 +710,7 @@
 "origin" "0 0 64"
 "radius" "10"
 "text" "<bitmap input_move>で移動"
+"task" "move"
 }
 // entity 40
 {

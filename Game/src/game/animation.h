@@ -6,6 +6,7 @@
 #include "math/vec.h"
 #include "math/quaternion.h"
 #include "math/color.h"
+#include "math/easing.h"
 
 class Bone;
 class Control;
@@ -16,7 +17,7 @@ public:
 	struct Key
 	{
 		float time;
-		float (*easing)(const float); // イージング関数への関数ポインタ
+		Easing::Type easing;
 	};
 
 	struct FloatKey : public Key
@@ -79,18 +80,23 @@ public:
 	// チャンネルを追加する
 	void AddChannel(const Channel& channel);
 
+	void SetName(const std::string& name) { name_ = name; }
 	void SetTicksPerSecond(float ticks) { ticks_per_second_ = ticks; }
 	void SetDuration(float duration) { duration_ = duration; }
-	void SetName(const std::string& name) { name_ = name; }
 
 	const std::vector<Channel>& Channels() const { return channels_; }
+	std::string Name() const { return name_; }
 	float TicksPerSecond() const { return ticks_per_second_; }
 	float Duration() const { return duration_; }
-	std::string Name() const { return name_; }
 
 private:
 	std::vector<Channel> channels_;
-	float ticks_per_second_;
-	float duration_;
+
+	// アニメーション名
 	std::string name_;
+	// 一秒に更新される回数
+	float ticks_per_second_;
+	// アニメーションの継続時間
+	float duration_;
+
 };

@@ -10,11 +10,8 @@
 
 Animator::Animator()
 {
-	animations_.clear();
 	animation_map_.clear();
 	current_animation_ = nullptr;
-	current_time_ = 0;
-	speed_ = 1.0f;
 }
 
 Animator::Animator(const std::shared_ptr<Animation>& animation) : Animator()
@@ -40,7 +37,7 @@ bool Animator::Init()
 	return true;
 }
 
-void Animator::Update(const float delta_time)
+void Animator::AfterUpdate(const float delta_time)
 {
 	// 再生中でなければ終了
 	if (!current_animation_)
@@ -63,6 +60,8 @@ void Animator::Update(const float delta_time)
 	float time_in_ticks = current_time_ * ticks_per_second;
 	float anim_time = time_in_ticks;
 
+	bool end_flag = false;
+
 	if (loop_) // ループ再生の場合
 	{
 		anim_time = (float)fmod(anim_time, current_animation_->Duration());
@@ -71,18 +70,19 @@ void Animator::Update(const float delta_time)
 	{
 		if (anim_time >= current_animation_->Duration())
 		{
-			// 再生キューが空なら終了
 			if (animation_queue_.empty())
 			{
-				current_animation_ = nullptr;
-				return;
+				// 再生キューが空なら終了
+				end_flag = true;
 			}
+			else
+			{
+				// 再生キューが空でなければ次のアニメーションを再生する
+				Play(animation_queue_.front());
+				animation_queue_.pop();
 
-			// 再生キューが空でなければ次のアニメーションを再生する
-			Play(animation_queue_.front());
-			animation_queue_.pop();
-
-			anim_time = 0;
+				anim_time = 0;
+			}
 		}
 	}
 	
@@ -100,11 +100,15 @@ void Animator::Update(const float delta_time)
 	}
 	
 	current_time_ += 60.0f / 100.0f * speed_ * delta_time;
+
+	if (end_flag)
+	{
+		current_animation_ = nullptr;
+	}
 }
 
 void Animator::RegisterAnimation(const std::shared_ptr<Animation>& animation)
 {
-	animations_.push_back(animation);
 	animation_map_[animation->Name()] = animation;
 }
 
@@ -369,5 +373,5 @@ void Animator::GetCurrentKeys(const std::vector<Animation::Key>& keys, const flo
 float Animator::GetEasingTime(const Animation::Key& key1, const Animation::Key& key2, const float current_time)
 {
 	float duration = key2.time - key1.time;
-	return duration > 0 ? key2.easing((current_time - key1.time) / duration) : 0;
+	return duration > 0 ? Easing::GetFunction(key2.easing)((current_time - key1.time) / duration) : 0;
 }

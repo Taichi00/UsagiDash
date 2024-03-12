@@ -71,22 +71,13 @@ bool TitleScene::Init()
 		std::vector<std::shared_ptr<Animation>> animations;
 		{
 			auto animation = std::make_shared<Animation>("press");
-			/*{
-				Animation::Channel channel = {};
-				channel.type = Animation::TYPE_GUI;
-				channel.gui.name = "panel";
-				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(0.9f, 0.9f, 0.9f) },
-				};
-				animation->AddChannel(channel);
-			}*/
 			{
 				Animation::Channel channel = {};
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "control";
 				channel.gui.scale_keys = {
-					{ 0, Easing::Linear, Vec2(0.8f, 0.8f) },
-					{ 0.2f, Easing::OutBack, Vec2(1.1f, 1.1f) }
+					{ 0, Easing::LINEAR, Vec2(0.8f, 0.8f) },
+					{ 0.2f, Easing::OUT_BACK, Vec2(1.1f, 1.1f) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -102,7 +93,7 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "panel";
 				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(0.1f, 0.1f, 0.1f) }
+					{ 0, Easing::LINEAR, Color(0.1f, 0.1f, 0.1f) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -111,7 +102,7 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "label";
 				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(1, 1, 1) }
+					{ 0, Easing::LINEAR, Color(1, 1, 1) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -120,8 +111,8 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "control";
 				channel.gui.scale_keys = {
-					{ 0, Easing::Linear, Vec2(1, 1) },
-					{ 0.1f, Easing::OutCubic, Vec2(1.1f, 1.1f) }
+					{ 0, Easing::LINEAR, Vec2(1, 1) },
+					{ 0.1f, Easing::OUT_CUBIC, Vec2(1.1f, 1.1f) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -137,8 +128,8 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "panel";
 				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(0.1f, 0.1f, 0.1f) },
-					{ 0.1f, Easing::Linear, Color(1, 1, 1) }
+					{ 0, Easing::LINEAR, Color(0.1f, 0.1f, 0.1f) },
+					{ 0.1f, Easing::LINEAR, Color(1, 1, 1) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -147,8 +138,8 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "label";
 				channel.gui.color_keys = {
-					{ 0, Easing::Linear, Color(1, 1, 1) },
-					{ 0.1f, Easing::Linear, Color(0.35f, 0.3f, 0.3f) }
+					{ 0, Easing::LINEAR, Color(1, 1, 1) },
+					{ 0.1f, Easing::LINEAR, Color(0.35f, 0.3f, 0.3f) }
 				};
 				animation->AddChannel(channel);
 			}
@@ -157,8 +148,8 @@ bool TitleScene::Init()
 				channel.type = Animation::TYPE_GUI;
 				channel.gui.name = "control";
 				channel.gui.scale_keys = {
-					{ 0, Easing::Linear, Vec2(1.1f, 1.1f) },
-					{ 0.1f, Easing::OutCubic, Vec2(1, 1) }
+					{ 0, Easing::LINEAR, Vec2(1.1f, 1.1f) },
+					{ 0.1f, Easing::OUT_CUBIC, Vec2(1, 1) }
 				};
 				animation->AddChannel(channel);
 			}

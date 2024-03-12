@@ -39,14 +39,14 @@ bool PlayerController2::Init()
 	wall_slide_smoke_emitter_ = GetEntity()->Child("wall_slide_smoke_emitter")->GetComponent<ParticleEmitter>();
 
 	// state の生成
-	idle_state_ = std::make_unique<IdleState>(this);
-	run_state_ = std::make_unique<RunState>(this);
-	jump_state_ = std::make_unique<JumpState>(this);
-	in_air_state_ = std::make_unique<InAirState>(this);
-	dashjump_state_ = std::make_unique<DashjumpState>(this);
-	dash_state_ = std::make_unique<DashState>(this);
-	sliding_wall_state_ = std::make_unique<SlidingWallState>(this);
-	walljump_state_ = std::make_unique<WalljumpState>(this);
+	idle_state_ = std::make_unique<IdleState>(this, STATE_IDLE);
+	run_state_ = std::make_unique<RunState>(this, STATE_RUN);
+	jump_state_ = std::make_unique<JumpState>(this, STATE_JUMP);
+	in_air_state_ = std::make_unique<InAirState>(this, STATE_IN_AIR);
+	dashjump_state_ = std::make_unique<DashjumpState>(this, STATE_DASHJUMP);
+	dash_state_ = std::make_unique<DashState>(this, STATE_DASH);
+	sliding_wall_state_ = std::make_unique<SlidingWallState>(this, STATE_SLIDING_WALL);
+	walljump_state_ = std::make_unique<WalljumpState>(this, STATE_WALLJUMP);
 
 	// 初期 state の設定
 	state_ = idle_state_.get();
@@ -76,6 +76,14 @@ void PlayerController2::Update(const float delta_time)
 	
 	is_grounded_prev_ = is_grounded_;
 	is_running_prev_ = is_running_;
+}
+
+PlayerController2::PlayerState PlayerController2::GetCurrentState() const
+{
+	if (!state_)
+		return STATE_IDLE;
+
+	return (PlayerState)state_->GetState();
 }
 
 void PlayerController2::Idle(const float delta_time)
@@ -483,8 +491,6 @@ void PlayerController2::IdleState::OnStateBegin(State* prev_state)
 	}
 
 	object->dash_frame_ = 0;
-
-	printf("idle\n");
 }
 
 void PlayerController2::IdleState::OnStateEnd(State* next_state)
@@ -543,8 +549,6 @@ void PlayerController2::RunState::OnStateBegin(State* prev_state)
 	}
 
 	object->is_running_ = true;
-
-	printf("run\n");
 }
 
 void PlayerController2::RunState::OnStateEnd(State* next_state)
@@ -623,8 +627,6 @@ void PlayerController2::JumpState::OnStateBegin(State* prev_state)
 
 	object->dash_frame_ = 0;
 	jump_frame_ = object->jump_frame_max_;
-
-	printf("jump\n");
 }
 
 void PlayerController2::JumpState::OnStateEnd(State* next_state)
@@ -705,8 +707,6 @@ void PlayerController2::InAirState::OnStateBegin(State* prev_state)
 			object->velocity_.y = -hit.distance;
 		}
 	}
-
-	printf("in air\n");
 }
 
 void PlayerController2::InAirState::OnStateEnd(State* next_state)
@@ -800,8 +800,6 @@ void PlayerController2::DashjumpState::OnStateBegin(State* prev_state)
 	}
 
 	jump_frame_ = object->jump_frame_max_;
-
-	printf("dashjump\n");
 }
 
 void PlayerController2::DashjumpState::OnStateEnd(State* next_state)
@@ -883,8 +881,6 @@ void PlayerController2::DashState::OnStateBegin(State* prev_state)
 	}
 
 	object->is_running_ = true;
-
-	printf("dash\n");
 }
 
 void PlayerController2::DashState::OnStateEnd(State* next_state)
@@ -968,8 +964,6 @@ void PlayerController2::SlidingWallState::OnStateBegin(State* prev_state)
 
 	// パーティクル
 	object->wall_slide_smoke_emitter_->Emit();
-
-	printf("sliding wall\n");
 }
 
 void PlayerController2::SlidingWallState::OnStateEnd(State* next_state)
@@ -1046,8 +1040,6 @@ void PlayerController2::WalljumpState::OnStateBegin(State* prev_state)
 
 	jump_frame_ = object->jump_frame_max_;
 	kick_frame_ = object->walljump_kick_frame_max_;
-
-	printf("walljump\n");
 }
 
 void PlayerController2::WalljumpState::OnStateEnd(State* next_state)

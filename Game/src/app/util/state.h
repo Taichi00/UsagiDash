@@ -4,7 +4,7 @@ template <typename T>
 class State
 {
 public:
-	State(T* object) : object(object) {}
+	State(T* object, const unsigned int state) : object(object), state(state) {}
 	virtual ~State() {}
 
 	// 遷移時に一度だけ呼ばれる
@@ -24,7 +24,11 @@ public:
 		next_state->Update(delta_time);
 	}
 
+	unsigned int GetState() const { return state; }
+
 protected:
 	// 制御するオブジェクトのポインタ
 	T* object;
+
+	unsigned int state;
 };

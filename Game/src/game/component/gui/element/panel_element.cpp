@@ -28,5 +28,5 @@ void PanelElement::Draw()
 		rect.bottom + prop_.padding.bottom
 	};
 
-	engine_->DrawFillRectangle(rect, color_, prop_.radius);
+	engine_->DrawFillRectangle(rect, color_ * control_->GetColor(), prop_.radius);
 }

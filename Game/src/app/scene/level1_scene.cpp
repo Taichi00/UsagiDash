@@ -7,6 +7,7 @@
 #include "app/component/camera_controller.h"
 #include "app/component/pause_behavior.h"
 #include "app/component/pause_manager.h"
+#include "app/entity/tutorial_label.h"
 #include "game/entity.h"
 #include "game/game.h"
 #include "game/input/input.h"
@@ -162,13 +163,13 @@ bool Level1Scene::Init()
 			channel.type = Animation::TYPE_GUI;
 			channel.gui.name = "label";
 			channel.gui.position_keys = {
-				{ 0, Easing::Linear, Vec2(0, 0) },
-				{ 0.2f, Easing::OutCubic, Vec2(0, -3) },
-				{ 0.6f, Easing::InCubic, Vec2(0, 0) },
+				{ 0, Easing::LINEAR, Vec2(0, 0) },
+				{ 0.2f, Easing::OUT_CUBIC, Vec2(0, -3) },
+				{ 0.6f, Easing::IN_CUBIC, Vec2(0, 0) },
 			};
 			channel.gui.color_keys = {
-				{ 0, Easing::Linear, Color(1, 0.75f, 0) },
-				{ 1, Easing::InCubic, Color(1, 1, 1) }
+				{ 0, Easing::LINEAR, Color(1, 0.75f, 0) },
+				{ 1, Easing::IN_CUBIC, Color(1, 1, 1) }
 			};
 			animation->AddChannel(channel);
 			animation->SetDuration(1);
@@ -197,7 +198,7 @@ bool Level1Scene::Init()
 		CreateEntity(coin_gui);
 	}
 
-	auto guide_label = new Entity("guide_label");
+	auto guide_label = new Entity("menu_label");
 	{
 		TextProperty prop = {};
 		prop.font = L"Koruri";
@@ -227,25 +228,8 @@ bool Level1Scene::Init()
 		CreateEntity(guide_label);
 	}
 
-	auto tutorial_label = new Entity("tutorial_label");
+	auto tutorial_label = new TutorialLabel();
 	{
-		TextProperty text_prop{};
-		text_prop.font = L"Koruri";
-		text_prop.font_size = 22;
-		text_prop.color = Color(0.35f, 0.3f, 0.3f);
-		text_prop.font_weight = TextProperty::WEIGHT_BOLD;
-		text_prop.horizontal_alignment = TextProperty::HORIZONTAL_ALIGNMENT_CENTER;
-		text_prop.vertical_alignment = TextProperty::VERTICAL_ALIGNMENT_CENTER;
-
-		PanelProperty panel_prop{};
-		panel_prop.color = Color(1, 1, 1, 1);
-		panel_prop.radius = 22;
-		panel_prop.padding = { 24, 6, 24, 6 };
-
-		tutorial_label->AddComponent(new Label("", text_prop, panel_prop, true));
-		auto control = tutorial_label->GetComponent<Control>();
-		control->SetTransform(Vec2(0, 130), Vec2(200, 46), Vec2(0.5, 0.5), Vec2(0.5, 0));
-
 		CreateEntity(tutorial_label);
 	}
 

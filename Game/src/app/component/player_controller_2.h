@@ -45,6 +45,21 @@ public:
 	bool Init() override;
 	void Update(const float delta_time) override;
 
+	enum PlayerState
+	{
+		STATE_IDLE,
+		STATE_RUN,
+		STATE_DASH,
+		STATE_JUMP,
+		STATE_IN_AIR,
+		STATE_DASHJUMP,
+		STATE_SLIDING_WALL,
+		STATE_WALLJUMP,
+	};
+	
+	// 現在の状態を取得する
+	PlayerState GetCurrentState() const;
+
 private:
 	// 停止
 	void Idle(const float delta_time);
@@ -65,12 +80,11 @@ private:
 
 	// 拡縮アニメーション
 	void ScaleAnimation(const Vec3& velocity, const float delta_time);
-
 	// カメラ回転を考慮した移動方向ベクトルを取得
 	Vec3 GetMoveDirection(const Vec2& input);
-
+	// アナログ入力を考慮した最大移動速度を取得
 	float GetMaxSpeed(const Vec2& input);
-
+	// 壁に触れているかどうかチェックする
 	void WallRaycast();
 
 private:
@@ -149,7 +163,7 @@ private:
 	class IdleState : public State<PlayerController2>
 	{
 	public:
-		IdleState(PlayerController2* player) : State(player) {}
+		IdleState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -158,7 +172,7 @@ private:
 	class RunState : public State<PlayerController2>
 	{
 	public:
-		RunState(PlayerController2* player) : State(player) {}
+		RunState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -167,7 +181,7 @@ private:
 	class JumpState : public State<PlayerController2>
 	{
 	public:
-		JumpState(PlayerController2* player) : State(player) {}
+		JumpState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -180,7 +194,7 @@ private:
 	class InAirState : public State<PlayerController2>
 	{
 	public:
-		InAirState(PlayerController2* player) : State(player) {}
+		InAirState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -189,7 +203,7 @@ private:
 	class DashjumpState : public State<PlayerController2>
 	{
 	public:
-		DashjumpState(PlayerController2* player) : State(player) {}
+		DashjumpState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -202,7 +216,7 @@ private:
 	class DashState : public State<PlayerController2>
 	{
 	public:
-		DashState(PlayerController2* player) : State(player) {}
+		DashState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -211,7 +225,7 @@ private:
 	class SlidingWallState : public State<PlayerController2>
 	{
 	public:
-		SlidingWallState(PlayerController2* player) : State(player) {}
+		SlidingWallState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -220,7 +234,7 @@ private:
 	class WalljumpState : public State<PlayerController2>
 	{
 	public:
-		WalljumpState(PlayerController2* player) : State(player) {}
+		WalljumpState(PlayerController2* player, PlayerState state) : State(player, state) {}
 		void OnStateBegin(State* prev_state) override;
 		void OnStateEnd(State* next_state) override;
 		void Update(const float delta_time) override;
@@ -231,16 +245,6 @@ private:
 	};
 
 	friend State<PlayerController2>;
-
-	enum PlayerState
-	{
-		STATE_IDLE,
-		STATE_RUN,
-		STATE_DASH,
-		STATE_JUMP,
-		STATE_DASHJUMP,
-		STATE_SLIDING_WALL,
-	};
 
 	State<PlayerController2>* state_ = nullptr;
 	std::unique_ptr<IdleState> idle_state_ = nullptr;

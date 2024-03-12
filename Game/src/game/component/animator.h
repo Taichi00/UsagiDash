@@ -33,7 +33,7 @@ public:
 	Animator(const std::vector<std::shared_ptr<Animation>>& animations);
 
 	bool Init() override;
-	void Update(const float delta_time) override;
+	void AfterUpdate(const float delta_time) override;
 
 	// アニメーションを登録する
 	void RegisterAnimation(const std::shared_ptr<Animation>& animation);
@@ -72,16 +72,23 @@ private:
 	float GetEasingTime(const Animation::Key& key1, const Animation::Key& key2, const float current_time);
 
 private:
-	std::vector<std::shared_ptr<Animation>> animations_;
+	// アニメーションの名前マップ
 	std::map<std::string, std::shared_ptr<Animation>> animation_map_;
-
+	// 現在のアニメーション
 	std::shared_ptr<Animation> current_animation_;
+	// 再生キュー
 	std::queue<AnimationArgs> animation_queue_;
-	float current_time_;
-	float speed_;
-	bool loop_;
-	float blend_ratio_;
-	float blend_time_;
+
+	// 時間
+	float current_time_ = 0;
+	// 再生速度
+	float speed_ = 1;
+	// ループするかどうか
+	bool loop_ = true;
+
+	// ブレンド
+	float blend_ratio_ = 0;
+	float blend_time_ = 0;
 
 	MeshRenderer* mesh_renderer_ = nullptr;
 	Control* control_ = nullptr;

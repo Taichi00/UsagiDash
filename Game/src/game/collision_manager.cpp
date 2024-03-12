@@ -26,29 +26,12 @@ void CollisionManager::Update(const float delta_time)
 	std::vector<Collider*> colliders;
 	std::vector<Rigidbody*> rigidbodies;
 
-	for (int i = 0; i < colliders_.size(); i++)
-	{
-		octree_objects_[i]->Remove();
-
-		// 更新停止中なら判定しない
-		if (!colliders_[i]->GetEntity()->IsUpdateEnabled())
-			continue;
-
-		colliders.push_back(colliders_[i]);
-	}
-
 	for (auto rigidbody : rigidbodies_)
 	{
 		// 更新停止中なら判定しない
 		if (!rigidbody->GetEntity()->IsUpdateEnabled())
 			continue;
 
-		rigidbodies.push_back(rigidbody);
-	}
-
-	// rigidbodyの準備
-	for (auto rigidbody : rigidbodies)
-	{
 		// 重力
 		if (rigidbody->use_gravity)
 		{
@@ -58,17 +41,55 @@ void CollisionManager::Update(const float delta_time)
 		rigidbody->velocity *= 0.995f;
 
 		rigidbody->Prepare(delta_time);
+
+		rigidbodies.push_back(rigidbody);
 	}
 
-	// colliderの準備
-	for (int i = 0; i < colliders.size(); i++)
+	for (int i = 0; i < colliders_.size(); i++)
 	{
-		colliders[i]->ResetHits();
-		colliders[i]->Prepare();
+		octree_objects_[i]->Remove();
 
-		octree_objects_[i]->aabb = colliders[i]->GetAABB();
+		// コンポーネントが無効なら判定しない
+		if (!colliders_[i]->enabled)
+			continue;
+
+		// 更新停止中なら判定しない
+		if (!colliders_[i]->GetEntity()->IsUpdateEnabled())
+			continue;
+		
+		// 準備
+		colliders_[i]->ResetHits();
+		colliders_[i]->Prepare();
+
+		octree_objects_[i]->aabb = colliders_[i]->GetAABB();
 		octree_->Regist(octree_objects_[i].get());
+
+		colliders.push_back(colliders_[i]);
 	}
+
+	//// rigidbodyの準備
+	//for (auto rigidbody : rigidbodies)
+	//{
+	//	// 重力
+	//	if (rigidbody->use_gravity)
+	//	{
+	//		rigidbody->velocity += Vec3(0.f, -64.8f, 0.f) * delta_time;
+	//	}
+	//	// 空気抵抗
+	//	rigidbody->velocity *= 0.995f;
+
+	//	rigidbody->Prepare(delta_time);
+	//}
+
+	//// colliderの準備
+	//for (int i = 0; i < colliders.size(); i++)
+	//{
+	//	colliders[i]->ResetHits();
+	//	colliders[i]->Prepare();
+
+	//	octree_objects_[i]->aabb = colliders[i]->GetAABB();
+	//	octree_->Regist(octree_objects_[i].get());
+	//}
 
 	// 衝突判定
 	std::vector<Collider*> collision_list;
