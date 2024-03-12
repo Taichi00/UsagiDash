@@ -7,7 +7,7 @@
 
 #define NOMINMAX
 
-class PlayerController;
+class PlayerController2;
 class Label;
 class AudioSource;
 class Animator;
@@ -24,8 +24,13 @@ public:
 		SCENE_GAME,
 	};
 
-	GameManager(PlayerController* player, CameraController* camera, Label* coin_label);
-	~GameManager() = default;
+	GameManager(
+		const SceneState state,
+		PlayerController2* player, 
+		CameraController* camera, 
+		Label* coin_label);
+
+	~GameManager() {}
 
 	static GameManager* Get()
 	{
@@ -74,7 +79,7 @@ private:
 private:
 	static GameManager* instance_;
 
-	PlayerController* player_;
+	PlayerController2* player_;
 	CameraController* camera_;
 	Label* coin_label_;
 	Animator* coin_label_animator_ = nullptr;

@@ -11,12 +11,14 @@
 #include "game/component/audio/audio_source.h"
 #include <iostream>
 
-PlayerController::PlayerController(float speed, float acceleration)
+PlayerController::PlayerController(const Property& prop)
 {
-	speed_ = speed;
-	acceleration_ = acceleration;
-	plus_speed_ = 0.f;
-	dashjump_speed_ = 4;
+	speed_ = prop.speed;
+	acceleration_ = prop.acceleration;
+	dashjump_speed_ = prop.dashjump_speed;
+
+	audio_jump_ = prop.audio_jump;
+	audio_footstep_ = prop.audio_footstep;
 }
 
 PlayerController::~PlayerController()
@@ -27,7 +29,6 @@ bool PlayerController::Init()
 {
 	animator_ = GetEntity()->GetComponent<Animator>();
 	rigidbody_ = GetEntity()->GetComponent<Rigidbody>();
-	audio_source_ = GetEntity()->GetComponent<AudioSource>();
 
 	run_smoke_emitter_ = GetEntity()->Child("run_smoke_emitter")->GetComponent<ParticleEmitter>();
 	jump_smoke_emitter_ = GetEntity()->Child("jump_smoke_emitter")->GetComponent<ParticleEmitter>();
@@ -50,8 +51,6 @@ void PlayerController::Update(const float delta_time)
 
 	is_running_prev_ = is_running_;
 	is_grounded_prev_ = is_grounded_;
-	jump_frame_prev_ = jump_frame_;
-	
 }
 
 void PlayerController::Move2(const float delta_time)
@@ -124,7 +123,7 @@ void PlayerController::Move(const float delta_time)
 	float friction = 0.9f;
 	float acceleration = acceleration_;
 	float speed = speed_ + plus_speed_;
-	auto velocity = (rigidbody_->velocity - rigidbody_->floor_velocity) / delta_time;
+	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity;
 
 	if (!is_grounded_)
 	{
@@ -167,7 +166,7 @@ void PlayerController::Move(const float delta_time)
 	v += forward * input_dir.y;
 
 	v = v.Normalized();
-	auto pv = v * acceleration * input_dir.Length();
+	auto pv = v * acceleration * input_dir.Length() * delta_time;
 
 	// ‘¬“x‚ÌXV
 	velocity += pv;
@@ -192,6 +191,10 @@ void PlayerController::Move(const float delta_time)
 		{
 			velocity.z *= friction;
 		}
+	}
+	else
+	{
+		is_running_ = false;
 	}
 
 	// â
@@ -288,7 +291,7 @@ void PlayerController::Move(const float delta_time)
 				walljump_frame_ = 25;
 			}
 
-			audio_source_->Play(0.5f);
+			audio_jump_->Play(0.5f);
 		}
 	}
 	if (jump_frame_ > 0 && jump_frame_ <= jump_frame_max_)
@@ -356,7 +359,7 @@ void PlayerController::Move(const float delta_time)
 	auto floor_quat = Quaternion::FromToRotation(Vec3(0, 1, 0), rigidbody_->floor_normal).Conjugate();
 	run_smoke_emitter_->transform->rotation = floor_quat;
 	
-	rigidbody_->velocity = velocity * delta_time + rigidbody_->floor_velocity;
+	rigidbody_->velocity = velocity + rigidbody_->floor_velocity;
 }
 
 void PlayerController::Animate(const float delta_time)
@@ -366,7 +369,7 @@ void PlayerController::Animate(const float delta_time)
 		return;
 	}
 	
-	auto velocity = (rigidbody_->velocity - rigidbody_->floor_velocity) / delta_time;
+	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity;
 
 	auto scale = Vec3(1, 1, 1);
 

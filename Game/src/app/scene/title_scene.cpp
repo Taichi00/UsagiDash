@@ -266,6 +266,7 @@ bool TitleScene::Init()
 	auto game_manager = new Entity("game_manager");
 	{
 		game_manager->AddComponent(new GameManager(
+			GameManager::SCENE_TITLE,
 			nullptr,
 			nullptr,
 			nullptr

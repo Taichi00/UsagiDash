@@ -26,25 +26,37 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 
 	// アクションのキー設定
 	settings.button_actions["jump"] = {
-		{ Input::InputType::KEYBOARD, Input::Button::KEY_SPACE },
-		{ Input::InputType::GAMEPAD, Input::Button::PAD_A }
+		{ Input::KEYBOARD, Input::KEY_SPACE },
+		{ Input::GAMEPAD, Input::PAD_A },
 	};
 	settings.button_actions["crouch"] = {
-		{ Input::InputType::KEYBOARD, Input::Button::KEY_LSHIFT },
-		{ Input::InputType::GAMEPAD, Input::Button::PAD_LT },
-		{ Input::InputType::GAMEPAD, Input::Button::PAD_RT },
+		{ Input::KEYBOARD, Input::KEY_LSHIFT },
+		{ Input::GAMEPAD, Input::PAD_LT },
+		{ Input::GAMEPAD, Input::PAD_RT },
+	};
+	settings.axis_actions["horizontal"] = {
+		//{ Input::KEYBOARD, Input::KEY_WASD_X },
+		{ Input::KEYBOARD, Input::KEY_ARROW_X },
+		{ Input::GAMEPAD, Input::PAD_LSTICK_X },
+	};
+	settings.axis_actions["vertical"] = {
+		//{ Input::KEYBOARD, Input::KEY_WASD_Y },
+		{ Input::KEYBOARD, Input::KEY_ARROW_Y },
+		{ Input::GAMEPAD, Input::PAD_LSTICK_Y },
 	};
 	settings.axis_actions["camera_horizontal"] = {
-		{ Input::InputType::KEYBOARD, Input::Axis::KEY_WASD_X },
-		{ Input::InputType::GAMEPAD, Input::Axis::PAD_RSTICK_X }
+		{ Input::KEYBOARD, Input::KEY_WASD_X },
+		{ Input::GAMEPAD, Input::PAD_RSTICK_X },
+		//{ Input::MOUSE, Input::MOUSE_DELTA_X },
 	};
 	settings.axis_actions["camera_vertical"] = {
-		{ Input::InputType::KEYBOARD, Input::Axis::KEY_WASD_Y },
-		{ Input::InputType::GAMEPAD, Input::Axis::PAD_RSTICK_Y }
+		{ Input::KEYBOARD, Input::KEY_WASD_Y },
+		{ Input::GAMEPAD, Input::PAD_RSTICK_Y },
+		//{ Input::MOUSE, Input::MOUSE_DELTA_Y },
 	};
 	settings.button_actions["menu"] = {
-		{ Input::InputType::KEYBOARD, Input::Button::KEY_ESCAPE },
-		{ Input::InputType::GAMEPAD, Input::Button::PAD_START }
+		{ Input::KEYBOARD, Input::KEY_ESCAPE },
+		{ Input::GAMEPAD, Input::PAD_START }
 	};
 
 	// ボタンアイコンの設定
@@ -104,8 +116,11 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 
 	Game::Create();
 
-	//Game::Get()->Run(new Level1Scene(), settings);
+#if _DEBUG
+	Game::Get()->Run(new Level1Scene(), settings);
+#else
 	Game::Get()->Run(new TitleScene(), settings);
+#endif
 
 	Game::Destroy();
 

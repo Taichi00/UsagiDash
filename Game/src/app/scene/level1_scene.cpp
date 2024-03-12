@@ -2,6 +2,7 @@
 #include "app/component/game_manager.h"
 #include "app/component/map_loader.h"
 #include "app/component/player_controller.h"
+#include "app/component/player_controller_2.h"
 #include "app/entity/player.h"
 #include "app/component/camera_controller.h"
 #include "app/component/pause_behavior.h"
@@ -18,7 +19,6 @@
 #include "math/color.h"
 #include "math/vec.h"
 #include "math/easing.h"
-#include <dinput.h>
 #include <game/animation.h>
 #include <memory>
 #include <random>
@@ -65,7 +65,7 @@ bool Level1Scene::Init()
 		std::shared_ptr sphereModel = SphereMesh::Load(1, 0.72f, 0, 0);
 		std::shared_ptr capsuleModel = CapsuleMesh::Load(2, 2, 0.72f, 0, 0);
 
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 0; i++)
 		{
 			std::shared_ptr<Model> model;
 			auto object = new Entity("object " + std::to_string(i + 1), "object", "object");
@@ -252,7 +252,8 @@ bool Level1Scene::Init()
 	auto game_manager = new Entity("game_manager");
 	{
 		game_manager->AddComponent(new GameManager(
-			player->GetComponent<PlayerController>(),
+			GameManager::SCENE_GAME,
+			player->GetComponent<PlayerController2>(),
 			camera->GetComponent<CameraController>(),
 			coin_gui->Child("coin_label")->GetComponent<Label>()
 		));
@@ -283,34 +284,23 @@ void Level1Scene::Update(const float delta_time)
 	//rigidbody->velocity.y = cos(angle) * 20 - rigidbody->transform->position.y;
 	if (rigidbody->transform->position.y < -13)
 	{
-		rigidbody->velocity.y *= -60 * delta_time;
+		rigidbody->velocity.y *= -1;
 		rigidbody->transform->position.y = -13;
 	}
 	if (rigidbody->transform->position.y > 7)
 	{
-		rigidbody->velocity.y *= -60 * delta_time;
+		rigidbody->velocity.y *= -1;
 		rigidbody->transform->position.y = 7;
 	}
 	if (rigidbody->velocity.y >= 0)
 	{
-		rigidbody->velocity.y += 1.2f * delta_time;
+		rigidbody->velocity.y += 61.2f * delta_time;
 	}
 	else
 	{
-		rigidbody->velocity.y = -6.0f * delta_time;
+		rigidbody->velocity.y = -6.0f;
 	}
 	//rigidbody->velocity.x += (0 - movingObj->transform->position.x) * 1.8 * delta_time;
 	//rigidbody->velocity.y += (-10 - movingObj->transform->position.y) * 0.03;
 	//rigidbody->velocity.z += (25 - movingObj->transform->position.z) * 1.8 * delta_time;
-
-
-	if (Input::GetKeyDown(DIK_R))
-	{
-		Game::Get()->LoadScene(new TitleScene());
-	}
-
-	if (Input::GetKeyDown(DIK_F))
-	{
-		Game::Get()->ToggleFullscreen();
-	}
 }

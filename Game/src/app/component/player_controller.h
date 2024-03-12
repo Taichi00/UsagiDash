@@ -44,12 +44,25 @@ public:
 		STATE_SLIDING_WALL,
 	};*/
 
-	PlayerController(float speed, float acceleration);
+	struct Property
+	{
+		// 移動速度
+		float speed;
+		// 加速度
+		float acceleration;
+		// ダッシュジャンプ速度
+		float dashjump_speed;
+		// ジャンプの音
+		AudioSource* audio_jump;
+		// 足音
+		AudioSource* audio_footstep;
+	};
+
+	PlayerController(const Property& prop);
 	~PlayerController();
 
 	bool Init() override;
 	void Update(const float delta_time) override;
-
 
 private:
 	void Move2(const float delta_time);
@@ -57,29 +70,54 @@ private:
 	void Animate(const float delta_time);
 
 private:
-	Vec3 move_direction_;
+	// 移動速度
 	float speed_;
-	float plus_speed_;
+	// 追加速度（加速中にプラスになる）
+	float plus_speed_ = 0;
+	// 加速度
 	float acceleration_;
-	float angle_, angle_prev_;
 
-	bool is_running_, is_running_prev_;
-	bool is_grounded_, is_grounded_prev_;
-	bool is_touching_wall_;
-	bool is_sliding_wall_;
+	// 向き
+	float angle_ = 0;
+	float angle_prev_ = 0;
 
+	// 走っているかどうか
+	bool is_running_ = false;
+	bool is_running_prev_ = false;
+
+	// 接地しているかどうか
+	bool is_grounded_ = false;
+	bool is_grounded_prev_ = false;
+
+	// 壁に接しているかどうか
+	bool is_touching_wall_ = false;
+
+	// 壁をスライディングしているかどうか
+	bool is_sliding_wall_ = false;
+
+	// 空中にいるフレーム数
 	int air_count_ = 0;
 
-	float jump_frame_, jump_frame_prev_;
+	// ジャンプフレーム数
+	float jump_frame_ = 0;
+	// 最大ジャンプフレーム数
 	float jump_frame_max_ = 16;
 
+	// 壁ジャンプフレーム数
 	float walljump_frame_ = 0;
 
+	// ダッシュジャンプの速度
 	float dashjump_speed_;
+	// ダッシュジャンプフレーム数
 	float dashjump_frame_ = 0;
+	// 最大ダッシュジャンプフレーム数
 	float dashjump_frame_max_ = 120;
 
+	// ジャンプを開始したフレームかどうか
 	bool is_jump_start_frame_ = false;
+
+	// 足音用のカウンター
+	float footstep_count_ = 0;
 
 	Animator* animator_ = nullptr;
 	Rigidbody* rigidbody_ = nullptr;
@@ -87,7 +125,8 @@ private:
 	ParticleEmitter* jump_smoke_emitter_ = nullptr;
 	ParticleEmitter* circle_smoke_emitter_ = nullptr;
 	ParticleEmitter* wall_slide_smoke_emitter_ = nullptr;
-	AudioSource* audio_source_ = nullptr;
+	AudioSource* audio_jump_ = nullptr;
+	AudioSource* audio_footstep_ = nullptr;
 
 	//State<Player>* state_ = nullptr;
 	//std::unique_ptr<IdleState> idle_state_ = nullptr;

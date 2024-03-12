@@ -85,7 +85,7 @@ void CameraController::Rotate(const float delta_time)
 		angle_acceleration = angle_acceleration_ * 1.5f;
 		angle_friction = 0.9f;
 	}
-
+	
 	// ‰Á‘¬
 	angle_velocity_.y += input_dir.x * angle_acceleration;
 	angle_velocity_.x += -input_dir.y * angle_acceleration;

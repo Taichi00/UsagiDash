@@ -27,21 +27,37 @@ bool PauseManager::Init()
 	return true;
 }
 
+void PauseManager::BeforeDraw()
+{
+	if (is_paused_ != is_paused_prev_)
+	{
+		// エンティティに通知する
+		if (is_paused_)
+		{
+			for (auto entity : entities_)
+			{
+				entity->DisableUpdate();
+			}
+		}
+		else
+		{
+			for (auto entity : entities_)
+			{
+				entity->EnableUpdate();
+			}
+		}
+	}
+
+	is_paused_prev_ = is_paused_;
+}
+
 void PauseManager::Pause()
 {
-	for (auto entity : entities_)
-	{
-		entity->DisableUpdate();
-	}
 	is_paused_ = true;
 }
 
 void PauseManager::Resume()
 {
-	for (auto entity : entities_)
-	{
-		entity->EnableUpdate();
-	}
 	is_paused_ = false;
 }
 

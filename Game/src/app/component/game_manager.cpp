@@ -4,6 +4,7 @@
 #include "game/component/audio/audio_source.h"
 #include "game/component/animator.h"
 #include "app/component/player_controller.h"
+#include "app/component/player_controller_2.h"
 #include "game/component/rigidbody.h"
 #include "app/entity/checkpoint.h"
 #include "game/component/gui/transition.h"
@@ -16,8 +17,9 @@
 
 GameManager* GameManager::instance_ = nullptr;
 
-GameManager::GameManager(PlayerController* player, CameraController* camera, Label* coin_label)
+GameManager::GameManager(const SceneState state, PlayerController2* player, CameraController* camera, Label* coin_label)
 {
+	scene_state_ = state;
 	player_ = player;
 	camera_ = camera;
 	coin_label_ = coin_label;
@@ -27,6 +29,7 @@ bool GameManager::Init()
 {
 	if (instance_ && instance_ != this)
 	{
+		instance_->scene_state_ = scene_state_;
 		instance_->player_ = player_;
 		instance_->camera_ = camera_;
 		instance_->coin_label_ = coin_label_;
@@ -47,9 +50,9 @@ bool GameManager::Init()
 	if (audio_source_)
 		audio_source_->Play(0.3f, true);
 
+	// coin label の初期化
 	if (coin_label_)
 	{
-		// coin label の初期化
 		coin_label_->SetText(GetCoinText(num_coins_));
 
 		coin_label_animator_ = coin_label_->GetEntity()->GetComponent<Animator>();
@@ -66,6 +69,7 @@ bool GameManager::Init()
 		GetEntity()->AddChild(entity);
 	}
 
+	// ポーズ
 	pause_manager_ = PauseManager::Get();
 
 	if (pause_manager_)
@@ -131,7 +135,6 @@ void GameManager::UpdateGameStart()
 	if (!transition_->IsFadingIn())
 	{
 		is_starting_game_ = false;
-		scene_state_ = SCENE_GAME;
 
 		// 最初のシーンをロードする
 		Game::Get()->LoadScene(new Level1Scene());
@@ -217,6 +220,4 @@ void GameManager::LoadTitle()
 	pause_menu_ = nullptr;
 
 	Game::Get()->LoadScene(new TitleScene());
-
-	scene_state_ = SCENE_TITLE;
 }

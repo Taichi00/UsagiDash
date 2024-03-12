@@ -1,4 +1,5 @@
 #include "app/component/player_controller.h"
+#include "app/component/player_controller_2.h"
 #include "game/component/animator.h"
 #include "game/component/audio/audio_source.h"
 #include "game/component/collider/capsule_collider.h"
@@ -119,9 +120,26 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new CapsuleCollider({ 1, 1 }));
 	AddComponent(new Rigidbody(1, true, false, 0));
-	AddComponent(new Animator());
-	AddComponent(new AudioSource(game->LoadResource<Audio>(L"assets/se/Retro Jump Classic 08.wav")));
-	AddComponent(new PlayerController(20, 1.2f));
+	AddComponent(new Animator(model->animations));
+
+	auto audio_jump = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/Retro Jump Classic 08.wav"));
+	auto audio_footstep = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/bubble_pop_.wav"));
+
+	PlayerController2::Property player_prop = {};
+	player_prop.speed = 18;
+	player_prop.acceleration = 100;
+	player_prop.air_acceleration = 0.96f;
+	player_prop.friction = 0.9f;
+	player_prop.jump_power = 6;
+	player_prop.dashjump_power = 5.4f;
+	player_prop.dashjump_speed = 29;
+	player_prop.dash_speed = 24;
+	//player_prop.dashjump_speed = 4;
+	player_prop.walljump_kick_power = 15;
+	player_prop.audio_jump = audio_jump;
+	player_prop.audio_footstep = audio_footstep;
+
+	AddComponent(new PlayerController2(player_prop));
 	AddComponent(new PauseBehavior());
 
 	GetComponent<Animator>()->Play("Idle", 2.0f);

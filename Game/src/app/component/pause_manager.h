@@ -17,6 +17,7 @@ public:
 	}
 
 	bool Init() override;
+	void BeforeDraw() override;
 
 	// í‚é~
 	void Pause();
@@ -40,4 +41,5 @@ private:
 
 	// É|Å[ÉYíÜÇ©Ç«Ç§Ç©
 	bool is_paused_ = false;
+	bool is_paused_prev_ = false;
 };
