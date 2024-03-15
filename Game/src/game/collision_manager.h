@@ -39,7 +39,7 @@ private:
 	// 8分木
 	std::unique_ptr<Octree<Collider>> octree_;
 	// 8分木に登録するオブジェクト
-	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
+	//std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
 
 	LayerManager* layer_manager_ = nullptr;
 };

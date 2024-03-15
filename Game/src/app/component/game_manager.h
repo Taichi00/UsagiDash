@@ -28,7 +28,8 @@ public:
 		const SceneState state,
 		PlayerController2* player, 
 		CameraController* camera, 
-		Label* coin_label);
+		Label* coin_label
+	);
 
 	~GameManager() {}
 
@@ -83,8 +84,7 @@ private:
 	Animator* coin_label_animator_ = nullptr;
 	Transition* transition_ = nullptr;
 	PauseManager* pause_manager_ = nullptr;
-
-	AudioSource* audio_source_ = nullptr;
+	AudioSource* audio_bgm_ = nullptr;
 
 	// ÉRÉCÉìÇÃñáêî
 	unsigned int num_coins_ = 0;

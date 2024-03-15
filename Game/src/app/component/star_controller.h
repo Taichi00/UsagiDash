@@ -4,11 +4,12 @@
 
 class Collider;
 class ParticleEmitter;
+class AudioSource;
 
 class StarController : public Component
 {
 public:
-	StarController(ParticleEmitter* confetti);
+	StarController(ParticleEmitter* confetti, AudioSource* audio_twinkle);
 	~StarController();
 
 	bool Init() override;
@@ -27,4 +28,5 @@ private:
 	float slow_duration_ = 30;
 
 	ParticleEmitter* confetti_ = nullptr;
+	AudioSource* audio_twinkle_ = nullptr;
 };

@@ -3,11 +3,15 @@
 #include "game/component/animator.h"
 #include "app/component/tutorial_label_controller.h"
 #include "app/component/pause_behavior.h"
+#include "game/component/audio/audio_source.h"
+#include "game/game.h"
 #include <vector>
 #include <memory>
 
 TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 {
+	auto game = Game::Get();
+
 	Vec2 position = Vec2(0, 130);
 
 	TextProperty text_prop{};
@@ -108,6 +112,10 @@ TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 	}
 
 	AddComponent(new Animator(animations));
-	AddComponent(new TutorialLabelController());
+
+	auto audio_show = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/MI_SFX 27.wav"));
+	auto audio_hide = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/MI_SFX 28.wav"));
+
+	AddComponent(new TutorialLabelController(audio_show, audio_hide));
 	AddComponent(new PauseBehavior());
 }

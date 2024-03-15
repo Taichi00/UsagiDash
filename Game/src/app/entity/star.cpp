@@ -5,6 +5,7 @@
 #include "app/component/pause_behavior.h"
 #include "app/component/star_controller.h"
 #include "game/component/particle_emitter.h"
+#include "game/component/audio/audio_source.h"
 
 Star::Star() : Entity("star", "star", "item")
 {
@@ -47,7 +48,11 @@ Star::Star() : Entity("star", "star", "item")
 
 	AddComponent(new MeshRenderer(game->LoadResource<Model>(L"assets/model/item/Star.gltf")));
 	AddComponent(new SphereCollider(4));
+
 	auto confetti = AddComponent<ParticleEmitter>(new ParticleEmitter(confetti_prop));
-	AddComponent(new StarController(confetti));
+
+	auto audio_twinkle = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/magical-background-6892.wav"), 80.0f);
+
+	AddComponent(new StarController(confetti, audio_twinkle));
 	AddComponent(new PauseBehavior());
 }

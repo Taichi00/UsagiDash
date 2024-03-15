@@ -28,6 +28,7 @@ public:
 
 	virtual ~OctreeObject()
 	{
+		Remove();
 	}
 	
 	// リストから離脱
@@ -386,7 +387,7 @@ protected:
 protected:
 	unsigned int dim_;
 	OctreeCell<T>** cell_array_; // 線形空間ポインタ配列
-	unsigned int pow_[OCTREE_MAX_LEVEL + 1]; // 各レベルでの空間数
+	unsigned int pow_[OCTREE_MAX_LEVEL + 1] = {}; // 各レベルでの空間数
 	Vec3 width_;
 	Vec3 unit_; // 最小レベル空間の辺の長さ
 	AABB aabb_;

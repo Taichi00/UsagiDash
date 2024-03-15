@@ -18,3 +18,8 @@ void Animation::AddChannel(const Channel& channel)
 	channels_.push_back(channel);
 }
 
+void Animation::SetTicksPerSecond(float ticks)
+{
+	ticks_per_second_ = ticks == 0 ? 25 : ticks;
+}
+

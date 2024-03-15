@@ -41,7 +41,6 @@ void CheckpointController::OnCollisionEnter(Collider* collider)
 		animator_->Play("Jump", 2.5f, false, 0);
 		animator_->Push("Waving", 4);
 
-		audio_->SetPitch(0.9f);
 		audio_->Play(0.6f);
 	}
 }

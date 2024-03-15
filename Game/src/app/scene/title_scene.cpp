@@ -11,6 +11,8 @@ bool TitleScene::Init()
 
 	SetSkybox(L"assets/skybox/default");
 
+	auto game = Game::Get();
+
 	auto camera = new Entity("camera");
 	{
 		camera->AddComponent(new Camera());
@@ -159,8 +161,13 @@ bool TitleScene::Init()
 			animations.push_back(animation);
 		}
 
+		auto audio_press = game->LoadResource<Audio>(L"assets/se/abs-popup-3.wav");
+		auto audio_hover = game->LoadResource<Audio>(L"assets/se/MI_SFX 25.wav");
+
 		auto start_button = new Entity("start_button");
 		{
+			auto as_press = start_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = start_button->AddComponent<AudioSource>(audio_hover);
 			auto button = start_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"はじめる",
 				text_prop,
@@ -168,6 +175,8 @@ bool TitleScene::Init()
 				[]() {
 					GameManager::Get()->StartGame();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			start_button->AddComponent<Animator>(new Animator(animations));
@@ -184,6 +193,8 @@ bool TitleScene::Init()
 
 		auto option_button = new Entity("option_button");
 		{
+			auto as_press = option_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover);
 			auto button = option_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"フルスクリーン",
 				text_prop,
@@ -191,6 +202,8 @@ bool TitleScene::Init()
 				[]() {
 					Game::Get()->ToggleFullscreen();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			option_button->AddComponent<Animator>(new Animator(animations));
@@ -207,6 +220,8 @@ bool TitleScene::Init()
 
 		auto exit_button = new Entity("exit_button");
 		{
+			auto as_press = exit_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover);
 			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"おわる",
 				text_prop,
@@ -214,6 +229,8 @@ bool TitleScene::Init()
 				[]() {
 					GameManager::Get()->EndGame();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			exit_button->AddComponent<Animator>(new Animator(animations));
@@ -262,7 +279,7 @@ bool TitleScene::Init()
 			nullptr,
 			nullptr
 		));
-		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/y014_m.wav"), 100.f));
+		game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/Sweet Treats.wav")));
 
 		CreateEntity(game_manager);
 	}

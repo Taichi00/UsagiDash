@@ -55,6 +55,8 @@ public:
 	float Speed() const { return speed_; }
 
 	float CurrentTime() const { return current_time_; }
+	float PreviousTime() const { return previous_time_; }
+	Animation* CurrentAnimation() const { return current_animation_.get(); }
 
 private:
 	void Play(AnimationArgs anim);
@@ -83,6 +85,7 @@ private:
 
 	// ŠÔ
 	float current_time_ = 0;
+	float previous_time_ = 0;
 	// Ä¶‘¬“x
 	float speed_ = 1;
 	// ƒ‹[ƒv‚·‚é‚©‚Ç‚¤‚©

@@ -6,11 +6,12 @@
 class Label;
 class Animator;
 class TutorialTextController;
+class AudioSource;
 
 class TutorialLabelController : public Component
 {
 public:
-	TutorialLabelController() {}
+	TutorialLabelController(AudioSource* audio_show, AudioSource* audio_hide);
 	~TutorialLabelController() {}
 
 	bool Init() override;
@@ -22,4 +23,6 @@ private:
 	Label* label_ = nullptr;
 	Animator* animator_ = nullptr;
 	TutorialTextController* tutorial_ = nullptr;
+	AudioSource* audio_show_ = nullptr;
+	AudioSource* audio_hide_ = nullptr;
 };

@@ -25,7 +25,9 @@ void CollisionManager::Update(const float delta_time)
 
 	std::vector<Collider*> colliders;
 	std::vector<Rigidbody*> rigidbodies;
+	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects;
 
+	// rigidbody の準備
 	for (auto rigidbody : rigidbodies_)
 	{
 		// 更新停止中なら判定しない
@@ -37,6 +39,7 @@ void CollisionManager::Update(const float delta_time)
 		{
 			rigidbody->velocity += Vec3(0.f, -64.8f, 0.f) * delta_time;
 		}
+
 		// 空気抵抗
 		rigidbody->velocity *= 0.995f;
 
@@ -45,51 +48,34 @@ void CollisionManager::Update(const float delta_time)
 		rigidbodies.push_back(rigidbody);
 	}
 
-	for (int i = 0; i < colliders_.size(); i++)
+	// collider の準備
+	for (auto collider : colliders_)
 	{
-		octree_objects_[i]->Remove();
-
 		// コンポーネントが無効なら判定しない
-		if (!colliders_[i]->enabled)
+		if (!collider->enabled)
 			continue;
 
 		// 更新停止中なら判定しない
-		if (!colliders_[i]->GetEntity()->IsUpdateEnabled())
+		if (!collider->GetEntity()->IsUpdateEnabled())
 			continue;
 		
-		// 準備
-		colliders_[i]->ResetHits();
-		colliders_[i]->Prepare();
+		collider->ResetHits();
+		collider->Prepare();
 
-		octree_objects_[i]->aabb = colliders_[i]->GetAABB();
-		octree_->Regist(octree_objects_[i].get());
+		auto entity = collider->GetEntity();
+		auto obj = std::make_unique<OctreeObject<Collider>>();
 
-		colliders.push_back(colliders_[i]);
+		obj->object = collider;
+		obj->group = entity;
+		obj->layer = layer_manager_->GetLayerIndex(entity->layer);
+		obj->aabb = collider->GetAABB();
+
+		// Octreeに追加
+		octree_->Regist(obj.get());
+
+		colliders.push_back(collider);
+		octree_objects.push_back(std::move(obj));
 	}
-
-	//// rigidbodyの準備
-	//for (auto rigidbody : rigidbodies)
-	//{
-	//	// 重力
-	//	if (rigidbody->use_gravity)
-	//	{
-	//		rigidbody->velocity += Vec3(0.f, -64.8f, 0.f) * delta_time;
-	//	}
-	//	// 空気抵抗
-	//	rigidbody->velocity *= 0.995f;
-
-	//	rigidbody->Prepare(delta_time);
-	//}
-
-	//// colliderの準備
-	//for (int i = 0; i < colliders.size(); i++)
-	//{
-	//	colliders[i]->ResetHits();
-	//	colliders[i]->Prepare();
-
-	//	octree_objects_[i]->aabb = colliders[i]->GetAABB();
-	//	octree_->Regist(octree_objects_[i].get());
-	//}
 
 	// 衝突判定
 	std::vector<Collider*> collision_list;
@@ -97,8 +83,8 @@ void CollisionManager::Update(const float delta_time)
 
 	for (int i = 0; i < collision_list.size(); i += 2)
 	{
-		auto& collider1 = collision_list[i];
-		auto& collider2 = collision_list[i + 1];
+		auto collider1 = collision_list[i];
+		auto collider2 = collision_list[i + 1];
 
 		// 衝突判定
 		if (collider1->Intersects(collider2))
@@ -109,7 +95,7 @@ void CollisionManager::Update(const float delta_time)
 	}
 	
 	// 衝突応答
-	for (auto& rigidbody : rigidbodies)
+	for (auto rigidbody : rigidbodies)
 	{
 		rigidbody->Resolve(delta_time);
 	}
@@ -117,13 +103,15 @@ void CollisionManager::Update(const float delta_time)
 	for (int i = 0; i < 2; i++)
 	{
 		// 準備
-		for (auto i = 0; i < colliders.size(); i++)
+		for (auto& octree_object : octree_objects)
 		{
-			colliders[i]->Prepare();
+			auto collider = octree_object->object;
 
-			octree_objects_[i]->Remove();
-			octree_objects_[i]->aabb = colliders[i]->GetAABB();
-			octree_->Regist(octree_objects_[i].get());
+			collider->Prepare();
+
+			octree_object->Remove();
+			octree_object->aabb = collider->GetAABB();
+			octree_->Regist(octree_object.get());
 		}
 
 		// 衝突判定
@@ -132,8 +120,8 @@ void CollisionManager::Update(const float delta_time)
 
 		for (int j = 0; j < collision_list.size(); j += 2)
 		{
-			auto& collider1 = collision_list[j];
-			auto& collider2 = collision_list[j + 1];
+			auto collider1 = collision_list[j];
+			auto collider2 = collision_list[j + 1];
 
 			// 衝突判定
 			if (collider1->Intersects(collider2))
@@ -144,13 +132,13 @@ void CollisionManager::Update(const float delta_time)
 		}
 
 		// 衝突応答
-		for (auto& rigidbody : rigidbodies_)
+		for (auto rigidbody : rigidbodies)
 		{
 			rigidbody->Resolve(delta_time);
 		}
 	}
 
-	for (auto& rigidbody : rigidbodies_)
+	for (auto rigidbody : rigidbodies)
 	{
 		// 位置の更新
 		rigidbody->transform->position = rigidbody->position;
@@ -173,15 +161,15 @@ void CollisionManager::Add(Collider* collider)
 {
 	colliders_.push_back(collider);
 
-	auto entity = collider->GetEntity();
-	auto obj = std::make_unique<OctreeObject<Collider>>();
+	//auto entity = collider->GetEntity();
+	//auto obj = std::make_unique<OctreeObject<Collider>>();
 
-	obj->object = collider;
-	obj->group = entity;
-	obj->layer = layer_manager_->GetLayerIndex(entity->layer);
+	//obj->object = collider;
+	//obj->group = entity;
+	//obj->layer = layer_manager_->GetLayerIndex(entity->layer);
 
-	// Octreeに追加
-	octree_objects_.push_back(std::move(obj));
+	//// Octreeに追加
+	//octree_objects_.push_back(std::move(obj));
 }
 
 void CollisionManager::Add(Rigidbody* rigidbody)
@@ -198,15 +186,15 @@ void CollisionManager::Remove(Collider* collider)
 		colliders_.end()
 	);
 
-	auto it = std::find_if(octree_objects_.begin(), octree_objects_.end(), [&collider](std::unique_ptr<OctreeObject<Collider>>& obj) {
-		return obj->object == collider;
-		});
-	
-	if (it != octree_objects_.end())
-	{
-		(*it)->Remove();
-		octree_objects_.erase(it);
-	}
+	//auto it = std::find_if(octree_objects_.begin(), octree_objects_.end(), [&collider](std::unique_ptr<OctreeObject<Collider>>& obj) {
+	//	return obj->object == collider;
+	//	});
+	//
+	//if (it != octree_objects_.end())
+	//{
+	//	(*it)->Remove();
+	//	octree_objects_.erase(it);
+	//}
 }
 
 void CollisionManager::Remove(Rigidbody* rigidbody)

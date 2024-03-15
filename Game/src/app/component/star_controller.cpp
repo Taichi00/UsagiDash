@@ -7,10 +7,12 @@
 #include "game/game.h"
 #include "math/easing.h"
 #include "game/component/particle_emitter.h"
+#include "game/component/audio/audio_source.h"
 
-StarController::StarController(ParticleEmitter* confetti)
+StarController::StarController(ParticleEmitter* confetti, AudioSource* audio_twinkle)
 {
 	confetti_ = confetti;
+	audio_twinkle_ = audio_twinkle;
 }
 
 StarController::~StarController()
@@ -19,6 +21,9 @@ StarController::~StarController()
 
 bool StarController::Init()
 {
+	// ƒLƒ‰ƒLƒ‰‰¹‚ğÄ¶
+	audio_twinkle_->Play(1, true);
+
 	return true;
 }
 

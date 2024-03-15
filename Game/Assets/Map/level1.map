@@ -1104,29 +1104,24 @@
 // entity 62
 {
 "classname" "item_coin"
-"origin" "3648 -528 320"
+"origin" "2432 1248 672"
 }
 // entity 63
 {
 "classname" "item_coin"
-"origin" "2432 1248 672"
+"origin" "2464 1248 672"
 }
 // entity 64
 {
 "classname" "item_coin"
-"origin" "2464 1248 672"
+"origin" "2464 1216 672"
 }
 // entity 65
 {
 "classname" "item_coin"
-"origin" "2464 1216 672"
-}
-// entity 66
-{
-"classname" "item_coin"
 "origin" "2432 1216 672"
 }
-// entity 67
+// entity 66
 {
 "classname" "jump_rift"
 "origin" "3648 -864 288"
@@ -1135,7 +1130,7 @@
 "dir_y" "1"
 "distance" "15"
 }
-// entity 68
+// entity 67
 {
 "classname" "jump_rift"
 "origin" "3488 -1216 496"
@@ -1144,93 +1139,93 @@
 "dir_y" "1"
 "distance" "15"
 }
-// entity 69
+// entity 68
 {
 "classname" "item_coin"
 "origin" "3488 -1216 688"
 }
-// entity 70
+// entity 69
 {
 "classname" "item_coin"
 "origin" "3488 -1216 736"
 }
-// entity 71
+// entity 70
 {
 "classname" "item_coin"
 "origin" "3488 -1216 784"
 }
-// entity 72
+// entity 71
 {
 "classname" "item_coin"
 "origin" "3488 -1216 832"
 }
-// entity 73
+// entity 72
 {
 "classname" "item_coin"
 "origin" "3488 -1216 880"
 }
-// entity 74
+// entity 73
 {
 "classname" "item_coin"
 "origin" "3488 -1216 928"
 }
-// entity 75
+// entity 74
 {
 "classname" "item_coin"
 "origin" "3488 -1216 976"
 }
-// entity 76
+// entity 75
 {
 "classname" "item_coin"
 "origin" "3488 -1216 1024"
 }
-// entity 77
+// entity 76
 {
 "classname" "item_coin"
 "origin" "3488 -1216 640"
 }
-// entity 78
+// entity 77
 {
 "classname" "item_coin"
 "origin" "3648 -864 400"
 }
-// entity 79
+// entity 78
 {
 "classname" "item_coin"
 "origin" "3648 -864 448"
 }
-// entity 80
+// entity 79
 {
 "classname" "item_coin"
 "origin" "3648 -864 496"
 }
-// entity 81
+// entity 80
 {
 "classname" "item_coin"
 "origin" "3648 -864 544"
 }
-// entity 82
+// entity 81
 {
 "classname" "item_coin"
 "origin" "3648 -864 592"
 }
-// entity 83
+// entity 82
 {
 "classname" "item_coin"
 "origin" "3648 -576 320"
 }
-// entity 84
+// entity 83
 {
 "classname" "item_coin"
 "origin" "3648 -624 320"
 }
-// entity 85
+// entity 84
 {
 "classname" "star"
 "origin" "3088 -1632 1040"
 "angle" "315"
 }
-// entity 86
+// entity 85
 {
 "classname" "info_player_start"
 "origin" "0 0 24"

@@ -122,8 +122,11 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	AddComponent(new Rigidbody(1, true, false, 0));
 	AddComponent(new Animator(model->animations));
 
-	auto audio_jump = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/Retro Jump Classic 08.wav"));
-	auto audio_footstep = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/bubble_pop_.wav"));
+	auto audio_jump = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/cartoon-jump-6462.wav"));
+	auto audio_dashjump = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/DM-CGS-07.wav"));
+	auto audio_walljump = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/soccer-ball-kick-37625.wav"));
+	auto audio_footstep = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/DM-CGS-32.wav"));
+	auto audio_landing = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/MI_SFX 24.wav"));
 
 	PlayerController2::Property player_prop = {};
 	player_prop.speed = 18;
@@ -134,10 +137,12 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	player_prop.dashjump_power = 5.4f;
 	player_prop.dashjump_speed = 26;
 	player_prop.dash_speed = 24;
-	//player_prop.dashjump_speed = 4;
 	player_prop.walljump_kick_power = 15;
 	player_prop.audio_jump = audio_jump;
+	player_prop.audio_dashjump = audio_dashjump;
+	player_prop.audio_walljump = audio_walljump;
 	player_prop.audio_footstep = audio_footstep;
+	player_prop.audio_landing = audio_landing;
 
 	AddComponent(new PlayerController2(player_prop));
 	AddComponent(new PauseBehavior());

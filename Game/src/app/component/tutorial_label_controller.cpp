@@ -3,6 +3,13 @@
 #include "game/component/animator.h"
 #include "game/component/gui/label.h"
 #include "app/component/tutorial_text_controller.h"
+#include "game/component/audio/audio_source.h"
+
+TutorialLabelController::TutorialLabelController(AudioSource* audio_show, AudioSource* audio_hide)
+{
+    audio_show_ = audio_show;
+    audio_hide_ = audio_hide;
+}
 
 bool TutorialLabelController::Init()
 {
@@ -25,6 +32,7 @@ void TutorialLabelController::Show(const std::string& text, TutorialTextControll
 
     label_->SetText(text);
     animator_->Play("show", 1, false);
+    audio_show_->Play(0.5f);
 
     tutorial_ = tutorial;
 }
@@ -32,6 +40,7 @@ void TutorialLabelController::Show(const std::string& text, TutorialTextControll
 void TutorialLabelController::Hide()
 {
     animator_->Play("hide", 1, false);
+    audio_hide_->Play(0.5f);
 
     tutorial_ = nullptr;
 }

@@ -20,6 +20,8 @@ public:
 	void Update(const float delta_time);
 
 	void Play(const float volume = 1.0f, const bool loop = false);
+	void Playing(const float volume = 1.0f, const bool loop = false);
+	void Stop();
 
 	void SetVolume(const float volume);
 	void SetPitch(const float pitch);

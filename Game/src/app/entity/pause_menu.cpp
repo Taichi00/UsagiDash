@@ -2,9 +2,13 @@
 #include "game/component/all_components.h"
 #include "app/component/game_manager.h"
 #include "app/scene/title_scene.h"
+#include "game/game.h"
+#include "game/component/audio/audio_source.h"
 
 PauseMenu::PauseMenu() : Entity("pause_menu")
 {
+	auto game = Game::Get();
+
 	{
 		PanelProperty prop = {};
 		prop.color = Color(0, 0, 0, 0.1f);
@@ -142,8 +146,13 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 			animations.push_back(animation);
 		}
 
+		auto audio_press = game->LoadResource<Audio>(L"assets/se/abs-popup-3.wav");
+		auto audio_hover = game->LoadResource<Audio>(L"assets/se/MI_SFX 25.wav");
+
 		auto resume_button = new Entity("resume_button");
 		{
+			auto as_press = resume_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = resume_button->AddComponent<AudioSource>(audio_hover);
 			auto button = resume_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"つづける",
 				text_prop,
@@ -151,6 +160,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 				[]() {
 					GameManager::Get()->Resume();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			resume_button->AddComponent<Animator>(new Animator(animations));
@@ -167,6 +178,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 
 		auto option_button = new Entity("option_button");
 		{
+			auto as_press = option_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover);
 			auto button = option_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"フルスクリーン",
 				text_prop,
@@ -174,6 +187,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 				[]() {
 					Game::Get()->ToggleFullscreen();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			option_button->AddComponent<Animator>(new Animator(animations));
@@ -190,6 +205,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 
 		auto exit_button = new Entity("exit_button");
 		{
+			auto as_press = exit_button->AddComponent<AudioSource>(audio_press);
+			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover);
 			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"タイトルにもどる",
 				text_prop,
@@ -197,6 +214,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 				[]() {
 					GameManager::Get()->LoadTitle();
 				},
+				as_press,
+				as_hover,
 				false
 			));
 			exit_button->AddComponent<Animator>(new Animator(animations));

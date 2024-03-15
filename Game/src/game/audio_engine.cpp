@@ -158,6 +158,12 @@ void AudioEngine::PlayWaveSound(const WaveData& wave_data, IXAudio2SourceVoice* 
     source_voice->Start();
 }
 
+void AudioEngine::Stop(IXAudio2SourceVoice* source_voice)
+{
+    source_voice->Stop();
+    source_voice->FlushSourceBuffers();
+}
+
 void AudioEngine::SetVolume(IXAudio2SourceVoice* source_voice, float volume)
 {
     source_voice->SetVolume(volume);

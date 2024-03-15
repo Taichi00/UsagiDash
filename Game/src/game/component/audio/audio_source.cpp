@@ -55,12 +55,30 @@ void AudioSource::Update(const float delta_time)
 
 void AudioSource::Play(const float volume, const bool loop)
 {
+	if (is_playing_)
+	{
+		engine_->Stop(source_voice_);
+	}
+
 	is_playing_ = true;
 
 	if (is_3d_)
 		UpdateEmitterState();
 
 	engine_->PlayWaveSound(*audio_->Data(), source_voice_, volume, loop);
+}
+
+void AudioSource::Playing(const float volume, const bool loop)
+{
+	if (is_playing_)
+		return;
+
+	Play(volume, loop);
+}
+
+void AudioSource::Stop()
+{
+	engine_->Stop(source_voice_);
 }
 
 void AudioSource::SetVolume(const float volume)

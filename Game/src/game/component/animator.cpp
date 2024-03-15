@@ -50,16 +50,13 @@ void Animator::AfterUpdate(const float delta_time)
 	}
 
 	float ticks_per_second = current_animation_->TicksPerSecond();
-	ticks_per_second != 0 ? ticks_per_second : 25.0f;
-
-	float time_in_ticks = current_time_ * ticks_per_second;
-	float anim_time = time_in_ticks;
+	float anim_time = current_time_ * ticks_per_second;
 
 	bool end_flag = false;
 
 	if (loop_) // ƒ‹[ƒvÄ¶‚Ìê‡
 	{
-		anim_time = (float)fmod(anim_time, current_animation_->Duration());
+		anim_time = std::fmod(anim_time, current_animation_->Duration());
 	}
 	else
 	{
@@ -94,6 +91,7 @@ void Animator::AfterUpdate(const float delta_time)
 		}
 	}
 	
+	previous_time_ = current_time_;
 	current_time_ += 60.0f / 100.0f * speed_ * delta_time;
 
 	if (end_flag)

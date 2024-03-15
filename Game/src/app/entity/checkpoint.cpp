@@ -14,7 +14,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 {
 	auto game = Game::Get();
 	auto model = game->LoadResource<Model>(L"assets/model/object/flag.gltf");
-	auto audio = game->LoadResource<Audio>(L"assets/se/confirmation_002.wav");
+	auto audio = game->LoadResource<Audio>(L"assets/se/cute-level-up-3-189853.wav");
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(5));

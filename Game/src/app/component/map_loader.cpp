@@ -7,7 +7,7 @@
 #include "math/quaternion.h"
 #include "app/component/game_manager.h"
 #include "app/entity/metal_ball_emitter.h"
-#include "app/entity/jump_rift.h"
+#include "app/entity/jump_lift.h"
 #include "app/entity/star.h"
 
 MapLoader::MapLoader(const std::wstring& path)
@@ -105,7 +105,7 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 		else if (class_name == "jump_rift")
 		{
 			// ジャンプリフト
-			new_entity = new JumpRift(
+			new_entity = new JumpLift(
 				Vec3(
 					MapFileParser::ToFloat(pairs.at("dir_x")),
 					MapFileParser::ToFloat(pairs.at("dir_y")),

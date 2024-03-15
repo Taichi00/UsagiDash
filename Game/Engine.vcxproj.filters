@@ -348,16 +348,19 @@
     <ClCompile Include="src\app\entity\metal_ball_emitter.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\entity\jump_rift.cpp">
+    <ClCompile Include="src\app\entity\jump_lift.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\app\component\jump_rift_controller.cpp">
+    <ClCompile Include="src\app\component\jump_lift_controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\app\entity\star.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\app\component\star_controller.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\app\component\metal_ball_controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -731,16 +734,19 @@
     <ClInclude Include="src\app\entity\metal_ball_emitter.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\entity\jump_rift.h">
+    <ClInclude Include="src\app\entity\jump_lift.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\app\component\jump_rift_controller.h">
+    <ClInclude Include="src\app\component\jump_lift_controller.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\entity\star.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\component\star_controller.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\app\component\metal_ball_controller.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

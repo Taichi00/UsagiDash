@@ -81,7 +81,7 @@ public:
 	void AddChannel(const Channel& channel);
 
 	void SetName(const std::string& name) { name_ = name; }
-	void SetTicksPerSecond(float ticks) { ticks_per_second_ = ticks; }
+	void SetTicksPerSecond(float ticks);
 	void SetDuration(float duration) { duration_ = duration; }
 
 	const std::vector<Channel>& Channels() const { return channels_; }

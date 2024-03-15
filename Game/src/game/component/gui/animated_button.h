@@ -3,6 +3,7 @@
 #include "game/component/gui/button.h"
 
 class Animator;
+class AudioSource;
 
 class AnimatedButton : public Button
 {
@@ -12,6 +13,8 @@ public:
 		const TextProperty& text_prop,
 		const PanelProperty& panel_prop,
 		const std::function<void()>& function,
+		AudioSource* audio_press = nullptr,
+		AudioSource* audio_hover = nullptr,
 		const bool fit = true
 	);
 	~AnimatedButton();
@@ -24,4 +27,6 @@ public:
 
 private:
 	Animator* animator_ = nullptr;
+	AudioSource* audio_press_ = nullptr;
+	AudioSource* audio_hover_ = nullptr;
 };

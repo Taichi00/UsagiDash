@@ -6,6 +6,8 @@
 #include "app/component/pause_behavior.h"
 #include "app/component/entity_height_destroyer.h"
 #include "game/game.h"
+#include "game/component/audio/audio_source.h"
+#include "app/component/metal_ball_controller.h"
 
 MetalBall::MetalBall(const float radius) : Entity("metal_ball", "object", "object")
 {
@@ -14,6 +16,10 @@ MetalBall::MetalBall(const float radius) : Entity("metal_ball", "object", "objec
 	AddComponent(new MeshRenderer(game->LoadResource<Model>(L"assets/model/object/metal_ball.gltf")));
 	AddComponent(new SphereCollider(radius));
 	AddComponent(new Rigidbody(10, true, false, 0.0f));
+
+	auto audio_rolling = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/rolling-metal-barrel-96710.wav"), 80.0f);
+
+	AddComponent(new MetalBallController(audio_rolling));
 	AddComponent(new EntityHeightDestroyer(-40));
 	AddComponent(new PauseBehavior());
 

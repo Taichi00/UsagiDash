@@ -63,55 +63,6 @@ bool Level1Scene::Init()
 		SetMainCamera(camera);
 	}
 
-	{
-		std::vector<Entity*> objects;
-		std::shared_ptr sphereModel = SphereMesh::Load(1, 0.72f, 0, 0);
-		std::shared_ptr capsuleModel = CapsuleMesh::Load(2, 2, 0.72f, 0, 0);
-
-		for (int i = 0; i < 0; i++)
-		{
-			std::shared_ptr<Model> model;
-			auto object = new Entity("object " + std::to_string(i + 1), "object", "object");
-			/*
-			if (i % 2 == 1)
-			{
-				object->AddComponent(new CapsuleCollider({ 2, 2 }));
-				model = capsuleModel;
-			}
-			else
-			{*/
-			object->AddComponent(new SphereCollider(1));
-			model = sphereModel;
-			//}
-
-			object->AddComponent(new MeshRenderer(model));
-			object->AddComponent(new Rigidbody(0.5f, true, false, 0.1f));
-			object->AddComponent(new PauseBehavior());
-			CreateEntity(object);
-			objects.push_back(object);
-
-			auto pos = Vec3(frand(mt) * 20, frand(mt) * 10 + 10, frand(mt) * 20);
-			//object->transform->position = Vec3(10 * (i + 1), 10, 0);
-			object->transform->position = pos;
-		}
-	}
-
-	enemy = new Entity("enemy", "enemy", "object");
-	{
-		auto model = LoadResource<Model>(L"assets/model/character/Enemy.gltf");
-		enemy->AddComponent(new MeshRenderer(model));
-		enemy->AddComponent(new SphereCollider(1.5f));
-		enemy->AddComponent(new Rigidbody(0.5, true, false, 0.5f));
-		enemy->AddComponent(new Animator(model->animations));
-		enemy->AddComponent(new PauseBehavior());
-
-		enemy->GetComponent<Collider>()->offset = Vec3(0, 1.5f, 0);
-		enemy->transform->position = Vec3(-5, 0, -5);
-		enemy->transform->scale = Vec3(2, 2, 2);
-		CreateEntity(enemy);
-		enemy->GetComponent<Animator>()->Play("Walk", 2.0f);
-	}
-
 	auto map = new Entity("map", "map", "map");
 	{
 		map->AddComponent(new MeshRenderer(LoadResource<Model>(L"assets/map/level1.obj")));
@@ -231,7 +182,6 @@ bool Level1Scene::Init()
 			camera->GetComponent<CameraController>(),
 			coin_gui->Child("coin_label")->GetComponent<Label>()
 		));
-		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/y014_m.wav"), 100.f));
 
 		CreateEntity(game_manager);
 	}

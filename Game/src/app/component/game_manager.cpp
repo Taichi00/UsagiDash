@@ -17,7 +17,12 @@
 
 GameManager* GameManager::instance_ = nullptr;
 
-GameManager::GameManager(const SceneState state, PlayerController2* player, CameraController* camera, Label* coin_label)
+GameManager::GameManager(
+	const SceneState state, 
+	PlayerController2* player, 
+	CameraController* camera, 
+	Label* coin_label
+)
 {
 	scene_state_ = state;
 	player_ = player;
@@ -44,11 +49,13 @@ bool GameManager::Init()
 	GetScene()->DontDestroyOnLoad(GetEntity());
 
 	// audio source ‚ğæ“¾
-	audio_source_ = GetEntity()->GetComponent<AudioSource>();
+	audio_bgm_ = GetEntity()->GetComponent<AudioSource>();
 
 	// BGM ‚ğÄ¶
-	if (audio_source_)
-		audio_source_->Play(0.3f, true);
+	if (audio_bgm_)
+	{
+		audio_bgm_->Play(0.3f, true);
+	}
 
 	// coin label ‚Ì‰Šú‰»
 	if (coin_label_)

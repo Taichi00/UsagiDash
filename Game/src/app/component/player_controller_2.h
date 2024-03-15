@@ -35,8 +35,14 @@ public:
 		float walljump_kick_power;
 		// ジャンプの音
 		AudioSource* audio_jump;
+		// ダッシュジャンプの音
+		AudioSource* audio_dashjump;
+		// 壁ジャンプの音
+		AudioSource* audio_walljump;
 		// 足音
 		AudioSource* audio_footstep;
+		// 着地音
+		AudioSource* audio_landing;
 	};
 
 	PlayerController2(const Property& prop);
@@ -80,6 +86,8 @@ private:
 
 	// 拡縮アニメーション
 	void ScaleAnimation(const Vec3& velocity, const float delta_time);
+	// 足音を再生する
+	void PlayFootStep();
 	// カメラ回転を考慮した移動方向ベクトルを取得
 	Vec3 GetMoveDirection(const Vec2& input);
 	// アナログ入力を考慮した最大移動速度を取得
@@ -148,10 +156,8 @@ private:
 	float dash_frame_ = 0;
 	float dash_frame_max_ = 120;
 
+	// 現在の速度
 	float current_speed_ = 0;
-
-	// 足音用のカウンター
-	float footstep_count_ = 0;
 
 	Animator* animator_ = nullptr;
 	Rigidbody* rigidbody_ = nullptr;
@@ -160,7 +166,11 @@ private:
 	ParticleEmitter* circle_smoke_emitter_ = nullptr;
 	ParticleEmitter* wall_slide_smoke_emitter_ = nullptr;
 	AudioSource* audio_jump_ = nullptr;
+	AudioSource* audio_dashjump_ = nullptr;
+	AudioSource* audio_walljump_ = nullptr;
 	AudioSource* audio_footstep_ = nullptr;
+	AudioSource* audio_landing_ = nullptr;
+
 
 	class IdleState : public State<PlayerController2>
 	{

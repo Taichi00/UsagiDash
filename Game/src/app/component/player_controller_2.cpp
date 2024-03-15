@@ -21,7 +21,10 @@ PlayerController2::PlayerController2(const Property& prop)
 	walljump_kick_power_ = prop.walljump_kick_power;
 
 	audio_jump_ = prop.audio_jump;
+	audio_dashjump_ = prop.audio_dashjump;
+	audio_walljump_ = prop.audio_walljump;
 	audio_footstep_ = prop.audio_footstep;
+	audio_landing_ = prop.audio_landing;
 }
 
 PlayerController2::~PlayerController2()
@@ -145,6 +148,9 @@ void PlayerController2::Run(const float delta_time)
 
 	// 拡縮アニメーション
 	ScaleAnimation(velocity_, delta_time);
+
+	// 足音
+	PlayFootStep();
 }
 
 void PlayerController2::Jump(const float jump_frame, const float delta_time)
@@ -326,6 +332,9 @@ void PlayerController2::Dash(const float delta_time)
 
 	// 拡縮アニメーション
 	ScaleAnimation(velocity_, delta_time);
+
+	// 足音
+	PlayFootStep();
 }
 
 void PlayerController2::SlidingWall(const float delta_time)
@@ -418,6 +427,35 @@ void PlayerController2::ScaleAnimation(const Vec3& velocity, const float delta_t
 	transform->scale = Vec3::Lerp(transform->scale, scale, 0.3f);
 }
 
+void PlayerController2::PlayFootStep()
+{
+	auto animation = animator_->CurrentAnimation();
+
+	if (!animation)
+		return;
+
+	auto duration = animation->Duration();
+	auto ticks_per_second = animation->TicksPerSecond();
+
+	auto time = animator_->CurrentTime() * ticks_per_second;
+	auto prev_time = animator_->PreviousTime() * ticks_per_second;
+
+	time = std::fmod(time, duration);
+	prev_time = std::fmod(prev_time, duration);
+
+	if (time < prev_time)
+		prev_time -= duration;
+
+	float t1 = 0;
+	float t2 = duration * 0.5f;
+
+	if ((prev_time <= t1 && t1 < time) || (prev_time <= t2 && t2 < time))
+	{
+		audio_footstep_->SetPitch(0.8f);
+		audio_footstep_->Play(0.5f);
+	}
+}
+
 Vec3 PlayerController2::GetMoveDirection(const Vec2& input)
 {
 	auto camera = GetEntity()->GetScene()->GetMainCamera();
@@ -486,10 +524,11 @@ void PlayerController2::IdleState::OnStateBegin(State* prev_state)
 	// アニメーション
 	object->animator_->Play("Idle", 2);
 
-	// パーティクル
 	{
+		// 着地
 		if (!object->is_grounded_prev_&& object->air_frame_ > 10)
 		{
+			object->audio_landing_->Play(0.5f);
 			object->circle_smoke_emitter_->Emit();
 		}
 	}
@@ -541,12 +580,13 @@ void PlayerController2::IdleState::Update(const float delta_time)
 void PlayerController2::RunState::OnStateBegin(State* prev_state)
 {
 	// アニメーション
-	object->animator_->Play("Run", 2);
+	object->animator_->Playing("Run", 2);
 
-	// パーティクル
 	{
+		// 着地
 		if (!object->is_grounded_prev_ && object->air_frame_ > 10)
 		{
+			object->audio_landing_->Play(0.5f);
 			object->circle_smoke_emitter_->Emit();
 		}
 
@@ -786,7 +826,7 @@ void PlayerController2::DashjumpState::OnStateBegin(State* prev_state)
 	object->jump_smoke_emitter_->Emit();
 
 	// サウンド
-	object->audio_jump_->Play(0.5f);
+	object->audio_dashjump_->Play(0.5f);
 
 	auto input = Vec2(
 		Input::GetAxis("horizontal"),
@@ -880,10 +920,11 @@ void PlayerController2::DashState::OnStateBegin(State* prev_state)
 	// アニメーション
 	object->animator_->Play("Run", 2);
 
-	// パーティクル
 	{
+		// 着地
 		if (!object->is_grounded_prev_ && object->air_frame_ > 10)
 		{
+			object->audio_landing_->Play(0.5f);
 			object->circle_smoke_emitter_->Emit();
 		}
 
@@ -1039,7 +1080,7 @@ void PlayerController2::WalljumpState::OnStateBegin(State* prev_state)
 	object->jump_smoke_emitter_->Emit();
 
 	// サウンド
-	object->audio_jump_->Play(0.5f);
+	object->audio_walljump_->Play(0.5f);
 
 	Vec3 wall_normal = object->wall_normal_; 
 	auto wall_dir = Vec3::Scale(wall_normal, 1, 0, 1).Normalized();
