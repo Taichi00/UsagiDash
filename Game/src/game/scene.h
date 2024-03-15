@@ -44,38 +44,42 @@ public:
 	void DrawPostProcess();
 	void DrawFXAA();
 
+	// エンティティを生成する
 	Entity* CreateEntity(Entity* entity);
+
+	// 削除するエンティティのリストに追加する
 	void AddDestroyEntity(Entity* entity);
 
 	// シーン破棄時に破棄しないエンティティを追加
 	bool DontDestroyOnLoad(Entity* entity);
 	std::vector<std::unique_ptr<Entity>> MoveDontDestroyEntities();
 
+	// 名前からエンティティを取得する
 	Entity* FindEntity(const std::string& name);
 	Entity* FindEntityWithTag(const std::string& tag);
 
+	// ルートエンティティを取得する
 	Entity* RootEntity();
 
+	// メインカメラを設定する
 	void SetMainCamera(Entity* camera);
 	Camera* GetMainCamera();
 
-	//ShadowMap* GetShadowMap();
-
-	//CollisionManager* GetCollisionManager();
-
+	// スカイボックスを設定する
 	void SetSkybox(const std::wstring& path);
 
-	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)	// リソースを読み込む
+	// リソースを読み込む
+	template<class T> std::shared_ptr<T> LoadResource(const std::wstring& path)
 	{
 		return Game::Get()->LoadResource<T>(path);
 	}
-	
 
 private:
 	bool PreparePSO();
 	void UpdateCB();
 	void UpdateEntityList();
 
+	// エンティティを削除する
 	void DestroyEntities();
 
 	// 指定したメソッドを再帰的に実行する

@@ -74,8 +74,8 @@ TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 			channel.gui.name = "control";
 			channel.gui.color_keys = {
 				{ 0, Easing::LINEAR, Color(1, 1, 1, 1) },
-				{ 0.15f, Easing::LINEAR, Color(0.35f, 1, 0.4f, 1) },
-				{ 0.8f, Easing::LINEAR, Color(0.35f, 1, 0.4f, 1) },
+				{ 0.05f, Easing::LINEAR, Color(0.35f, 1, 0.4f, 1) },
+				{ 0.9f, Easing::LINEAR, Color(0.35f, 1, 0.4f, 1) },
 				{ 1, Easing::LINEAR, Color(0.35f, 1, 0.4f, 0) },
 			};
 			animation->AddChannel(channel);
@@ -86,9 +86,7 @@ TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 			channel.gui.name = "control";
 			channel.gui.scale_keys = {
 				{ 0, Easing::LINEAR, Vec2(0.8f, 0.8f) },
-				{ 0.15f, Easing::OUT_BACK, Vec2(1.1f, 1.1f) },
-				/*{ 0.8f, Easing::LINEAR, Vec2(1.1f, 1.1f) },
-				{ 1, Easing::IN_QUAD, Vec2(0.8f, 0.8f) }*/
+				{ 0.15f, Easing::OUT_BACK, Vec2(1.0f, 1.0f) },
 			};
 			animation->AddChannel(channel);
 		}
@@ -98,12 +96,12 @@ TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 			channel.gui.name = "control";
 			channel.gui.position_keys = {
 				{ 0, Easing::LINEAR, position },
-				{ 0.7f, Easing::LINEAR, position },
-				{ 1, Easing::IN_CUBIC, position - Vec2(0, 30) },
+				{ 0.8f, Easing::LINEAR, position },
+				{ 1, Easing::IN_QUAD, position - Vec2(0, 30) },
 			};
 			animation->AddChannel(channel);
 		}
-		animation->SetDuration(1);
+		animation->SetDuration(1.0f);
 		animation->SetTicksPerSecond(1);
 
 		animations.push_back(animation);

@@ -129,10 +129,9 @@ float Window::AspectRate()
 	return (float)width_ / (float)height_;
 }
 
-double Window::TimeAdjustment()
+void Window::TimeAdjustment()
 {
 	double frame_time = static_cast<double>(time_end_.QuadPart - time_start_.QuadPart) / static_cast<double>(time_freq_.QuadPart);
-	double fps = 0.0;
 
 	// —]—T‚ª‚ ‚ê‚Î‚»‚Ì•ª‘Ò‚Â
 	if (frame_time < frame_time_)
@@ -142,12 +141,7 @@ double Window::TimeAdjustment()
 		timeBeginPeriod(1);
 		Sleep(sleep_time);
 		timeEndPeriod(1);
-		//return 0;
 	}
-
-	fps = 1.0 / frame_time;
-	//printf("%f\n", fps);
-	return fps;
 }
 
 void Window::TickTime()

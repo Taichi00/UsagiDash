@@ -118,8 +118,8 @@ void PlayerController2::Run(const float delta_time)
 		velocity_ += move_direction * acceleration * delta_time;
 
 		// 坂を滑らないように力を加える
-		Vec3 gravity = Vec3(0, -64.8f, 0) * delta_time;
-		velocity_ += (-gravity + rigidbody_->floor_normal * gravity.y);
+		//Vec3 gravity = Vec3(0, -64.8f, 0) * delta_time;
+		//velocity_ += (-gravity + rigidbody_->floor_normal * gravity.y);
 
 		// xz 最大速度を制限する
 		Vec3 velocity_xz = Vec3::Scale(velocity_, 1, 0, 1);
@@ -406,10 +406,14 @@ void PlayerController2::Walljump(const float jump_frame, const float delta_time)
 
 void PlayerController2::ScaleAnimation(const Vec3& velocity, const float delta_time)
 {
-	Vec3 scale;
-	scale.y = std::abs(velocity.y * delta_time) * 0.9f + 1;
-	scale.x = 1 - std::abs(velocity.y * delta_time) * 0.2f;
-	scale.z = 1 - std::abs(velocity.y * delta_time) * 0.2f;
+	Vec3 scale = Vec3(1, 1, 1);
+
+	if (!is_grounded_)
+	{
+		scale.y = std::abs(velocity.y * delta_time) * 0.9f + 1;
+		scale.x = 1 - std::abs(velocity.y * delta_time) * 0.2f;
+		scale.z = 1 - std::abs(velocity.y * delta_time) * 0.2f;
+	}
 
 	transform->scale = Vec3::Lerp(transform->scale, scale, 0.3f);
 }
@@ -429,7 +433,7 @@ Vec3 PlayerController2::GetMoveDirection(const Vec2& input)
 
 float PlayerController2::GetMaxSpeed(const Vec2& input)
 {
-	float speed = speed_;
+	float speed = current_speed_;
 
 	// ゲームパッドならスティックの倒し具合に応じて最大速度を変更する
 	if (Input::CurrentInputType() == Input::InputType::GAMEPAD)
@@ -437,9 +441,9 @@ float PlayerController2::GetMaxSpeed(const Vec2& input)
 		float input_len = input.Length();
 		float velocity_len = Vec3::Scale(velocity_, 1, 0, 1).Length();
 
-		if (velocity_len < speed_ * input_len * 1.1f)
+		if (velocity_len < current_speed_ * input_len * 1.1f)
 		{
-			speed = speed_ * input_len;
+			speed = current_speed_ * input_len;
 		}
 		else
 		{
@@ -463,7 +467,7 @@ void PlayerController2::WallRaycast()
 	float distance = 2;
 
 	RaycastHit hit;
-	if (Physics::Raycast(origin, direction, distance, hit, { "map" }))
+	if (Physics::Raycast(origin, direction, distance, hit, { "map", "object" }))
 	{
 		wall_normal_ = hit.normal;
 		is_touching_wall_ = true;
@@ -491,6 +495,7 @@ void PlayerController2::IdleState::OnStateBegin(State* prev_state)
 	}
 
 	object->dash_frame_ = 0;
+	object->current_speed_ = object->speed_;
 }
 
 void PlayerController2::IdleState::OnStateEnd(State* next_state)
@@ -549,6 +554,7 @@ void PlayerController2::RunState::OnStateBegin(State* prev_state)
 	}
 
 	object->is_running_ = true;
+	object->current_speed_ = object->speed_;
 }
 
 void PlayerController2::RunState::OnStateEnd(State* next_state)
@@ -625,8 +631,11 @@ void PlayerController2::JumpState::OnStateBegin(State* prev_state)
 	// サウンド
 	object->audio_jump_->Play(0.5f);
 
+	object->velocity_.y = std::max(object->velocity_.y, 0.0f);
+
 	object->dash_frame_ = 0;
 	jump_frame_ = object->jump_frame_max_;
+	object->current_speed_ = object->speed_;
 }
 
 void PlayerController2::JumpState::OnStateEnd(State* next_state)
@@ -685,7 +694,7 @@ void PlayerController2::JumpState::Update(const float delta_time)
 
 	object->Jump(jump_frame_, delta_time);
 
-	jump_frame_ -= 60.0f * delta_time;
+	jump_frame_ -= 1;//60.0f * delta_time;
 }
 
 // --------------------------------------------------------------
@@ -702,7 +711,7 @@ void PlayerController2::InAirState::OnStateBegin(State* prev_state)
 		Vec3 origin = object->transform->position + Vec3(0, 0, 0);
 		Vec3 direction = Vec3(0, -1, 0);
 		RaycastHit hit;
-		if (Physics::Raycast(origin, direction, 1, hit, { "map" }))
+		if (Physics::Raycast(origin, direction, 1, hit, { "map", "object" }))
 		{
 			object->velocity_.y = -hit.distance;
 		}
@@ -800,6 +809,7 @@ void PlayerController2::DashjumpState::OnStateBegin(State* prev_state)
 	}
 
 	jump_frame_ = object->jump_frame_max_;
+	object->current_speed_ = object->dashjump_speed_;
 }
 
 void PlayerController2::DashjumpState::OnStateEnd(State* next_state)
@@ -859,7 +869,7 @@ void PlayerController2::DashjumpState::Update(const float delta_time)
 	object->Dashjump(jump_frame_, delta_time);
 
 	object->dash_frame_ = object->dash_frame_max_;
-	jump_frame_ -= 60.0f * delta_time;
+	jump_frame_ -= 1;//60.0f * delta_time;
 }
 
 // --------------------------------------------------------------
@@ -881,6 +891,7 @@ void PlayerController2::DashState::OnStateBegin(State* prev_state)
 	}
 
 	object->is_running_ = true;
+	object->current_speed_ = object->dashjump_speed_;
 }
 
 void PlayerController2::DashState::OnStateEnd(State* next_state)
@@ -964,6 +975,7 @@ void PlayerController2::SlidingWallState::OnStateBegin(State* prev_state)
 
 	// パーティクル
 	object->wall_slide_smoke_emitter_->Emit();
+	object->current_speed_ = object->speed_;
 }
 
 void PlayerController2::SlidingWallState::OnStateEnd(State* next_state)
@@ -1040,6 +1052,7 @@ void PlayerController2::WalljumpState::OnStateBegin(State* prev_state)
 
 	jump_frame_ = object->jump_frame_max_;
 	kick_frame_ = object->walljump_kick_frame_max_;
+	object->current_speed_ = object->speed_;
 }
 
 void PlayerController2::WalljumpState::OnStateEnd(State* next_state)
@@ -1106,7 +1119,7 @@ void PlayerController2::WalljumpState::Update(const float delta_time)
 	}
 	else
 	{
-		jump_frame_ -= 60.0f * delta_time;
+		jump_frame_ -= 1;//60.0f * delta_time;
 	}
 
 	kick_frame_ -= 60.0f * delta_time;

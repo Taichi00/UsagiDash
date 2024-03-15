@@ -25,9 +25,12 @@ void Transition::Update(const float delta_time)
 	{
 		time_ += 0.6f * speed_ * delta_time;
 
+		// フェードイン終了
 		if (time_ > 1)
 		{
 			time_ = 1;
+			function_();
+
 			is_fading_in_ = false;
 		}
 	}
@@ -35,9 +38,12 @@ void Transition::Update(const float delta_time)
 	{
 		time_ += 0.6f * speed_ * delta_time;
 
+		// フェードアウト終了
 		if (time_ > 1)
 		{
 			time_ = 0;
+			function_();
+
 			is_fading_out_ = false;
 			is_fading_ = false;
 		}
@@ -64,21 +70,31 @@ void Transition::Draw2D()
 	}
 }
 
-void Transition::FadeIn(const float speed, const Easing::Type easing_type)
+void Transition::FadeIn(
+	const float speed,
+	const Easing::Type easing_type,
+	const std::function<void()>& function
+)
 {
 	speed_ = speed;
 	time_ = 0;
 	easing_type_ = easing_type;
+	function_ = function;
 
 	is_fading_in_ = true;
 	is_fading_ = true;
 }
 
-void Transition::FadeOut(const float speed, const Easing::Type easing_type)
+void Transition::FadeOut(
+	const float speed,
+	const Easing::Type easing_type,
+	const std::function<void()>& function
+)
 {
 	speed_ = speed;
 	time_ = 0;
 	easing_type_ = easing_type;
+	function_ = function;
 
 	is_fading_out_ = true;
 	is_fading_ = true;

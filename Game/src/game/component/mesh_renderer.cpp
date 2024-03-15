@@ -57,7 +57,6 @@ bool MeshRenderer::Init()
 
 	pipeline_manager_ = Game::Get()->GetEngine()->GetPipelineStateManager();
 
-	printf("MeshRenderer‚Ì‰Šú‰»‚É¬Œ÷\n");
 	return true;
 }
 

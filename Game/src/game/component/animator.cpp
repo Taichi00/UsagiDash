@@ -29,11 +29,6 @@ bool Animator::Init()
 	mesh_renderer_ = GetEntity()->GetComponent<MeshRenderer>();
 	control_ = GetEntity()->GetComponent<Control>();
 
-	if (mesh_renderer_)
-	{
-		RegisterAnimations(mesh_renderer_->GetModel().animations);
-	}
-
 	return true;
 }
 

@@ -161,11 +161,19 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\app\component\checkpoint_controller.cpp" />
+    <ClCompile Include="src\app\component\entity_height_destroyer.cpp" />
+    <ClCompile Include="src\app\component\jump_rift_controller.cpp" />
+    <ClCompile Include="src\app\component\metal_ball_emitter_controller.cpp" />
     <ClCompile Include="src\app\component\pause_behavior.cpp" />
     <ClCompile Include="src\app\component\pause_manager.cpp" />
     <ClCompile Include="src\app\component\player_controller_2.cpp" />
+    <ClCompile Include="src\app\component\star_controller.cpp" />
     <ClCompile Include="src\app\component\tutorial_label_controller.cpp" />
+    <ClCompile Include="src\app\entity\jump_rift.cpp" />
+    <ClCompile Include="src\app\entity\metal_ball.cpp" />
+    <ClCompile Include="src\app\entity\metal_ball_emitter.cpp" />
     <ClCompile Include="src\app\entity\pause_menu.cpp" />
+    <ClCompile Include="src\app\entity\star.cpp" />
     <ClCompile Include="src\app\entity\tutorial_label.cpp" />
     <ClCompile Include="src\game\component\gui\animated_button.cpp" />
     <ClCompile Include="src\app\component\tutorial_text_controller.cpp" />
@@ -260,12 +268,20 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
     <ClCompile Include="src\util\reader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\app\component\entity_height_destroyer.h" />
+    <ClInclude Include="src\app\component\jump_rift_controller.h" />
+    <ClInclude Include="src\app\component\metal_ball_emitter_controller.h" />
     <ClInclude Include="src\app\component\checkpoint_controller.h" />
     <ClInclude Include="src\app\component\pause_behavior.h" />
     <ClInclude Include="src\app\component\pause_manager.h" />
     <ClInclude Include="src\app\component\player_controller_2.h" />
+    <ClInclude Include="src\app\component\star_controller.h" />
     <ClInclude Include="src\app\component\tutorial_label_controller.h" />
+    <ClInclude Include="src\app\entity\jump_rift.h" />
+    <ClInclude Include="src\app\entity\metal_ball.h" />
+    <ClInclude Include="src\app\entity\metal_ball_emitter.h" />
     <ClInclude Include="src\app\entity\pause_menu.h" />
+    <ClInclude Include="src\app\entity\star.h" />
     <ClInclude Include="src\app\entity\tutorial_label.h" />
     <ClInclude Include="src\game\component\gui\animated_button.h" />
     <ClInclude Include="src\app\component\title_scene_controller.h" />

@@ -223,17 +223,11 @@ float4 main(VSOutput input) : SV_TARGET
     float4 worldPos = texPosition.xyzw;
     float3 normal = normalize(texNormal.xyz);
     float3 albedo = pow(texAlbedo.xyz, 2.2);
-    float metallic = texMetallicRoughness.b;
+    float ao = texMetallicRoughness.r;
     float roughness = texMetallicRoughness.g;
-    //float ao = texMetallicRoughness.r;
+    float metallic = texMetallicRoughness.b;
     float shininess = texNormal.w;
     float depth = texDepth.r;
-    
-    // パラメータ（ConstantBufferにする）
-    //metallic = 0;
-    //roughness = 0.1;
-    float ao = 1;
-    float spec = 0.129;
     
     float3 N = normalize(normal); // 法線ベクトル
     float3 V = normalize(CameraPos - worldPos.xyz); // 視線ベクトル
@@ -241,7 +235,6 @@ float4 main(VSOutput input) : SV_TARGET
     
     // 反射率を表すF0を求める
     float3 F0 = 0.04;
-    //F0 = 0.2 * spec;
     F0 = lerp(F0, albedo, metallic);
     
     // reflectance equation
@@ -299,7 +292,7 @@ float4 main(VSOutput input) : SV_TARGET
     //float3 diffuse = lerp(0.8, 1, irradiance) * albedo;
     
     float3 prefilteredColor = gSpecularMap.SampleLevel(gSampler, R, roughness * maxLod).rgb;
-    float3 envBRDF = gBrdfLUT.Sample(gSampler, float2(clamp(dot(N, V), 0.0, 0.99), 1.0 - roughness)).rgb;
+    float2 envBRDF = gBrdfLUT.Sample(gSampler, float2(clamp(dot(N, V), 0.0, 0.99), roughness)).rg;
     float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
     
     float3 ambient = (kD * diffuse + specular) * ao;

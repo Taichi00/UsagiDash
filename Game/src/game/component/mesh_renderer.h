@@ -41,9 +41,6 @@ public:
 	Bone* FindBone(std::string name);
 	BoneList* GetBones();
 
-public:
-	bool is_shadow_from_above = false;	// 上から影を落とすかどうか
-
 protected:
 	std::shared_ptr<Model> model_;	// モデルデータへのポインタ
 	BoneList bones_;	// モデルのボーン
@@ -53,7 +50,7 @@ protected:
 	std::unique_ptr<ConstantBuffer> bone_cb_[Engine::FRAME_BUFFER_COUNT];
 	std::vector<std::unique_ptr<ConstantBuffer>> materials_cb_;
 
-	PipelineStateManager* pipeline_manager_;
+	PipelineStateManager* pipeline_manager_ = nullptr;
 
 	float outline_width_;
 };

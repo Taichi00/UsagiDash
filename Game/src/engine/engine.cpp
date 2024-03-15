@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <stdio.h>
 
-//std::unique_ptr<Engine> g_Engine;
+#define _DEBUG 0
 
 Engine::Engine()
 {

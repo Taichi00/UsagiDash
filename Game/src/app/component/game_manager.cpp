@@ -80,11 +80,8 @@ bool GameManager::Init()
 
 void GameManager::Update(const float delta_time)
 {
-	if (player_)
+	if (scene_state_ == SCENE_GAME)
 		PlayerFallen();
-
-	if (is_starting_game_)
-		UpdateGameStart();
 
 	UpdatePause();
 }
@@ -99,6 +96,16 @@ void GameManager::AddCoin(const int n)
 		coin_label_animator_->Play("get", 1, false);
 }
 
+void GameManager::SetStartPosition(const Vec3& position)
+{
+	if (!player_ || !camera_)
+		return;
+
+	start_position_ = position;
+	player_->transform->position = start_position_;
+	camera_->ForceMove();
+}
+
 std::string GameManager::GetCoinText(const int n)
 {
 	auto str = std::to_string(n);
@@ -109,37 +116,23 @@ std::string GameManager::GetCoinText(const int n)
 
 void GameManager::PlayerFallen()
 {
-	if (!is_respawning_)
-	{
-		if (player_->transform->position.y < -50)
-		{
-			is_respawning_ = true;
-			transition_->FadeIn(4, Easing::IN_QUAD);
-		}
-	}
-	else
-	{
-		if (!transition_->IsFadingIn())
-		{
-			is_respawning_ = false;
-			transition_->FadeOut(4, Easing::OUT_QUAD);
+	if (!transition_)
+		return;
 
-			RespawnPlayer();
-			camera_->ForceMove();
-		}
-	}
-}
-
-void GameManager::UpdateGameStart()
-{
 	if (!transition_->IsFadingIn())
 	{
-		is_starting_game_ = false;
+		// プレイヤーが落下したら
+		if (player_->transform->position.y < -50)
+		{
+			// フェードイン
+			transition_->FadeIn(4, Easing::IN_QUAD, [this]() {
+				transition_->FadeOut(4, Easing::OUT_QUAD);
 
-		// 最初のシーンをロードする
-		Game::Get()->LoadScene(new Level1Scene());
-
-		transition_->FadeOut(2);
+				// リスポーン
+				RespawnPlayer();
+				camera_->ForceMove();
+				});
+		}
 	}
 }
 
@@ -167,8 +160,12 @@ void GameManager::RespawnPlayer()
 
 void GameManager::StartGame()
 {
-	transition_->FadeIn(2);
-	is_starting_game_ = true;
+	transition_->FadeIn(2, Easing::LINEAR, [this]() {
+		// 最初のシーンをロードする
+		Game::Get()->LoadScene(new Level1Scene());
+
+		transition_->FadeOut(2);
+		});
 }
 
 void GameManager::EndGame()

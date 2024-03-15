@@ -19,7 +19,7 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 
 	auto model = game->LoadResource<Model>(L"assets/model/character/Character2.glb");
 
-	float pbr_color[4] = { 0, 1, 0, 1 };
+	float pbr_color[4] = { 1, 1, 0, 1 };
 	auto smoke_albedo = game->LoadResource<Texture2D>(L"assets/effect/smoke_albedo.png");
 	auto smoke_normal = game->LoadResource<Texture2D>(L"assets/effect/smoke_normal.png");
 	std::shared_ptr smoke_pbr = Texture2D::GetMono(pbr_color);
@@ -132,7 +132,7 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	player_prop.friction = 0.9f;
 	player_prop.jump_power = 6;
 	player_prop.dashjump_power = 5.4f;
-	player_prop.dashjump_speed = 29;
+	player_prop.dashjump_speed = 26;
 	player_prop.dash_speed = 24;
 	//player_prop.dashjump_speed = 4;
 	player_prop.walljump_kick_power = 15;
@@ -142,9 +142,7 @@ Player::Player(const std::string& name) : Entity(name, "player", "player")
 	AddComponent(new PlayerController2(player_prop));
 	AddComponent(new PauseBehavior());
 
-	GetComponent<Animator>()->Play("Idle", 2.0f);
 	GetComponent<Collider>()->offset = Vec3(0, 1.5f, 0);
-	GetComponent<MeshRenderer>()->is_shadow_from_above = true;
 
 	auto run_smoke_emitter = new Entity("run_smoke_emitter");
 	run_smoke_emitter->AddComponent(new ParticleEmitter(run_smoke_prop));

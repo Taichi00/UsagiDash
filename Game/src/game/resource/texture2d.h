@@ -16,12 +16,15 @@ public:
 	~Texture2D();
 
 	Texture2D(std::wstring path);
-	Texture2D(const void* pSource, size_t size);
+	Texture2D(const void* pSource, const size_t size, const DXGI_FORMAT format);
 	Texture2D(ID3D12Resource* buffer);
 
-	static std::unique_ptr<Texture2D> Load(const std::string& path);	// stringで受け取ったパスからテクスチャを読み込む
-	static std::unique_ptr<Texture2D> Load(const std::wstring& path);	// wstringで受け取ったパスからテクスチャを読み込む
-	static std::unique_ptr<Texture2D> Load(const void* pSource, size_t size);	// バイナリデータから読み込む
+	// stringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(const std::string& path);
+	// wstringで受け取ったパスからテクスチャを読み込む
+	static std::unique_ptr<Texture2D> Load(const std::wstring& path);
+	// バイナリデータから読み込む
+	static std::unique_ptr<Texture2D> Load(const void* pSource, const size_t size, const DXGI_FORMAT format);
 
 	static std::unique_ptr<Texture2D> GetMono(const float color[4]);	// 単色テクスチャを生成する
 	static std::unique_ptr<Texture2D> GetWhite();
@@ -44,7 +47,7 @@ public:
 
 private:
 	bool LoadTexture(std::wstring& path);
-	bool LoadTexture(const void* pSource, size_t size);
+	bool LoadTexture(const void* pSource, const size_t size, const DXGI_FORMAT format);
 
 	bool CreateResource(const CD3DX12_RESOURCE_DESC& desc, const void* src, UINT rowPitch, UINT slicePitch);
 	bool CreateResource(const DirectX::ScratchImage* image, const DirectX::TexMetadata& metadata);

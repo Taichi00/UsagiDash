@@ -12,6 +12,7 @@ public:
 		IN_CUBIC,
 		OUT_CUBIC,
 		IN_OUT_CUBIC,
+		IN_BACK,
 		OUT_BACK,
 	};
 
@@ -26,6 +27,7 @@ public:
 		case IN_CUBIC: return InCubic;
 		case OUT_CUBIC: return OutCubic;
 		case IN_OUT_CUBIC: return InOutCubic;
+		case IN_BACK: return InBack;
 		case OUT_BACK: return OutBack;
 		}
 

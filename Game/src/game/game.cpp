@@ -47,6 +47,8 @@ void Game::Run(Scene* scene, const GameSettings& settings)
 			window_->TickTime();
 			delta_time_ = (float)window_->DeltaTime();
 
+			auto delta_time = delta_time_ * time_scale_;
+
 			if (next_scene_)
 			{
 				LoadNextScene();
@@ -56,7 +58,7 @@ void Game::Run(Scene* scene, const GameSettings& settings)
 
 			if (current_scene_)
 			{
-				current_scene_->Update(delta_time_);
+				current_scene_->Update(delta_time);
 				current_scene_->Draw();
 				current_scene_->AfterUpdate();
 			}
@@ -115,7 +117,7 @@ Vec2 Game::GetWindowSize()
 	return Vec2((float)window_->Width(), (float)window_->Height());
 }
 
-double Game::DeltaTime() const
+float Game::DeltaTime() const
 {
 	return window_->DeltaTime();
 }

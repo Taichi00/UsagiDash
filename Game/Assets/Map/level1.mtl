@@ -7,11 +7,23 @@ map_Kd ..\..\Assets\Map\textures\Dark\texture_03.png
 newmtl Dark/texture_06
 map_Kd ..\..\Assets\Map\textures\Dark\texture_06.png
 
+newmtl Dark/texture_08
+map_Kd ..\..\Assets\Map\textures\Dark\texture_08.png
+
 newmtl Green/texture_01
 map_Kd ..\..\Assets\Map\textures\Green\texture_01.png
 
+newmtl Green/texture_02
+map_Kd ..\..\Assets\Map\textures\Green\texture_02.png
+
 newmtl Orange/texture_01
 map_Kd ..\..\Assets\Map\textures\Orange\texture_01.png
+
+newmtl Orange/texture_03
+map_Kd ..\..\Assets\Map\textures\Orange\texture_03.png
+
+newmtl Orange/texture_09
+map_Kd ..\..\Assets\Map\textures\Orange\texture_09.png
 
 newmtl __TB_empty
 map_Kd ..\..\Assets\Map\textures\__TB_empty.png

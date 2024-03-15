@@ -148,6 +148,8 @@ private:
 	float dash_frame_ = 0;
 	float dash_frame_max_ = 120;
 
+	float current_speed_ = 0;
+
 	// 足音用のカウンター
 	float footstep_count_ = 0;
 

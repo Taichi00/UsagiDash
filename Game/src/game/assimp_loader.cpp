@@ -341,7 +341,7 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     aiString path;
 
     float white[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    float pbr[] = { 0.0f, 0.8f, 0.0f, 1.0f };
+    float pbr[] = { 1.0f, 1.0f, 0.0f, 1.0f };
     float normal[] = { 0.5f, 0.5f, 1.0f, 1.0f };
 
     std::unique_ptr<Texture2D> tex;
@@ -350,7 +350,7 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     Texture2D::SetDefaultColor(white);
     if (src->GetTexture(aiTextureType_DIFFUSE, 0, &path) == aiReturn_SUCCESS)
     {
-        tex = LoadTexture(path, src, scene);
+        tex = LoadTexture(path, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, src, scene);
     }
     else
     {
@@ -362,7 +362,7 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     Texture2D::SetDefaultColor(pbr);
     if (src->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path) == aiReturn_SUCCESS)
     {
-        tex = LoadTexture(path, src, scene);
+        tex = LoadTexture(path, DXGI_FORMAT_R8G8B8A8_UNORM, src, scene);
     }
     else
     {
@@ -374,7 +374,7 @@ void AssimpLoader::LoadMaterial(Material& dst, const aiMaterial* src, const aiSc
     Texture2D::SetDefaultColor(normal);
     if (src->GetTexture(aiTextureType_NORMALS, 0, &path) == aiReturn_SUCCESS)
     {
-        tex = LoadTexture(path, src, scene);
+        tex = LoadTexture(path, DXGI_FORMAT_R8G8B8A8_UNORM, src, scene);
     }
     else
     {
@@ -499,13 +499,17 @@ void AssimpLoader::LoadBones(BoneList& bones, Mesh& mesh, const aiMesh* pMesh, a
     }
 }
 
-std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(aiString path, const aiMaterial* src, const aiScene* scene)
+std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(
+    const aiString& path,
+    const DXGI_FORMAT format,
+    const aiMaterial* src, 
+    const aiScene* scene)
 {
     // –„‚ßž‚Ý‰æ‘œ‚©‚Ç‚¤‚©
     const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(path.C_Str());
-    if (embeddedTexture != nullptr)
+    if (embeddedTexture)
     {
-        return LoadEmbeddedTexture(embeddedTexture);
+        return LoadEmbeddedTexture(embeddedTexture, format);
     }
     else
     {
@@ -517,15 +521,17 @@ std::unique_ptr<Texture2D> AssimpLoader::LoadTexture(aiString path, const aiMate
     }
 }
 
-std::unique_ptr<Texture2D> AssimpLoader::LoadEmbeddedTexture(const aiTexture* texture)
+std::unique_ptr<Texture2D> AssimpLoader::LoadEmbeddedTexture(
+    const aiTexture* texture, 
+    const DXGI_FORMAT format)
 {
     if (texture->mHeight == 0)
     {
-        return Texture2D::Load(texture->pcData, texture->mWidth);
+        return Texture2D::Load(texture->pcData, texture->mWidth, format);
     }
     else
     {
-        return Texture2D::Load(texture->pcData, static_cast<size_t>(texture->mWidth) * texture->mHeight);
+        return Texture2D::Load(texture->pcData, (size_t)(texture->mWidth * texture->mHeight), format);
     }
 }
 

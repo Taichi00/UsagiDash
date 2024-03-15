@@ -27,9 +27,9 @@ std::unique_ptr<Texture2D> Texture2D::Load(const std::wstring& path)
 	return tex;
 }
 
-std::unique_ptr<Texture2D> Texture2D::Load(const void* pSource, size_t size)
+std::unique_ptr<Texture2D> Texture2D::Load(const void* pSource, const size_t size, const DXGI_FORMAT format)
 {
-	auto tex = std::make_unique<Texture2D>(pSource, size);
+	auto tex = std::make_unique<Texture2D>(pSource, size, format);
 	if (!tex->IsValid())
 	{
 		return GetMono(default_color_);	// 読み込みに失敗したときは単色テクスチャを返す
@@ -113,7 +113,6 @@ DXGI_FORMAT Texture2D::Format() const
 
 DirectX::TexMetadata Texture2D::Metadata() const
 {
-	
 	return metadata_;
 }
 
@@ -126,9 +125,9 @@ Texture2D::Texture2D(std::wstring path)
 	is_valid_ = LoadTexture(path);
 }
 
-Texture2D::Texture2D(const void* pSource, size_t size)
+Texture2D::Texture2D(const void* pSource, const size_t size, const DXGI_FORMAT format)
 {
-	is_valid_ = LoadTexture(pSource, size);
+	is_valid_ = LoadTexture(pSource, size, format);
 }
 
 Texture2D::Texture2D(ID3D12Resource* buffer)
@@ -171,39 +170,53 @@ bool Texture2D::LoadTexture(std::wstring& path)
 	auto img = image.GetImage(0, 0, 0);
 	auto desc = CD3DX12_RESOURCE_DESC::Tex2D(
 		meta.format,
-		(UINT)meta.width,
+		(UINT64)meta.width,
 		(UINT)meta.height,
-		static_cast<UINT16>(meta.arraySize),
-		static_cast<UINT16>(meta.mipLevels)
+		(UINT16)meta.arraySize,
+		(UINT16)meta.mipLevels
 	);
 
 	//return CreateResource(desc, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
 	return CreateResource(&image, meta);
 }
 
-bool Texture2D::LoadTexture(const void* pSource, size_t size)
+bool Texture2D::LoadTexture(const void* pSource, const size_t size, const DXGI_FORMAT format)
 {
 	// WICテクスチャのロード
-	DirectX::ScratchImage image = {};
+	ScratchImage image = {};
 
-	auto hr = DirectX::LoadFromWICMemory(pSource, size, DirectX::WIC_FLAGS_NONE, nullptr, image);
+	WIC_FLAGS flag = WIC_FLAGS_NONE;
+	if (format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
+	{
+		flag = WIC_FLAGS_DEFAULT_SRGB;
+	}
+	else
+	{
+		flag = WIC_FLAGS_IGNORE_SRGB;
+	}
+
+	auto hr = DirectX::LoadFromWICMemory(pSource, size, flag, nullptr, image);
 	if (FAILED(hr))
 	{
 		return false;
 	}
 
+	// フォーマットを上書きする
+	//image.OverrideFormat(format);
+
 	auto img = image.GetImage(0, 0, 0);
-	auto meta = image.GetMetadata();
+	auto& meta = image.GetMetadata();
+
 	auto desc = CD3DX12_RESOURCE_DESC::Tex2D(
 		meta.format,
 		(UINT64)meta.width,
 		(UINT)meta.height,
-		static_cast<UINT16>(meta.arraySize),
-		static_cast<UINT16>(meta.mipLevels)
+		(UINT16)meta.arraySize,
+		(UINT16)meta.mipLevels
 	);
 	
-	return CreateResource(desc, img->pixels, static_cast<UINT>(img->rowPitch), static_cast<UINT>(img->slicePitch));
-	//return CreateResource(&image, meta);
+	//return CreateResource(desc, img->pixels, (UINT)img->rowPitch, (UINT)img->slicePitch);
+	return CreateResource(&image, meta);
 }
 
 bool Texture2D::CreateResource(
@@ -264,6 +277,7 @@ bool Texture2D::CreateResource(
 
 	resource_ = texture;
 	format_ = metadata.format;
+	metadata_ = metadata;
 	
 	return true;
 }

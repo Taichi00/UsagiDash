@@ -44,7 +44,7 @@ public:
 	void AddCoin(const int n);
 
 	// スタート位置を設定する
-	void SetStartPosition(const Vec3& position) { start_position_ = position; }
+	void SetStartPosition(const Vec3& position);
 
 	// プレイヤーのリスポーン位置を指定する
 	void SetCurrentCheckpoint(Entity* checkpoint) { current_checkpoint_ = checkpoint; }
@@ -72,8 +72,6 @@ private:
 
 	void PlayerFallen();
 
-	void UpdateGameStart();
-
 	void UpdatePause();
 
 private:
@@ -96,11 +94,6 @@ private:
 
 	// スタート位置
 	Vec3 start_position_;
-
-	// リスポーン中
-	bool is_respawning_ = false;
-	// ゲームスタート演出中
-	bool is_starting_game_ = false;
 
 	// ポーズメニュー
 	Entity* pause_menu_ = nullptr;

@@ -15,10 +15,10 @@ public:
 	UINT Height();
 	float AspectRate();
 
-	double TimeAdjustment();
+	void TimeAdjustment();
 	void TickTime();
 
-	double DeltaTime() const { return delta_time_; }
+	float DeltaTime() const { return delta_time_; }
 
 private:
 	HINSTANCE hinstance_;

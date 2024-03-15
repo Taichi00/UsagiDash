@@ -64,7 +64,6 @@ void Rigidbody::Resolve(const float delta_time)
 		auto depth = hit.depth;
 
 		float e = -0.4f;	// ”½”­ŒW”
-		float k;	// ‚Î‚Ë’è”
 
 		auto hitMass = hitRigidbody->mass;
 		auto hitVelocity = hitRigidbody->velocity;
@@ -78,7 +77,7 @@ void Rigidbody::Resolve(const float delta_time)
 		tangent = Vec3::Scale(tangent, 1, 0, 1);
 
 		// ÚG–Ê‚©‚ç—£‚ê‚é•ûŒü‚É“®‚¢‚Ä‚¢‚éê‡‚Í–³‹
-		if (Vec3::Dot(v, normal) <= 0.2)
+		/*if (Vec3::Dot(v, normal) <= 0.2)*/
 		{
 			auto angle = Vec3::Angle(normal, Vec3(0, 1, 0));
 
@@ -102,11 +101,10 @@ void Rigidbody::Resolve(const float delta_time)
 				J = -Vec3::Dot(v, normal) * (1.0f + e) / (1.0f / mass);	// Œ‚—Í
 				B = -Vec3::Dot(v, tangent) / (1.0f / mass);
 
-				if (hitFriction < std::abs(B / J)) B = std::min(friction, hitFriction) * B;
+				if (hitFriction < std::abs(B / J)) 
+					B *= friction * hitFriction;
 
 				dp = normal * depth;
-
-				k = 0.3f;
 			}
 			else
 			{
@@ -114,11 +112,10 @@ void Rigidbody::Resolve(const float delta_time)
 				J = -Vec3::Dot(v, normal) * (1.0f + e) / (1.0f / mass + 1.0f / hitMass);	// Œ‚—Í
 				B = -Vec3::Dot(v, tangent) / (1.0f / mass + 1.0f / hitMass);
 
-				if (hitFriction < std::abs(B / J)) B = std::min(friction, hitFriction) * B;
+				if (hitFriction < std::abs(B / J)) 
+					B *= friction * hitFriction;
 
 				dp = normal * depth * (1.0f / mass) / (1.0f / mass + 1.0f / hitMass);
-
-				k = 0.3f;
 			}
 			
 			position += dp + tangent * B / mass * delta_time;

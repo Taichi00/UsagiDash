@@ -18,7 +18,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(5));
-	AddComponent(new Animator());
+	AddComponent(new Animator(model->animations));
 	AddComponent(new AudioSource(audio));
 	AddComponent(new CheckpointController());
 	AddComponent(new PauseBehavior());
@@ -26,7 +26,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 	auto confetti = new Entity("confetti_emitter");
 	{
 		float normal_color[] = { 0.5f, 0.5f, 1, 1 };
-		float pbr_color[] = { 0, 0.2f, 0, 1 };
+		float pbr_color[] = { 1, 0.2f, 0, 1 };
 		std::shared_ptr albedo = game->LoadResource<Texture2D>(L"assets/effect/confetti.png");
 		std::shared_ptr normal = Texture2D::GetMono(normal_color);
 		std::shared_ptr pbr = Texture2D::GetMono(pbr_color);
@@ -65,7 +65,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 
 	auto smoke = new Entity("smoke_emitter");
 	{
-		float pbr_color[] = { 0, 1, 0, 1 };
+		float pbr_color[] = { 1, 1, 0, 1 };
 		std::shared_ptr albedo = game->LoadResource<Texture2D>(L"assets/effect/smoke_albedo.png");
 		std::shared_ptr normal = game->LoadResource<Texture2D>(L"assets/effect/smoke_normal.png");
 		std::shared_ptr pbr = Texture2D::GetMono(pbr_color);

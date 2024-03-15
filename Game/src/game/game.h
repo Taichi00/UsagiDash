@@ -88,7 +88,10 @@ public:
 	LayerManager* GetLayerManager() const { return layer_manager_.get(); }
 	GUIManager* GetGUIManager() const { return gui_manager_.get(); }
 
-	double DeltaTime() const;
+	float DeltaTime() const;
+
+	float TimeScale() const { return time_scale_; }
+	void SetTimeScale(const float time_scale) { time_scale_ = time_scale; }
 
 protected:
 	virtual void Init(const GameSettings& settings);
@@ -116,4 +119,5 @@ private:
 	std::unique_ptr<GUIManager> gui_manager_;
 
 	float delta_time_ = 0.0001f;
+	float time_scale_ = 1;
 };

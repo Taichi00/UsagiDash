@@ -7,6 +7,8 @@
 #include "app/component/camera_controller.h"
 #include "app/component/pause_behavior.h"
 #include "app/component/pause_manager.h"
+#include "app/component/metal_ball_emitter_controller.h"
+#include "app/entity/metal_ball_emitter.h"
 #include "app/entity/tutorial_label.h"
 #include "game/entity.h"
 #include "game/game.h"
@@ -94,25 +96,13 @@ bool Level1Scene::Init()
 		}
 	}
 
-	movingObj = new Entity("rift", "object", "object");
-	{
-		movingObj->AddComponent(new MeshRenderer(LoadResource<Model>(L"assets/model/object/rift.obj")));
-		movingObj->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"assets/model/object/rift.obj")));
-		movingObj->AddComponent(new Rigidbody(5, false, true, 0.1f));
-		movingObj->AddComponent(new PauseBehavior());
-
-		movingObj->transform->position = Vec3(0, -10, 25);
-		movingObj->transform->scale = Vec3(10, 10, 10);
-		movingObj->GetComponent<Collider>()->scale = movingObj->transform->scale;
-		CreateEntity(movingObj);
-	}
-
 	enemy = new Entity("enemy", "enemy", "object");
 	{
-		enemy->AddComponent(new MeshRenderer(LoadResource<Model>(L"assets/model/character/Enemy.gltf")));
+		auto model = LoadResource<Model>(L"assets/model/character/Enemy.gltf");
+		enemy->AddComponent(new MeshRenderer(model));
 		enemy->AddComponent(new SphereCollider(1.5f));
-		enemy->AddComponent(new Rigidbody(0.5, true, false, 0.1f));
-		enemy->AddComponent(new Animator());
+		enemy->AddComponent(new Rigidbody(0.5, true, false, 0.5f));
+		enemy->AddComponent(new Animator(model->animations));
 		enemy->AddComponent(new PauseBehavior());
 
 		enemy->GetComponent<Collider>()->offset = Vec3(0, 1.5f, 0);
@@ -261,30 +251,4 @@ bool Level1Scene::Init()
 void Level1Scene::Update(const float delta_time)
 {
 	Scene::Update(delta_time);
-
-	auto rigidbody = movingObj->GetComponent<Rigidbody>();
-	
-	//rigidbody->velocity.x = sin(angle) * 20 - rigidbody->transform->position.x;
-	//rigidbody->velocity.y = cos(angle) * 20 - rigidbody->transform->position.y;
-	if (rigidbody->transform->position.y < -13)
-	{
-		rigidbody->velocity.y *= -1;
-		rigidbody->transform->position.y = -13;
-	}
-	if (rigidbody->transform->position.y > 7)
-	{
-		rigidbody->velocity.y *= -1;
-		rigidbody->transform->position.y = 7;
-	}
-	if (rigidbody->velocity.y >= 0)
-	{
-		rigidbody->velocity.y += 61.2f * delta_time;
-	}
-	else
-	{
-		rigidbody->velocity.y = -6.0f;
-	}
-	//rigidbody->velocity.x += (0 - movingObj->transform->position.x) * 1.8 * delta_time;
-	//rigidbody->velocity.y += (-10 - movingObj->transform->position.y) * 0.03;
-	//rigidbody->velocity.z += (25 - movingObj->transform->position.z) * 1.8 * delta_time;
 }

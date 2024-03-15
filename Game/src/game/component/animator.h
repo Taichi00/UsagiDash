@@ -4,8 +4,7 @@
 #include "math/quaternion.h"
 #include "math/vec.h"
 #include "math/color.h"
-#include <game/bone.h>
-#include <game/animation.h>
+#include "game/animation.h"
 #include <map>
 #include <memory>
 #include <queue>
@@ -53,6 +52,9 @@ public:
 
 	// Ä¶‘¬“x‚ğİ’è
 	void SetSpeed(float speed);
+	float Speed() const { return speed_; }
+
+	float CurrentTime() const { return current_time_; }
 
 private:
 	void Play(AnimationArgs anim);

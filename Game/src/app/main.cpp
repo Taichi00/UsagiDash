@@ -64,7 +64,7 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_space.png" },
 		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_button_a.png" },
 		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_a.png" },
-		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_circle.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_cross.png" },
 	};
 	settings.action_icons["crouch"] = {
 		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_shift.png" },
@@ -88,7 +88,7 @@ int wmain(int argc, wchar_t** argv, wchar_t** envp)
 		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_space.png" },
 		{ InputIconManager::PAD_XBOX, L"assets/image/button_icon/xbox/xbox_button_a.png" },
 		{ InputIconManager::PAD_NSW,  L"assets/image/button_icon/switch/switch_button_a.png" },
-		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_circle.png" },
+		{ InputIconManager::PAD_PS,   L"assets/image/button_icon/playstation/playstation_button_cross.png" },
 	};
 	settings.action_icons["menu"] = {
 		{ InputIconManager::KEYBOARD, L"assets/image/button_icon/keyboard/keyboard_escape.png" },

@@ -6,6 +6,9 @@
 #include "math/vec.h"
 #include "math/quaternion.h"
 #include "app/component/game_manager.h"
+#include "app/entity/metal_ball_emitter.h"
+#include "app/entity/jump_rift.h"
+#include "app/entity/star.h"
 
 MapLoader::MapLoader(const std::wstring& path)
 {
@@ -66,37 +69,62 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 		// エンティティの生成
 		Entity* new_entity = nullptr;
 
-		// スタート位置
 		if (class_name == "info_player_start")
 		{
-			// スタート位置を設定
+			// スタート位置
 			GameManager::Get()->SetStartPosition(position);
 		}
-		// コイン
 		else if (class_name == "item_coin")
 		{
+			// コイン
 			new_entity = new Coin("");
 		}
-		// チュートリアル
 		else if (class_name == "tutorial")
 		{
+			// チュートリアル
 			new_entity = new Tutorial(
 				pairs.at("text"), 
 				pairs.at("task"),
 				MapFileParser::ToFloat(pairs.at("radius"))
 			);
 		}
-		// チェックポイント
 		else if (class_name == "checkpoint")
 		{
+			// チェックポイント
 			new_entity = new Checkpoint();
+		}
+		else if (class_name == "metal_ball_emitter")
+		{
+			// 鉄球発射装置
+			new_entity = new MetalBallEmitter(
+				MapFileParser::ToFloat(pairs.at("radius")),
+				MapFileParser::ToFloat(pairs.at("width")),
+				MapFileParser::ToFloat(pairs.at("spawn_rate"))
+			);
+		}
+		else if (class_name == "jump_rift")
+		{
+			// ジャンプリフト
+			new_entity = new JumpRift(
+				Vec3(
+					MapFileParser::ToFloat(pairs.at("dir_x")),
+					MapFileParser::ToFloat(pairs.at("dir_y")),
+					MapFileParser::ToFloat(pairs.at("dir_z"))
+				),
+				MapFileParser::ToFloat(pairs.at("distance"))
+			);
+		}
+		else if (class_name == "star")
+		{
+			// スター
+			new_entity = new Star();
 		}
 
 		if (new_entity)
 		{
-			scene->CreateEntity(new_entity);
 			new_entity->transform->position = position;
 			new_entity->transform->rotation = rotation;
+			scene->CreateEntity(new_entity);
 		}
 	}
 }

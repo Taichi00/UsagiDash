@@ -4,10 +4,8 @@
 #include "math/color.h"
 #include "math/vec.h"
 #include "math/easing.h"
-#include <game/resource/bitmap.h>
 #include <memory>
-
-class Bitmap;
+#include <functional>
 
 class Transition : public Control
 {
@@ -20,10 +18,18 @@ public:
 	void Draw2D() override;
 
 	// フェードイン
-	void FadeIn(const float speed, const Easing::Type easing_type = Easing::LINEAR);
+	void FadeIn(
+		const float speed, 
+		const Easing::Type easing_type = Easing::LINEAR,
+		const std::function<void()>& function = []() {}
+	);
 
 	// フェードアウト
-	void FadeOut(const float speed, const Easing::Type easing_type = Easing::LINEAR);
+	void FadeOut(
+		const float speed, 
+		const Easing::Type easing_type = Easing::LINEAR,
+		const std::function<void()>& function = []() {}
+	);
 
 	bool IsFadingIn() const { return is_fading_in_; }
 	bool IsFadingOut() const { return is_fading_out_; }
@@ -35,6 +41,7 @@ private:
 	float time_;
 	float speed_;
 	Easing::Type easing_type_;
+	std::function<void()> function_; // フェード終わりに実行する関数
 
 	bool is_fading_ = false; // フェード中
 	bool is_fading_in_ = false; // フェードイン中

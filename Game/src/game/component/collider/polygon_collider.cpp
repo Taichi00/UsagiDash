@@ -206,8 +206,8 @@ bool PolygonCollider::SphereIntersectsPolygon(
 	Vec3 N = normal_;	// •½–Ê‚Ì–@ü
 	float dist = Vec3::Dot(center - p[0], N);	// ‹…‚Æ•½–Ê‚Ì‹——£
 	
-	if (dist < 0)	// — –Ê‚È‚ç
-		return false;
+	//if (dist < 0)	// — –Ê‚È‚ç
+	//	return false;
 
 	if (dist < -radius || dist > radius)
 		return false;
@@ -244,11 +244,12 @@ bool PolygonCollider::SphereIntersectsPolygon(
 	// Õ“Ë
 	if (inside || intersects)
 	{
-		Vec3 bestPoint = point0;
+		Vec3 bestPoint;
 		Vec3 intersectionVec;
 
 		if (inside)
 		{
+			bestPoint = point0;
 			intersectionVec = center - point0;
 		}
 		else
