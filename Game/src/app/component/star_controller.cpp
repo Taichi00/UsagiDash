@@ -8,11 +8,22 @@
 #include "math/easing.h"
 #include "game/component/particle_emitter.h"
 #include "game/component/audio/audio_source.h"
+#include "app/component/pause_manager.h"
+#include "app/component/player_controller_2.h"
+#include "game/component/rigidbody.h"
+#include "game/component/timeline_player.h"
+#include "app/component/game_manager.h"
+#include "game/physics.h"
+#include "game/component/camera.h"
 
-StarController::StarController(ParticleEmitter* confetti, AudioSource* audio_twinkle)
+StarController::StarController(ParticleEmitter* confetti,
+	AudioSource* audio_twinkle,
+	AudioSource* audio_pick
+)
 {
 	confetti_ = confetti;
 	audio_twinkle_ = audio_twinkle;
+	audio_pick_ = audio_pick;
 }
 
 StarController::~StarController()
@@ -21,30 +32,16 @@ StarController::~StarController()
 
 bool StarController::Init()
 {
+	timeline_player_ = GetEntity()->GetComponent<TimelinePlayer>();
+
 	// キラキラ音を再生
-	audio_twinkle_->Play(1, true);
+	audio_twinkle_->Play(true);
 
 	return true;
 }
 
 void StarController::Update(const float delta_time)
 {
-	if (is_slowed_)
-	{
-		float t = Easing::InQuad(slow_time_ / slow_duration_);
-		t = std::max(1 - t, 0.01f);
-
-		Game::Get()->SetTimeScale(t);
-
-		slow_time_ += 1;
-
-		if (slow_time_ > slow_duration_)
-		{
-			is_slowed_ = false;
-			Game::Get()->SetTimeScale(1);
-		}
-	}
-
 	// 回転
 	transform->rotation = Quaternion::FromEuler(angle_, angle_, 0);
 
@@ -53,13 +50,13 @@ void StarController::Update(const float delta_time)
 
 void StarController::OnCollisionEnter(Collider* collider)
 {
-	if (is_slowed_)
-		return;
-
 	if (collider->GetEntity()->tag == "player")
 	{
+		audio_twinkle_->Stop();
+		audio_pick_->Play();
 		confetti_->Emit();
-		is_slowed_ = true;
-		slow_time_ = 0;
+
+		// ステージクリア演出
+		GameManager::Get()->StageClear(GetEntity());
 	}
 }

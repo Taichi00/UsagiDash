@@ -4,24 +4,19 @@
 #include "game/resource/audio.h"
 #include "game/component/transform.h"
 
-AudioSource::AudioSource(const std::shared_ptr<Audio>& audio)
+AudioSource::AudioSource()
 {
 	engine_ = Game::Get()->GetAudioEngine();
-	
-	audio_ = audio;
-
-	// source voice ÇçÏê¨
-	engine_->CreateSourceVoice(*audio_->Data(), &source_voice_);
 }
 
-AudioSource::AudioSource(const std::shared_ptr<Audio>& audio, const float radius) : AudioSource(audio)
+AudioSource::AudioSource(
+	std::shared_ptr<Audio> audio,
+	const float volume,
+	const float pitch,
+	const float radius
+) : AudioSource()
 {
-	is_3d_ = true;
-
-	// emitter ÇÃê›íË
-	emitter_.ChannelCount = 1;
-	emitter_.DopplerScaler = 0.0f;
-	emitter_.CurveDistanceScaler = radius;
+	Load(audio, volume, pitch, radius);
 }
 
 AudioSource::~AudioSource()
@@ -33,6 +28,9 @@ AudioSource::~AudioSource()
 
 void AudioSource::Update(const float delta_time)
 {
+	if (!source_voice_)
+		return;
+
 	if (is_playing_)
 	{
 		// source voice ÇÃèÛë‘ÇéÊìæ
@@ -53,8 +51,37 @@ void AudioSource::Update(const float delta_time)
 	}
 }
 
-void AudioSource::Play(const float volume, const bool loop)
+void AudioSource::Load(
+	std::shared_ptr<Audio> audio,
+	const float volume,
+	const float pitch,
+	const float radius
+)
 {
+	audio_ = audio;
+	volume_ = volume;
+	pitch_ = pitch;
+
+	if (radius > 0)
+	{
+		is_3d_ = true;
+		// emitter ÇÃê›íË
+		emitter_.ChannelCount = 1;
+		emitter_.DopplerScaler = 0.0f;
+		emitter_.CurveDistanceScaler = radius;
+	}
+
+	// source voice ÇçÏê¨
+	engine_->CreateSourceVoice(*audio_->Data(), &source_voice_);
+	engine_->SetVolume(source_voice_, volume_);
+	engine_->SetPitch(source_voice_, pitch_);
+}
+
+void AudioSource::Play(const bool loop)
+{
+	if (!source_voice_)
+		return;
+
 	if (is_playing_)
 	{
 		engine_->Stop(source_voice_);
@@ -65,15 +92,15 @@ void AudioSource::Play(const float volume, const bool loop)
 	if (is_3d_)
 		UpdateEmitterState();
 
-	engine_->PlayWaveSound(*audio_->Data(), source_voice_, volume, loop);
+	engine_->PlayWaveSound(*audio_->Data(), source_voice_, loop);
 }
 
-void AudioSource::Playing(const float volume, const bool loop)
+void AudioSource::Playing(const bool loop)
 {
 	if (is_playing_)
 		return;
 
-	Play(volume, loop);
+	Play(loop);
 }
 
 void AudioSource::Stop()
@@ -81,14 +108,40 @@ void AudioSource::Stop()
 	engine_->Stop(source_voice_);
 }
 
+void AudioSource::SetVolumePercentage(const float p)
+{
+	if (!source_voice_)
+		return;
+
+	engine_->SetVolume(source_voice_, volume_ * p);
+}
+
+void AudioSource::SetPitchPercentage(const float p)
+{
+	if (!source_voice_)
+		return;
+
+	engine_->SetPitch(source_voice_, pitch_ * p);
+}
+
 void AudioSource::SetVolume(const float volume)
 {
-	engine_->SetVolume(source_voice_, volume);
+	volume_ = volume;
+
+	if (!source_voice_)
+		return;
+
+	engine_->SetVolume(source_voice_, volume_);
 }
 
 void AudioSource::SetPitch(const float pitch)
 {
-	engine_->SetPitch(source_voice_, pitch);
+	pitch_ = pitch;
+
+	if (!source_voice_)
+		return;
+
+	engine_->SetPitch(source_voice_, pitch_);
 }
 
 void AudioSource::UpdateEmitterState()

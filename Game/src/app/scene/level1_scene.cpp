@@ -1,36 +1,36 @@
-#include "game/component/all_components.h"
+#include "app/component/camera_controller.h"
 #include "app/component/game_manager.h"
 #include "app/component/map_loader.h"
-#include "app/component/player_controller.h"
-#include "app/component/player_controller_2.h"
-#include "app/entity/player.h"
-#include "app/component/camera_controller.h"
+#include "app/component/metal_ball_emitter_controller.h"
 #include "app/component/pause_behavior.h"
 #include "app/component/pause_manager.h"
-#include "app/component/metal_ball_emitter_controller.h"
+#include "app/component/player_controller.h"
+#include "app/component/player_controller_2.h"
 #include "app/entity/metal_ball_emitter.h"
+#include "app/entity/pause_menu.h"
+#include "app/entity/player.h"
 #include "app/entity/tutorial_label.h"
+#include "app/scene/title_scene.h"
+#include "game/collision_manager.h"
+#include "game/component/all_components.h"
+#include "game/component/timeline_player.h"
 #include "game/entity.h"
 #include "game/game.h"
 #include "game/input/input.h"
+#include "game/resource/animation.h"
 #include "game/resource/bitmap.h"
 #include "game/resource/collision_model.h"
 #include "game/resource/model.h"
 #include "game/scene.h"
 #include "level1_scene.h"
-#include "app/scene/title_scene.h"
 #include "math/color.h"
-#include "math/vec.h"
 #include "math/easing.h"
-#include <game/animation.h>
+#include "math/quaternion.h"
+#include "math/vec.h"
 #include <memory>
 #include <random>
 #include <string>
 #include <vector>
-
-Entity* player, *enemy, *testSphere, *movingObj;
-float angle = 0;
-Vec3 direction = Vec3(1, 0, 0);
 
 bool Level1Scene::Init()
 {
@@ -48,7 +48,7 @@ bool Level1Scene::Init()
 		CreateEntity(pause_manager);
 	}
 
-	player = new Player("player");
+	auto player = new Player("player");
 	{
 		CreateEntity(player);
 	}
@@ -57,6 +57,7 @@ bool Level1Scene::Init()
 	{
 		camera->AddComponent(new Camera());
 		camera->AddComponent(new AudioListener());
+		camera->AddComponent(new Animator());
 		camera->AddComponent(new CameraController(player));
 		//camera->AddComponent(new PauseBehavior());
 		CreateEntity(camera);
@@ -65,8 +66,10 @@ bool Level1Scene::Init()
 
 	auto map = new Entity("map", "map", "map");
 	{
+		auto collision_model = LoadResource<CollisionModel>(L"assets/map/level1.obj");
+
 		map->AddComponent(new MeshRenderer(LoadResource<Model>(L"assets/map/level1.obj")));
-		map->AddComponent(new MeshCollider(LoadResource<CollisionModel>(L"assets/map/level1.obj")));
+		map->AddComponent(new MeshCollider(collision_model));
 		map->AddComponent(new Rigidbody(1, false, true, 0.1f));
 
 		map->transform->scale = Vec3(0.1f, 0.1f, 0.1f);
@@ -174,12 +177,18 @@ bool Level1Scene::Init()
 		CreateEntity(tutorial_label);
 	}
 
+	auto pause_menu = new PauseMenu();
+	{
+		CreateEntity(pause_menu);
+		pause_menu->SetActive(false);
+	}
+
 	auto game_manager = new Entity("game_manager");
 	{
 		game_manager->AddComponent(new GameManager(
 			GameManager::SCENE_GAME,
-			player->GetComponent<PlayerController2>(),
-			camera->GetComponent<CameraController>(),
+			player,
+			camera,
 			coin_gui->Child("coin_label")->GetComponent<Label>()
 		));
 
@@ -193,6 +202,136 @@ bool Level1Scene::Init()
 		map_loader->transform->scale = Vec3(0.1f, 0.1f, 0.1f);
 		map_loader->transform->position = Vec3(0, -10, 0);
 		CreateEntity(map_loader);
+	}
+
+	auto clear_event = new Entity("clear_event");
+	{
+		auto timeline = std::make_shared<Timeline>();
+
+		{
+			auto animator = player->GetComponent<Animator>();
+
+			Timeline::Track track = {};
+			track.type = Timeline::TYPE_ANIMATION;
+			track.target = player;
+			{
+				Timeline::AnimationTrack animation;
+				animation.animation_keys =
+				{
+					{ 0, Easing::LINEAR, animator->GetAnimation("Jump"), 2, false },
+					{ 20, Easing::LINEAR, animator->GetAnimation("Jump_Idle"), 2, true },
+					{ 40, Easing::LINEAR, animator->GetAnimation("Jump_Land"), 2, false },
+					{ 60, Easing::LINEAR, animator->GetAnimation("Wave"), 2, true },
+				};
+
+				track.animation.push_back(animation);
+			}
+			timeline->AddTrack(track);
+		}
+
+		{
+			auto star = FindEntity("star");
+
+			Timeline::Track track = {};
+			track.type = Timeline::TYPE_ANIMATION;
+			track.target = star;
+			{
+				auto animation_up = std::make_shared<Animation>();
+				{
+					Animation::Channel channel = {};
+					channel.type = Animation::TYPE_TRANSFORM;
+					channel.transform.position_keys =
+					{
+						{ 0, Easing::LINEAR, Vec3(0, 0, 0) },
+						{ 60, Easing::OUT_CUBIC, Vec3(0, 5, 0) }
+					};
+					animation_up->AddChannel(channel);
+				}
+				animation_up->SetDuration(60);
+				animation_up->SetTicksPerSecond(60);
+
+				auto animation_rotate = std::make_shared<Animation>();
+				{
+					Animation::Channel channel = {};
+					channel.type = Animation::TYPE_TRANSFORM;
+					channel.transform.rotation_keys =
+					{
+						{ 0, Easing::LINEAR, Quaternion::FromEuler(0, 0, 0) },
+						{ 20, Easing::IN_QUAD, Quaternion::FromEuler(0, 3.14f, 0) },
+						{ 40, Easing::OUT_QUAD, Quaternion::FromEuler(0, 6.28f, 0) },
+					};
+					animation_rotate->AddChannel(channel);
+				}
+				animation_rotate->SetDuration(40);
+				animation_rotate->SetTicksPerSecond(60);
+
+				{
+					Timeline::AnimationTrack anim_track;
+					anim_track.animation_keys =
+					{
+						{ 0, Easing::LINEAR, animation_up, 1, false }
+					};
+					track.animation.push_back(anim_track);
+				}
+				/*{
+					Timeline::AnimationTrack anim_track;
+					anim_track.animation_keys =
+					{
+						{ 0, Easing::LINEAR, animation_rotate, 2, true }
+					};
+					track.animation.push_back(anim_track);
+				}*/
+			}
+			timeline->AddTrack(track);
+		}
+
+		{
+			Timeline::Track track = {};
+			track.type = Timeline::TYPE_ANIMATION;
+			track.target = camera;
+			{
+				auto animation = std::make_shared<Animation>();
+				{
+					Animation::Channel channel = {};
+					channel.type = Animation::TYPE_TRANSFORM;
+					channel.transform.position_keys =
+					{
+						{ 0, Easing::LINEAR, Vec3(0, 5, 10) },
+						{ 120, Easing::OUT_QUAD, Vec3(0, 5, 20) }
+					};
+					animation->AddChannel(channel);
+				}
+				animation->SetDuration(120);
+				animation->SetTicksPerSecond(60);
+
+				Timeline::AnimationTrack anim_track;
+				anim_track.animation_keys =
+				{
+					{ 0, Easing::LINEAR, animation, 1, false }
+				};
+				track.animation.push_back(anim_track);
+			}
+			timeline->AddTrack(track);
+		}
+
+		{
+			Timeline::Track track = {};
+			track.type = Timeline::TYPE_AUDIO;
+			track.target = clear_event;
+			track.audio.audio_keys =
+			{
+				{ 60, Easing::LINEAR, LoadResource<Audio>(L"assets/se/confirmation_002.wav") },
+				{ 90, Easing::LINEAR, LoadResource<Audio>(L"assets/se/cute-level-up-3-189853.wav") }
+			};
+			timeline->AddTrack(track);
+		}
+
+		timeline->SetDuration(120);
+
+		clear_event->AddComponent(new AudioSource());
+		clear_event->AddComponent(new TimelinePlayer(timeline));
+
+		CreateEntity(clear_event);
 	}
 
 	return true;

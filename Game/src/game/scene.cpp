@@ -428,10 +428,12 @@ Entity* Scene::CreateEntity(Entity* entity)
 {
 	root_entity_->AddChild(entity);
 
-	entity->ExecuteOnAllChildrenBack([this](Entity& e) {
-		e.RegisterScene(this);
-		e.Init();
-		});
+	entity->ExecuteOnAllChildrenBack(
+		[this](Entity& e) {
+			e.RegisterScene(this);
+			e.Init();
+		}
+	);
 
 	return entity;
 }
@@ -776,7 +778,7 @@ void Scene::UpdateCB()
 	// SceneParameter
 	auto currentScene = scene_cb_[currentIndex]->GetPtr<SceneParameter>();
 
-	auto cameraPos = camera->transform->position;
+	auto cameraPos = camera->Position();
 	currentScene->camera_position = cameraPos;
 
 	auto targetPos = camera->GetFocusPosition();
@@ -788,7 +790,7 @@ void Scene::UpdateCB()
 
 void Scene::UpdateEntityList()
 {
-	entity_list_ = root_entity_->AllChildren();
+	entity_list_ = root_entity_->AllActiveChildren();
 }
 
 void Scene::DestroyEntities()

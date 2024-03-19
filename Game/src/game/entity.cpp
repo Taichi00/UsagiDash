@@ -49,8 +49,7 @@ bool Entity::Init()
 	{
 		for (auto& component : components.second)
 		{
-			if (component->enabled)
-				component->Init();
+			component->Init();
 		}
 	}
 	return true;
@@ -136,7 +135,7 @@ void Entity::PhysicsUpdate(const float delta_time)
 	if (!is_update_enabled_)
 		return;
 
-	for (auto& components: component_map_)
+	for (auto& components : component_map_)
 	{
 		for (auto& component : components.second)
 		{
@@ -281,6 +280,13 @@ void Entity::OnDestroy()
 	}
 }
 
+void Entity::SetActive(const bool flag)
+{
+	ExecuteOnAllChildren([flag](Entity& entity) {
+		entity.is_active_ = flag;
+		});
+}
+
 void Entity::SetParent(Entity* parent)
 {
 	if (!parent)
@@ -299,11 +305,6 @@ void Entity::SetParent(Entity* parent)
 	{
 		parent->AddChild(this);
 	}
-}
-
-Entity* Entity::Parent()
-{
-	return parent_;
 }
 
 void Entity::AddChild(Entity* child)
@@ -374,8 +375,15 @@ std::vector<Entity*> Entity::Children() const
 std::vector<Entity*> Entity::AllChildren() const
 {
 	std::vector<Entity*> children;
-
 	RecursiveGetChildren(this, children);
+
+	return children;
+}
+
+std::vector<Entity*> Entity::AllActiveChildren() const
+{
+	std::vector<Entity*> children;
+	RecursiveGetActiveChildren(this, children);
 
 	return children;
 }
@@ -383,9 +391,22 @@ std::vector<Entity*> Entity::AllChildren() const
 void Entity::RecursiveGetChildren(const Entity* entity, std::vector<Entity*>& list) const
 {
 	auto children = entity->Children();
-	for (const auto& child : children)
+	for (const auto child : children)
 	{
 		list.push_back(child);
 		RecursiveGetChildren(child, list);
+	}
+}
+
+void Entity::RecursiveGetActiveChildren(const Entity* entity, std::vector<Entity*>& list) const
+{
+	auto children = entity->Children();
+	for (const auto child : children)
+	{
+		if (child->IsActive())
+		{
+			list.push_back(child);
+			RecursiveGetChildren(child, list);
+		}
 	}
 }

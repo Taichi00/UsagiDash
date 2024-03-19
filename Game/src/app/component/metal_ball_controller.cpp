@@ -16,6 +16,6 @@ void MetalBallController::OnCollisionEnter(Collider* collider)
 {
 	if (collider->GetEntity()->tag == "map")
 	{
-		audio_rolling_->Playing(4, true);
+		audio_rolling_->Playing(true);
 	}
 }

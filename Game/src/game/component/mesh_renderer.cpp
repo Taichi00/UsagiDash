@@ -29,11 +29,6 @@ MeshRenderer::~MeshRenderer()
 {
 }
 
-void MeshRenderer::SetOutlineWidth(float width)
-{
-	outline_width_ = width;
-}
-
 bool MeshRenderer::Init()
 {
 	for (size_t i = 0; i < Engine::FRAME_BUFFER_COUNT; i++)
@@ -363,7 +358,7 @@ void MeshRenderer::UpdateBone()
 
 void MeshRenderer::UpdateCB()
 {
-	auto currentIndex = Game::Get()->GetEngine()->CurrentBackBufferIndex();
+	auto current_index = Game::Get()->GetEngine()->CurrentBackBufferIndex();
 	auto camera = GetEntity()->GetScene()->GetMainCamera();
 
 	auto aabb = model_->aabb;
@@ -374,26 +369,27 @@ void MeshRenderer::UpdateCB()
 	float radius = aabb.Size().Length() / 2;
 
 	// Transform
-	auto currentTransform = transform_cb_[currentIndex]->GetPtr<TransformParameter>();
+	auto current_transform = transform_cb_[current_index]->GetPtr<TransformParameter>();
 	auto world = transform->WorldMatrix();
 	auto view = camera->GetViewMatrix();
 	auto proj = camera->GetProjMatrix();
-	auto ditherLevel = (1.0f - std::max((center - camera->transform->position).Length() - radius, 0.f) / 3.0f) * 16;
+	auto dither_level = (1.0f - std::max((center - camera->Position()).Length() - radius, 0.f) / 3.0f) * 16;
+	dither_level = std::max(dither_level, dither_level_ * 16);
 
-	currentTransform->world = world;
-	currentTransform->view = view;
-	currentTransform->proj = proj;
-	currentTransform->dither_level = ditherLevel;
+	current_transform->world = world;
+	current_transform->view = view;
+	current_transform->proj = proj;
+	current_transform->dither_level = dither_level;
 
 	// Bone
-	auto currentBone = bone_cb_[currentIndex]->GetPtr<BoneParameter>();
+	auto current_bone = bone_cb_[current_index]->GetPtr<BoneParameter>();
 
 	for (int i = 0; i < bones_.Size(); i++)
 	{
 		auto bone = bones_[i];
 		auto mtx = bone->WorldMatrix() * bone->InvBindMatrix();
-		XMStoreFloat4x4(&(currentBone->bone[i]), XMMatrixTranspose(mtx));
-		XMStoreFloat4x4(&(currentBone->bone_normal[i]), XMMatrixInverse(nullptr, mtx));	// –@ü‚Í‹ts—ñ‚Ì“]’u‚Å•ÏŠ·
+		XMStoreFloat4x4(&(current_bone->bone[i]), XMMatrixTranspose(mtx));
+		XMStoreFloat4x4(&(current_bone->bone_normal[i]), XMMatrixInverse(nullptr, mtx)); // –@ü‚Í‹ts—ñ‚Ì“]’u‚Å•ÏŠ·
 	}
 
 	// Material
@@ -404,16 +400,16 @@ void MeshRenderer::UpdateCB()
 	}
 
 	// SceneParameter
-	auto currentScene = scene_cb_[currentIndex]->GetPtr<SceneParameter>();
-	auto cameraPos = camera->transform->position;
-	auto targetPos = camera->GetFocusPosition();
-	auto lightPos = targetPos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
-	auto lightWorld = world;
+	auto current_scene = scene_cb_[current_index]->GetPtr<SceneParameter>();
+	auto camera_pos = camera->Position();
+	auto target_pos = camera->GetFocusPosition();
+	auto light_pos = target_pos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
+	auto light_world = world;
 
-	currentScene->camera_position = cameraPos;
-	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, {0, 1, 0});
-	currentScene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
-	currentScene->light_world = lightWorld;
+	current_scene->camera_position = camera_pos;
+	current_scene->light_view = XMMatrixLookAtRH(light_pos, target_pos, {0, 1, 0});
+	current_scene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
+	current_scene->light_world = light_world;
 }
 
 const Model& MeshRenderer::GetModel() const

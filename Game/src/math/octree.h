@@ -224,14 +224,25 @@ public:
 
 		// ルート空間を処理
 		std::vector<OctreeObject<T>*> col_stac;
-		GetCollisionList(0, col_vect, col_stac);
+		MakeAllCollisionList(0, col_vect, col_stac);
 
 		return (unsigned long)col_stac.size();
 	}
 
+	void GetCollisionList(OctreeObject<T>* obj, std::vector<T*>& col_vect)
+	{
+		col_vect.clear();
+
+		// ルート空間の存在をチェック
+		if (!cell_array_[0])
+			return 0; // 空間が存在していない
+
+		MakeAllCollisionList(obj, 0, col_vect);
+	}
+
 protected:
 	// 空間内で衝突リストを作成する
-	bool GetCollisionList(const unsigned long& elem, std::vector<T*>& col_vect, std::vector<OctreeObject<T>*>& col_stac)
+	bool MakeAllCollisionList(const unsigned long elem, std::vector<T*>& col_vect, std::vector<OctreeObject<T>*>& col_stac)
 	{
 		// 空間内のオブジェクト同士の衝突リスト作成
 		OctreeObject<T>* obj1 = cell_array_[elem]->GetFirstObject();
@@ -298,7 +309,7 @@ protected:
 					}
 				}
 				child_flag = true;
-				GetCollisionList(elem * 8 + 1 + i, col_vect, col_stac); // 子空間へ
+				MakeAllCollisionList(elem * 8 + 1 + i, col_vect, col_stac); // 子空間へ
 			}
 		}
 		
@@ -308,6 +319,51 @@ protected:
 			for (unsigned long i = 0; i < obj_num; i++)
 			{
 				col_stac.pop_back();
+			}
+		}
+
+		return true;
+	}
+
+	bool MakeCollisionList(OctreeObject<T>* obj1, const unsigned long elem, std::vector<T*>& col_vect)
+	{
+		// 空間内のオブジェクト同士の衝突リスト作成
+		OctreeObject<T>* obj2 = cell_array_[elem]->GetFirstObject();
+		while (obj2 != nullptr)
+		{
+			if (obj1->group == obj2->group)
+			{
+				obj2 = obj2->next;
+				continue;
+			}
+
+			if (!layer_manager_->IsCollisionEnabled(obj1->layer, obj2->layer))
+			{
+				obj2 = obj2->next;
+				continue;
+			}
+
+			if (obj1->aabb.Intersects(obj2->aabb))
+			{
+				// 衝突リスト作成
+				col_vect.push_back(obj1->object);
+				col_vect.push_back(obj2->object);
+			}
+
+			obj2 = obj2->next;
+		}
+
+		bool child_flag = false;
+
+		// 子空間に移動
+		unsigned long obj_num = 0;
+		unsigned long next_elem;
+		for (unsigned long i = 0; i < 8; i++)
+		{
+			next_elem = elem * 8 + 1 + i;
+			if (next_elem < cell_num_ && cell_array_[elem * 8 + 1 + i])
+			{
+				MakeCollisionList(obj1, next_elem, col_vect); // 子空間へ
 			}
 		}
 

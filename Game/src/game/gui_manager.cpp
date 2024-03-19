@@ -3,6 +3,7 @@
 #include "math/vec.h"
 #include "game/component/gui/button_base.h"
 #include "game/game.h"
+#include "game/entity.h"
 #include "engine/engine.h"
 #include "engine/engine2d.h"
 
@@ -54,6 +55,11 @@ void GUIManager::RemoveButton(ButtonBase* button)
 	}
 }
 
+void GUIManager::PickButton(ButtonBase* button)
+{
+	current_picked_button_ = button;
+}
+
 void GUIManager::UpdateTarget()
 {
 	// キー入力
@@ -84,18 +90,22 @@ void GUIManager::UpdateTarget()
 		}
 		else
 		{
-			auto engine = Game::Get()->GetEngine();
-
 			// ボタンが選択されていなければ左上のボタンが選択されるようにする
 			current_pos = Vec2(0, 0);
-			input = Vec2(1, 1).Normalized();
+			input_normal = Vec2(1, 1).Normalized();
 		}
-
+		
 		float min_distance = 1000000;
 		ButtonBase* new_picked_button = nullptr;
 
 		for (auto button : buttons_)
 		{
+			if (!button->GetEntity()->IsActive())
+				continue;
+
+			if (!button->enabled)
+				continue;
+
 			auto pos = button->WorldPosition();
 			auto v = pos - current_pos;
 
@@ -115,6 +125,15 @@ void GUIManager::UpdateTarget()
 		if (new_picked_button)
 		{
 			current_picked_button_ = new_picked_button;
+		}
+	}
+
+	// エンティティやコンポーネントがアクティブでなければ選択を外す
+	if (current_picked_button_)
+	{
+		if (!current_picked_button_->enabled || !current_picked_button_->GetEntity()->IsActive())
+		{
+			current_picked_button_ = nullptr;
 		}
 	}
 

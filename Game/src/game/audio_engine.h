@@ -31,7 +31,7 @@ public:
 
 	void PlayWaveSound(
 		const WaveData& wave_data, IXAudio2SourceVoice* source_voice, 
-		float volume, bool loop);
+		bool loop);
 
 	void Stop(IXAudio2SourceVoice* source_voice);
 	void SetVolume(IXAudio2SourceVoice* source_voice, float volume);

@@ -113,8 +113,12 @@ TutorialLabel::TutorialLabel() : Entity("tutorial_label")
 
 	AddComponent(new Animator(animations));
 
-	auto audio_show = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/MI_SFX 27.wav"));
-	auto audio_hide = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/MI_SFX 28.wav"));
+	auto audio_show = AddComponent<AudioSource>(
+		game->LoadResource<Audio>(L"assets/se/MI_SFX 27.wav"), 0.5f
+	);
+	auto audio_hide = AddComponent<AudioSource>(
+		game->LoadResource<Audio>(L"assets/se/MI_SFX 28.wav"), 0.5f
+	);
 
 	AddComponent(new TutorialLabelController(audio_show, audio_hide));
 	AddComponent(new PauseBehavior());

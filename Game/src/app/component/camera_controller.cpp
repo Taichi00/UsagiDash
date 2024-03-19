@@ -3,7 +3,6 @@
 #include "game/entity.h"
 #include "game/component/camera.h"
 #include "game/physics.h"
-#include <dinput.h>
 
 CameraController::CameraController(Entity* target)
 {
@@ -150,7 +149,7 @@ void CameraController::Move(const float delta_time, const float move_speed)
 	}
 
 	// カメラ距離を計算
-	distance = current_distance_ + (distance - current_distance_) * pow(zoom_speed, delta_time * 60);
+	distance = current_distance_ + (distance - current_distance_) * zoom_speed;
 	current_distance_ = distance;
 	
 	// 位置を更新

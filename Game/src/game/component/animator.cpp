@@ -11,10 +11,9 @@
 Animator::Animator()
 {
 	animation_map_.clear();
-	current_animation_ = nullptr;
 }
 
-Animator::Animator(const std::shared_ptr<Animation>& animation) : Animator()
+Animator::Animator(std::shared_ptr<Animation> animation) : Animator()
 {
 	RegisterAnimation(animation);
 }
@@ -34,73 +33,13 @@ bool Animator::Init()
 
 void Animator::AfterUpdate(const float delta_time)
 {
-	// 再生中でなければ終了
-	if (!current_animation_)
-		return;
-	
-	// アニメーションブレンドの比率を計算
-	if (blend_time_ > 0)
+	for (int i = 0; i < ANIMATOR_LAYER_MAX; i++)
 	{
-		blend_ratio_ += 1.0f / blend_time_ * delta_time;
-		if (blend_ratio_ > 1) blend_ratio_ = 1;
-	}
-	else
-	{
-		blend_ratio_ = 1;
-	}
-
-	float ticks_per_second = current_animation_->TicksPerSecond();
-	float anim_time = current_time_ * ticks_per_second;
-
-	bool end_flag = false;
-
-	if (loop_) // ループ再生の場合
-	{
-		anim_time = std::fmod(anim_time, current_animation_->Duration());
-	}
-	else
-	{
-		if (anim_time >= current_animation_->Duration())
-		{
-			if (animation_queue_.empty())
-			{
-				// 再生キューが空なら終了
-				end_flag = true;
-			}
-			else
-			{
-				// 再生キューが空でなければ次のアニメーションを再生する
-				Play(animation_queue_.front());
-				animation_queue_.pop();
-
-				anim_time = 0;
-			}
-		}
-	}
-	
-	for (const auto& channel : current_animation_->Channels())
-	{
-		switch (channel.type)
-		{
-		case Animation::TYPE_BONE:
-			AnimateBone(channel.bone, anim_time);
-			break;
-		case Animation::TYPE_GUI:
-			AnimateGUI(channel.gui, anim_time);
-			break;
-		}
-	}
-	
-	previous_time_ = current_time_;
-	current_time_ += 60.0f / 100.0f * speed_ * delta_time;
-
-	if (end_flag)
-	{
-		current_animation_ = nullptr;
+		UpdateAnimation(i, delta_time);
 	}
 }
 
-void Animator::RegisterAnimation(const std::shared_ptr<Animation>& animation)
+void Animator::RegisterAnimation(std::shared_ptr<Animation> animation)
 {
 	animation_map_[animation->Name()] = animation;
 }
@@ -113,77 +52,198 @@ void Animator::RegisterAnimations(const std::vector<std::shared_ptr<Animation>>&
 	}
 }
 
-void Animator::Play(std::string name, float speed, bool loop, float blend_speed)
+void Animator::Play(std::shared_ptr<Animation> animation, float speed, bool loop, float blend_time, unsigned int layer)
 {
-	if (!animation_map_.contains(name))
+	if (!animation || layer >= ANIMATOR_LAYER_MAX)
 		return;
-
-	auto animation = animation_map_[name];
 
 	// 現在の状態を保持（アニメーションの遷移のため）
 	if (mesh_renderer_)
 		mesh_renderer_->GetBones()->SaveBuffer();
+	
+	AnimationData data = {};
+	data.animation = animation;
+	data.speed = speed;
+	data.loop = loop;
+	data.blend_time = blend_time;
+	data.start_position = transform->position;
+	data.start_rotation = transform->rotation;
+	data.start_scale = transform->scale;
 
-	current_animation_ = animation_map_[name];
-	current_time_ = 0;
-	speed_ = speed;
-	loop_ = loop;
-	blend_time_ = blend_speed;
-	blend_ratio_ = 0;
+	current_animations_[layer] = data;
+
+	ProcessChannels(layer, 0);
 }
 
-void Animator::Playing(std::string name, float speed, bool loop, float blend_time)
+void Animator::Play(const std::string& name, float speed, bool loop, float blend_time, unsigned int layer)
 {
 	if (!animation_map_.contains(name))
 		return;
 
-	auto animation = animation_map_[name];
+	auto& animation = animation_map_[name];
+	
+	Play(animation, speed, loop, blend_time, layer);
+}
 
-	// 同じアニメーションを再生中なら、プロパティだけ更新する
-	if (animation == current_animation_)
+void Animator::Playing(std::shared_ptr<Animation> animation, float speed, bool loop, float blend_time, unsigned int layer)
+{
+	if (layer >= ANIMATOR_LAYER_MAX)
+		return;
+
+	if (animation == current_animations_[layer].animation)
 	{
-		speed_ = speed;
-		loop_ = loop;
-		blend_time_ = blend_time;
+		// 同じアニメーションを再生中なら、プロパティだけ更新する
+		current_animations_[layer].speed = speed;
+		current_animations_[layer].loop = loop;
+		current_animations_[layer].blend_time = blend_time;
 	}
 	else
 	{
-		Play(name, speed, loop, blend_time);
+		Play(animation, speed, loop, blend_time, layer);
 	}
 }
 
-void Animator::Push(std::string name, float speed, bool loop, float blend_speed)
+void Animator::Playing(const std::string& name, float speed, bool loop, float blend_time, unsigned int layer)
 {
-	if (animation_map_.find(name) == animation_map_.end())
-	{
+	if (!animation_map_.contains(name))
 		return;
+
+	auto& animation = animation_map_[name];
+	
+	Playing(animation, speed, loop, blend_time, layer);
+}
+
+void Animator::Push(std::shared_ptr<Animation> animation, float speed, bool loop, float blend_time, unsigned int layer)
+{
+	if (!animation || layer >= ANIMATOR_LAYER_MAX)
+		return;
+
+	AnimationData data = {};
+	data.animation = animation;
+	data.speed = speed;
+	data.loop = loop;
+	data.blend_time = blend_time;
+
+	animation_queues_[layer].push(data);
+}
+
+void Animator::Push(const std::string& name, float speed, bool loop, float blend_time, unsigned int layer)
+{
+	if (!animation_map_.contains(name))
+		return;
+
+	auto& animation = animation_map_[name];
+
+	Push(animation, speed, loop, blend_time, layer);
+}
+
+void Animator::ClearQueue()
+{
+	for (auto& animation_queue : animation_queues_)
+	{
+		// 空のキューと swap することでキューを空にする
+		std::queue<AnimationData>().swap(animation_queue);
 	}
-
-	AnimationArgs anim{};
-	anim.name = name;
-	anim.speed = speed;
-	anim.loop = loop;
-	anim.blend_time = blend_speed;
-
-	animation_queue_.push(anim);
 }
 
 void Animator::Stop()
 {
-	current_animation_ = nullptr;
+	for (int i = 0; i < ANIMATOR_LAYER_MAX; i++)
+	{
+		current_animations_[i] = {};
+	}
 }
 
-void Animator::SetSpeed(float speed)
+std::shared_ptr<Animation> Animator::GetAnimation(const std::string& name) const
 {
-	speed_ = speed;
+	if (!animation_map_.contains(name))
+		return nullptr;
+
+	return animation_map_.at(name);
 }
 
-void Animator::Play(AnimationArgs anim)
+void Animator::UpdateAnimation(unsigned int layer, const float delta_time)
 {
-	Play(anim.name, anim.speed, anim.loop, anim.blend_time);
+	auto& data = current_animations_[layer];
+
+	// 再生中でなければ終了
+	if (!data.animation)
+		return;
+
+	// アニメーションブレンドの比率を計算
+	if (data.blend_time > 0)
+	{
+		data.blend_ratio += 1.0f / data.blend_time * delta_time;
+		if (data.blend_ratio > 1) data.blend_ratio = 1;
+	}
+	else
+	{
+		data.blend_ratio = 1;
+	}
+
+	float ticks_per_second = data.animation->TicksPerSecond();
+	float anim_time = data.current_time * ticks_per_second;
+
+	bool end_flag = false;
+
+	if (data.loop) // ループ再生の場合
+	{
+		anim_time = std::fmod(anim_time, data.animation->Duration());
+	}
+	else
+	{
+		if (anim_time >= data.animation->Duration())
+		{
+			if (animation_queues_[layer].empty())
+			{
+				// 再生キューが空なら終了
+				end_flag = true;
+			}
+			else
+			{
+				// 再生キューが空でなければ次のアニメーションを再生する
+				auto& next = animation_queues_[layer].front();
+				Play(next.animation, next.speed, next.loop, next.blend_time, layer);
+				animation_queues_[layer].pop();
+
+				anim_time = 0;
+			}
+		}
+	}
+
+	ProcessChannels(layer, anim_time);
+
+	data.previous_time = data.current_time;
+	data.current_time += 60.0f / 100.0f * data.speed * delta_time;
+
+	if (end_flag)
+	{
+		data.animation = nullptr;
+	}
 }
 
-void Animator::AnimateBone(const Animation::Channel::BoneChannel& channel, const float current_time)
+void Animator::ProcessChannels(unsigned int layer, const float current_time)
+{
+	auto& data = current_animations_[layer];
+
+	for (const auto& channel : data.animation->Channels())
+	{
+		switch (channel.type)
+		{
+		case Animation::TYPE_BONE:
+			AnimateBone(channel.bone, current_time, data.blend_ratio);
+			break;
+		case Animation::TYPE_TRANSFORM:
+			AnimateTransform(channel.transform, current_time, data.start_position, data.start_rotation, data.start_scale);
+			break;
+		case Animation::TYPE_GUI:
+			AnimateGUI(channel.gui, current_time);
+			break;
+		}
+	}
+}
+
+void Animator::AnimateBone(const Animation::BoneChannel& channel, const float current_time, const float blend_ratio)
 {
 	if (!mesh_renderer_)
 		return;
@@ -195,30 +255,57 @@ void Animator::AnimateBone(const Animation::Channel::BoneChannel& channel, const
 
 	if (!channel.position_keys.empty())
 	{
-		auto position = CalcCurrentVec3(channel.position_keys, current_time);
-		position = Vec3::Lerp(bone->PositionBuffer(), position, blend_ratio_);
+		auto position = Animation::GetCurrentVec3(channel.position_keys, current_time);
+		position = Vec3::Lerp(bone->PositionBuffer(), position, blend_ratio);
 
 		bone->SetPosition(position);
 	}
 
 	if (!channel.rotation_keys.empty())
 	{
-		auto rotation = CalcCurrentQuat(channel.rotation_keys, current_time);
-		rotation = Quaternion::Slerp(bone->RotationBuffer(), rotation, blend_ratio_);
+		auto rotation = Animation::GetCurrentQuat(channel.rotation_keys, current_time);
+		rotation = Quaternion::Slerp(bone->RotationBuffer(), rotation, blend_ratio);
 
 		bone->SetRotation(rotation);
 	}
 
 	if (!channel.scale_keys.empty())
 	{
-		auto scale = CalcCurrentVec3(channel.scale_keys, current_time);
-		scale = Vec3::Lerp(bone->ScaleBuffer(), scale, blend_ratio_);
+		auto scale = Animation::GetCurrentVec3(channel.scale_keys, current_time);
+		scale = Vec3::Lerp(bone->ScaleBuffer(), scale, blend_ratio);
 
 		bone->SetScale(scale);
 	}
 }
 
-void Animator::AnimateGUI(const Animation::Channel::GUIChannel& channel, const float current_time)
+void Animator::AnimateTransform(
+	const Animation::TransformChannel& channel,
+	const float current_time,
+	const Vec3& start_position,
+	const Quaternion& start_rotation,
+	const Vec3& start_scale
+)
+{
+	if (!channel.position_keys.empty())
+	{
+		auto position = Animation::GetCurrentVec3(channel.position_keys, current_time);
+		transform->position = start_position + position;
+	}
+
+	if (!channel.rotation_keys.empty())
+	{
+		auto rotation = Animation::GetCurrentQuat(channel.rotation_keys, current_time);
+		transform->rotation = start_rotation * rotation;
+	}
+
+	if (!channel.scale_keys.empty())
+	{
+		auto scale = Animation::GetCurrentVec3(channel.scale_keys, current_time);
+		transform->scale = start_scale * scale;
+	}
+}
+
+void Animator::AnimateGUI(const Animation::GUIChannel& channel, const float current_time)
 {
 	if (!control_)
 		return;
@@ -227,25 +314,25 @@ void Animator::AnimateGUI(const Animation::Channel::GUIChannel& channel, const f
 	{
 		if (!channel.position_keys.empty())
 		{
-			auto position = CalcCurrentVec2(channel.position_keys, current_time);
+			auto position = Animation::GetCurrentVec2(channel.position_keys, current_time);
 			control_->SetPosition(position);
 		}
 
 		if (!channel.rotation_keys.empty())
 		{
-			auto rotation = CalcCurrentFloat(channel.rotation_keys, current_time);
+			auto rotation = Animation::GetCurrentFloat(channel.rotation_keys, current_time);
 			control_->SetRotation(rotation);
 		}
 
 		if (!channel.color_keys.empty())
 		{
-			auto color = CalcCurrentColor(channel.color_keys, current_time);
+			auto color = Animation::GetCurrentColor(channel.color_keys, current_time);
 			control_->SetColor(color);
 		}
 
 		if (!channel.scale_keys.empty())
 		{
-			auto scale = CalcCurrentVec2(channel.scale_keys, current_time);
+			auto scale = Animation::GetCurrentVec2(channel.scale_keys, current_time);
 			control_->SetScale(scale);
 		}
 
@@ -257,114 +344,26 @@ void Animator::AnimateGUI(const Animation::Channel::GUIChannel& channel, const f
 
 		if (!channel.position_keys.empty())
 		{
-			auto position = CalcCurrentVec2(channel.position_keys, current_time);
+			auto position = Animation::GetCurrentVec2(channel.position_keys, current_time);
 			element->SetPosition(position);
 		}
 
 		if (!channel.rotation_keys.empty())
 		{
-			auto rotation = CalcCurrentFloat(channel.rotation_keys, current_time);
+			auto rotation = Animation::GetCurrentFloat(channel.rotation_keys, current_time);
 			element->SetRotation(rotation);
 		}
 
 		if (!channel.color_keys.empty())
 		{
-			auto color = CalcCurrentColor(channel.color_keys, current_time);
+			auto color = Animation::GetCurrentColor(channel.color_keys, current_time);
 			element->SetColor(color);
 		}
 
 		if (!channel.scale_keys.empty())
 		{
-			auto scale = CalcCurrentVec2(channel.scale_keys, current_time);
+			auto scale = Animation::GetCurrentVec2(channel.scale_keys, current_time);
 			element->SetScale(scale);
 		}
 	}
-}
-
-Vec2 Animator::CalcCurrentVec2(const std::vector<Animation::Vec2Key>& keys, const float current_time)
-{
-	int index1 = 0, index2 = 0;
-
-	GetCurrentKeys(std::vector<Animation::Key>(keys.begin(), keys.end()), current_time, index1, index2);
-
-	auto& key1 = keys[index1];
-	auto& key2 = keys[index2];
-	float t = GetEasingTime(key1, key2, current_time);
-
-	return Vec2::Lerp(key1.value, key2.value, t);
-}
-
-Vec3 Animator::CalcCurrentVec3(const std::vector<Animation::Vec3Key>& keys, const float current_time)
-{
-	int index1 = 0, index2 = 0;
-
-	GetCurrentKeys(std::vector<Animation::Key>(keys.begin(), keys.end()), current_time, index1, index2);
-
-	auto& key1 = keys[index1];
-	auto& key2 = keys[index2];
-	float t = GetEasingTime(key1, key2, current_time);
-
-	return Vec3::Lerp(key1.value, key2.value, t);
-}
-
-Quaternion Animator::CalcCurrentQuat(const std::vector<Animation::QuatKey>& keys, const float current_time)
-{
-	int index1 = 0, index2 = 0;
-
-	GetCurrentKeys(std::vector<Animation::Key>(keys.begin(), keys.end()), current_time, index1, index2);
-
-	auto& key1 = keys[index1];
-	auto& key2 = keys[index2];
-	float t = GetEasingTime(key1, key2, current_time);
-
-	return Quaternion::Slerp(key1.value, key2.value, t);
-}
-
-Color Animator::CalcCurrentColor(const std::vector<Animation::ColorKey>& keys, const float current_time)
-{
-	int index1 = 0, index2 = 0;
-
-	GetCurrentKeys(std::vector<Animation::Key>(keys.begin(), keys.end()), current_time, index1, index2);
-
-	auto& key1 = keys[index1];
-	auto& key2 = keys[index2];
-	float t = GetEasingTime(key1, key2, current_time);
-
-	return Color::Lerp(key1.value, key2.value, t);
-}
-
-float Animator::CalcCurrentFloat(const std::vector<Animation::FloatKey>& keys, const float current_time)
-{
-	int index1 = 0, index2 = 0;
-
-	GetCurrentKeys(std::vector<Animation::Key>(keys.begin(), keys.end()), current_time, index1, index2);
-
-	auto& key1 = keys[index1];
-	auto& key2 = keys[index2];
-	float t = GetEasingTime(key1, key2, current_time);
-
-	return key1.value * (1 - t) + key2.value * t;
-}
-
-void Animator::GetCurrentKeys(const std::vector<Animation::Key>& keys, const float current_time, int& index1, int& index2)
-{
-	index1 = 0;
-	index2 = (int)keys.size() - 1;
-
-	for (auto i = 0u; i < keys.size(); i++)
-	{
-		auto& key = keys[i];
-		if (current_time < key.time)
-		{
-			index2 = i;
-			break;
-		}
-		index1 = i;
-	}
-}
-
-float Animator::GetEasingTime(const Animation::Key& key1, const Animation::Key& key2, const float current_time)
-{
-	float duration = key2.time - key1.time;
-	return duration > 0 ? Easing::GetFunction(key2.easing)((current_time - key1.time) / duration) : 0;
 }

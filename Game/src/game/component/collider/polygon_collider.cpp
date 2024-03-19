@@ -251,6 +251,7 @@ bool PolygonCollider::SphereIntersectsPolygon(
 		{
 			bestPoint = point0;
 			intersectionVec = center - point0;
+			normal = N;
 		}
 		else
 		{
@@ -276,10 +277,11 @@ bool PolygonCollider::SphereIntersectsPolygon(
 				bestPoint = point3;
 				intersectionVec = d;
 			}
+
+			normal = intersectionVec.Normalized();
 		}
 
 		float len = intersectionVec.Length();
-		normal = intersectionVec.Normalized();
 		distance = radius - len;
 		
 		return true;

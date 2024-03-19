@@ -17,10 +17,12 @@ MetalBall::MetalBall(const float radius) : Entity("metal_ball", "object", "objec
 	AddComponent(new SphereCollider(radius));
 	AddComponent(new Rigidbody(10, true, false, 0.0f));
 
-	auto audio_rolling = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/rolling-metal-barrel-96710.wav"), 80.0f);
+	auto audio_rolling = AddComponent<AudioSource>(
+		game->LoadResource<Audio>(L"assets/se/rolling-metal-barrel-96710.wav"), 4.0f, 1.0f, 80.0f
+	);
 
 	AddComponent(new MetalBallController(audio_rolling));
-	AddComponent(new EntityHeightDestroyer(-40));
+	AddComponent(new EntityHeightDestroyer(-30, 20));
 	AddComponent(new PauseBehavior());
 
 	transform->scale = Vec3(radius, radius, radius);

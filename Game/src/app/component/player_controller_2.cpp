@@ -67,7 +67,7 @@ void PlayerController2::Update(const float delta_time)
 	velocity_ = rigidbody_->velocity - rigidbody_->floor_velocity;
 	state_->Update(delta_time);
 	rigidbody_->velocity = velocity_ + rigidbody_->floor_velocity;
-
+	
 	// 空中にいるフレーム数をカウント
 	air_frame_ = is_grounded_ ? 0 : air_frame_ + 60.0f * delta_time;
 
@@ -223,6 +223,11 @@ void PlayerController2::InAir(const float delta_time)
 			auto xz = velocity_xz.Normalized() * speed;
 			velocity_.x = xz.x;
 			velocity_.z = xz.z;
+		}
+
+		if (velocity_.y < -60)
+		{
+			velocity_.y = -60;
 		}
 	}
 
@@ -451,8 +456,7 @@ void PlayerController2::PlayFootStep()
 
 	if ((prev_time <= t1 && t1 < time) || (prev_time <= t2 && t2 < time))
 	{
-		audio_footstep_->SetPitch(0.8f);
-		audio_footstep_->Play(0.5f);
+		audio_footstep_->Play();
 	}
 }
 
@@ -528,7 +532,7 @@ void PlayerController2::IdleState::OnStateBegin(State* prev_state)
 		// 着地
 		if (!object->is_grounded_prev_&& object->air_frame_ > 10)
 		{
-			object->audio_landing_->Play(0.5f);
+			object->audio_landing_->Play();
 			object->circle_smoke_emitter_->Emit();
 		}
 	}
@@ -586,7 +590,7 @@ void PlayerController2::RunState::OnStateBegin(State* prev_state)
 		// 着地
 		if (!object->is_grounded_prev_ && object->air_frame_ > 10)
 		{
-			object->audio_landing_->Play(0.5f);
+			object->audio_landing_->Play();
 			object->circle_smoke_emitter_->Emit();
 		}
 
@@ -669,7 +673,7 @@ void PlayerController2::JumpState::OnStateBegin(State* prev_state)
 	object->jump_smoke_emitter_->Emit();
 
 	// サウンド
-	object->audio_jump_->Play(0.5f);
+	object->audio_jump_->Play();
 
 	object->velocity_.y = std::max(object->velocity_.y, 0.0f);
 
@@ -826,7 +830,7 @@ void PlayerController2::DashjumpState::OnStateBegin(State* prev_state)
 	object->jump_smoke_emitter_->Emit();
 
 	// サウンド
-	object->audio_dashjump_->Play(0.5f);
+	object->audio_dashjump_->Play();
 
 	auto input = Vec2(
 		Input::GetAxis("horizontal"),
@@ -924,7 +928,7 @@ void PlayerController2::DashState::OnStateBegin(State* prev_state)
 		// 着地
 		if (!object->is_grounded_prev_ && object->air_frame_ > 10)
 		{
-			object->audio_landing_->Play(0.5f);
+			object->audio_landing_->Play();
 			object->circle_smoke_emitter_->Emit();
 		}
 
@@ -1080,7 +1084,7 @@ void PlayerController2::WalljumpState::OnStateBegin(State* prev_state)
 	object->jump_smoke_emitter_->Emit();
 
 	// サウンド
-	object->audio_walljump_->Play(0.5f);
+	object->audio_walljump_->Play();
 
 	Vec3 wall_normal = object->wall_normal_; 
 	auto wall_dir = Vec3::Scale(wall_normal, 1, 0, 1).Normalized();

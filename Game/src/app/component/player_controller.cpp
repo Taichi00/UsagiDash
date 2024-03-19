@@ -56,13 +56,13 @@ void PlayerController::Update(const float delta_time)
 void PlayerController::Move2(const float delta_time)
 {
 	// フラグ更新
-	is_grounded_ = rigidbody_->is_grounded;
+	is_grounded_ = rigidbody_->is_grounded_;
 	is_touching_wall_ = rigidbody_->is_touching_wall;
 
 	float friction = is_grounded_ ? 0.9f : 1.f;
 	auto acceleration = is_grounded_ ? acceleration_ : walljump_frame_ ? 0.f : acceleration_ * 0.8f;
 	auto speed = speed_ + plus_speed_;
-	auto velocity = (rigidbody_->velocity - rigidbody_->floor_velocity) / delta_time;
+	auto velocity = (rigidbody_->velocity - rigidbody_->floor_velocity_) / delta_time;
 
 	// カメラ取得
 	auto camera = GetScene()->GetMainCamera();
@@ -117,13 +117,13 @@ void PlayerController::Move(const float delta_time)
 	// カメラ左方向ベクトル
 	auto left = Vec3::Scale(camera_rot * Vec3(-1, 0, 0), 1, 0, 1).Normalized();
 	
-	is_grounded_ = rigidbody_->is_grounded;
+	is_grounded_ = rigidbody_->is_grounded_;
 	is_touching_wall_ = rigidbody_->is_touching_wall;
 
 	float friction = 0.9f;
 	float acceleration = acceleration_;
 	float speed = speed_ + plus_speed_;
-	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity;
+	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity_;
 
 	if (!is_grounded_)
 	{
@@ -200,7 +200,7 @@ void PlayerController::Move(const float delta_time)
 	// 坂
 	if (is_grounded_)
 	{
-		auto q = Quaternion::FromToRotation(Vec3(0, 1, 0), rigidbody_->floor_normal);
+		auto q = Quaternion::FromToRotation(Vec3(0, 1, 0), rigidbody_->floor_normal_);
 		
 		if ((q * pv).y < 0)
 		{
@@ -208,7 +208,7 @@ void PlayerController::Move(const float delta_time)
 		}
 		
 		// 坂を滑らないように力を加える
-		velocity += (Vec3(0, 1.08f, 0) - rigidbody_->floor_normal * 1.08f);
+		velocity += (Vec3(0, 1.08f, 0) - rigidbody_->floor_normal_ * 1.08f);
 	}
 	else if (is_grounded_prev_ && jump_frame_ == 0)
 	{
@@ -255,7 +255,7 @@ void PlayerController::Move(const float delta_time)
 	{
 		if (is_touching_wall_ && v.Length() > 0)
 		{
-			auto normal = rigidbody_->wall_normal;
+			auto normal = rigidbody_->wall_normal_;
 			if (Vec3::Dot(v, -Vec3::Scale(normal, 1, 0, 1).Normalized()) > 0.5)
 			{
 				is_sliding_wall_ = true;
@@ -287,7 +287,7 @@ void PlayerController::Move(const float delta_time)
 
 			if (is_touching_wall_ && !is_grounded_)
 			{
-				velocity = Vec3::Scale(rigidbody_->wall_normal, 1, 0, 1) * 15;
+				velocity = Vec3::Scale(rigidbody_->wall_normal_, 1, 0, 1) * 15;
 				walljump_frame_ = 25;
 			}
 
@@ -346,7 +346,7 @@ void PlayerController::Move(const float delta_time)
 
 			if (is_sliding_wall_)
 			{
-				auto n = rigidbody_->wall_normal;
+				auto n = rigidbody_->wall_normal_;
 				angle_ = atan2(n.x, n.z);
 				t = 0.4f;
 			}
@@ -356,10 +356,10 @@ void PlayerController::Move(const float delta_time)
 		}
 	}
 	
-	auto floor_quat = Quaternion::FromToRotation(Vec3(0, 1, 0), rigidbody_->floor_normal).Conjugate();
+	auto floor_quat = Quaternion::FromToRotation(Vec3(0, 1, 0), rigidbody_->floor_normal_).Conjugate();
 	run_smoke_emitter_->transform->rotation = floor_quat;
 	
-	rigidbody_->velocity = velocity + rigidbody_->floor_velocity;
+	rigidbody_->velocity = velocity + rigidbody_->floor_velocity_;
 }
 
 void PlayerController::Animate(const float delta_time)
@@ -369,7 +369,7 @@ void PlayerController::Animate(const float delta_time)
 		return;
 	}
 	
-	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity;
+	auto velocity = rigidbody_->velocity - rigidbody_->floor_velocity_;
 
 	auto scale = Vec3(1, 1, 1);
 

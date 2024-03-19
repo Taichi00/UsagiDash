@@ -24,3 +24,8 @@ void ButtonBase::OnHovered()
 void ButtonBase::OnUnhovered()
 {
 }
+
+void ButtonBase::Pick()
+{
+	Game::Get()->GetGUIManager()->PickButton(this);
+}

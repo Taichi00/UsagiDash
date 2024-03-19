@@ -28,18 +28,24 @@ public:
 
 	void Detect(Ray* ray, const std::vector<std::string>& mask_tags = {});
 
-	void SetNonCollisionTags(const std::string& tag1, const std::string& tag2);
+	void SetOctreeSize(const AABB& aabb);
+
+private:
+	void PrepareRigidbodies(const float delta_time);
+	void PrepareColliders();
+	void Prepare();
 
 private:
 	std::vector<Collider*> colliders_;
 	std::vector<Rigidbody*> rigidbodies_;
 
-	std::vector<std::pair<std::string, std::string>> non_collision_tags_;
+	std::vector<Collider*> active_colliders_;
+	std::vector<Rigidbody*> active_rigidbodies_;
 
 	// 8分木
 	std::unique_ptr<Octree<Collider>> octree_;
 	// 8分木に登録するオブジェクト
-	//std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
+	std::vector<std::unique_ptr<OctreeObject<Collider>>> octree_objects_;
 
 	LayerManager* layer_manager_ = nullptr;
 };

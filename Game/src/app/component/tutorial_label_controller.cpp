@@ -32,7 +32,7 @@ void TutorialLabelController::Show(const std::string& text, TutorialTextControll
 
     label_->SetText(text);
     animator_->Play("show", 1, false);
-    audio_show_->Play(0.5f);
+    audio_show_->Play();
 
     tutorial_ = tutorial;
 }
@@ -40,7 +40,7 @@ void TutorialLabelController::Show(const std::string& text, TutorialTextControll
 void TutorialLabelController::Hide()
 {
     animator_->Play("hide", 1, false);
-    audio_hide_->Play(0.5f);
+    audio_hide_->Play();
 
     tutorial_ = nullptr;
 }

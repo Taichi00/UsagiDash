@@ -1,17 +1,53 @@
 #include "entity_height_destroyer.h"
 #include "game/component/transform.h"
 #include "game/entity.h"
+#include "game/component/mesh_renderer.h"
+#include "math/easing.h"
 
-EntityHeightDestroyer::EntityHeightDestroyer(const float height)
+EntityHeightDestroyer::EntityHeightDestroyer(const float height, const float destroy_time)
 {
 	height_ = height;
+	destroy_time_ = destroy_time;
+}
+
+bool EntityHeightDestroyer::Init()
+{
+	mesh_renderer_ = GetEntity()->GetComponent<MeshRenderer>();
+
+	return true;
 }
 
 void EntityHeightDestroyer::Update(const float delta_time)
 {
-	// 指定の高さを下回ったら削除する
-	if (transform->WorldPosition().y < height_)
+	if (destroy_timer_ > 0)
 	{
-		GetEntity()->Destroy();
+		auto t = destroy_timer_ / destroy_time_;
+
+		// だんだん透明になっていく
+		mesh_renderer_->SetDitherLevel(Easing::Linear(1 - t));
+
+		destroy_timer_ -= 60.0f * delta_time;
+
+		if (destroy_timer_ <= 0)
+		{
+			// 削除
+			GetEntity()->Destroy();
+		}
+	}
+	else
+	{
+		// 指定の高さを下回ったら削除開始
+		if (transform->WorldPosition().y < height_)
+		{
+			if (mesh_renderer_)
+			{
+				destroy_timer_ = destroy_time_;
+			}
+			else
+			{
+				// mesh renderer が無ければすぐに削除
+				GetEntity()->Destroy();
+			}
+		}
 	}
 }

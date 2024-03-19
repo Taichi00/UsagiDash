@@ -5,11 +5,16 @@
 class Collider;
 class ParticleEmitter;
 class AudioSource;
+class TimelinePlayer;
 
 class StarController : public Component
 {
 public:
-	StarController(ParticleEmitter* confetti, AudioSource* audio_twinkle);
+	StarController(
+		ParticleEmitter* confetti, 
+		AudioSource* audio_twinkle,
+		AudioSource* audio_pick
+	);
 	~StarController();
 
 	bool Init() override;
@@ -23,10 +28,10 @@ private:
 	// ‰ñ“]‚·‚é‘¬“x
 	float angle_speed_ = 1.2f;
 
-	bool is_slowed_ = false;
-	float slow_time_ = 0;
-	float slow_duration_ = 30;
+	bool is_catched_ = false;
 
 	ParticleEmitter* confetti_ = nullptr;
 	AudioSource* audio_twinkle_ = nullptr;
+	AudioSource* audio_pick_ = nullptr;
+	TimelinePlayer* timeline_player_ = nullptr;
 };

@@ -142,7 +142,7 @@ void AudioEngine::DestroySourceVoice(IXAudio2SourceVoice* source_voice)
     source_voice = nullptr;
 }
 
-void AudioEngine::PlayWaveSound(const WaveData& wave_data, IXAudio2SourceVoice* source_voice, float volume, bool loop)
+void AudioEngine::PlayWaveSound(const WaveData& wave_data, IXAudio2SourceVoice* source_voice, bool loop)
 {
     // ”gŒ`ƒf[ƒ^‚ğ source voice ‚É“n‚·
     XAUDIO2_BUFFER buffer{};
@@ -154,7 +154,6 @@ void AudioEngine::PlayWaveSound(const WaveData& wave_data, IXAudio2SourceVoice* 
     source_voice->SubmitSourceBuffer(&buffer);
     
     // ‰¹‚ğ–Â‚ç‚·
-    source_voice->SetVolume(volume);
     source_voice->Start();
 }
 

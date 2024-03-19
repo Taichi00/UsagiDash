@@ -17,7 +17,7 @@ Coin::Coin(const std::string& name) : Entity(name, "coin", "item")
 
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(1.5f));
-	AddComponent(new AudioSource(se));
+	AddComponent(new AudioSource(se, 0.8f));
 	AddComponent(new CoinScript());
 	AddComponent(new PauseBehavior());
 }

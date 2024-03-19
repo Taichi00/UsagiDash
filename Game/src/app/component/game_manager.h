@@ -14,6 +14,9 @@ class Animator;
 class Transition;
 class CameraController;
 class PauseManager;
+class ButtonBase;
+class Rigidbody;
+class TimelinePlayer;
 
 class GameManager : public Component
 {
@@ -26,8 +29,8 @@ public:
 
 	GameManager(
 		const SceneState state,
-		PlayerController2* player, 
-		CameraController* camera, 
+		Entity* player, 
+		Entity* camera, 
 		Label* coin_label
 	);
 
@@ -67,6 +70,9 @@ public:
 	// タイトルに戻る
 	void LoadTitle();
 
+	// ステージクリア
+	void StageClear(Entity* star);
+
 private:
 	// コインの枚数テキストを取得する
 	std::string GetCoinText(const int n);
@@ -78,13 +84,17 @@ private:
 private:
 	static GameManager* instance_;
 
-	PlayerController2* player_;
-	CameraController* camera_;
-	Label* coin_label_;
+	Entity* player_ = nullptr;
+	Entity* camera_ = nullptr;
+
+	PlayerController2* player_controller_ = nullptr;
+	CameraController* camera_controller_ = nullptr;
+	Label* coin_label_ = nullptr;
 	Animator* coin_label_animator_ = nullptr;
 	Transition* transition_ = nullptr;
 	PauseManager* pause_manager_ = nullptr;
 	AudioSource* audio_bgm_ = nullptr;
+	Rigidbody* player_rigidbody_ = nullptr;
 
 	// コインの枚数
 	unsigned int num_coins_ = 0;
@@ -97,6 +107,11 @@ private:
 
 	// ポーズメニュー
 	Entity* pause_menu_ = nullptr;
+	ButtonBase* resume_button_ = nullptr;
+
+	// ステージクリアイベント
+	Entity* clear_event_ = nullptr;
+	TimelinePlayer* timeline_player_ = nullptr;
 
 	SceneState scene_state_ = SCENE_TITLE;
 };

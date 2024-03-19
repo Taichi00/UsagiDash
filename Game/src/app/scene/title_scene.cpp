@@ -166,8 +166,8 @@ bool TitleScene::Init()
 
 		auto start_button = new Entity("start_button");
 		{
-			auto as_press = start_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = start_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = start_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = start_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = start_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"はじめる",
 				text_prop,
@@ -193,8 +193,8 @@ bool TitleScene::Init()
 
 		auto option_button = new Entity("option_button");
 		{
-			auto as_press = option_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = option_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = option_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"フルスクリーン",
 				text_prop,
@@ -220,8 +220,8 @@ bool TitleScene::Init()
 
 		auto exit_button = new Entity("exit_button");
 		{
-			auto as_press = exit_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = exit_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"おわる",
 				text_prop,
@@ -279,7 +279,7 @@ bool TitleScene::Init()
 			nullptr,
 			nullptr
 		));
-		game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/Sweet Treats.wav")));
+		//game_manager->AddComponent(new AudioSource(LoadResource<Audio>(L"assets/bgm/Sweet Treats.wav"), 0.3f));
 
 		CreateEntity(game_manager);
 	}

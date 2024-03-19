@@ -54,10 +54,11 @@ void CoinScript::OnCollisionEnter(Collider* collider)
         transform->position = Vec3(0, 2, 0);
         angle_speed_ = 18;
 
-        destroy_flag_ = true;
+        // Œø‰Ê‰¹
+        audio_source_->Play();
 
         GameManager::Get()->AddCoin(1);
-        audio_source_->Play(0.8f);
-        //audio_source_->SetPitch(50.f);
+
+        destroy_flag_ = true;
     }
 }

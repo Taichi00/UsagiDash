@@ -19,7 +19,7 @@ Checkpoint::Checkpoint() : Entity("", "checkpoint", "event")
 	AddComponent(new MeshRenderer(model));
 	AddComponent(new SphereCollider(5));
 	AddComponent(new Animator(model->animations));
-	AddComponent(new AudioSource(audio));
+	AddComponent(new AudioSource(audio, 0.6f));
 	AddComponent(new CheckpointController());
 	AddComponent(new PauseBehavior());
 

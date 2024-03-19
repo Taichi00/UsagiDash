@@ -19,8 +19,6 @@ public:
 	MeshRenderer(std::shared_ptr<Model> model);
 	~MeshRenderer();
 
-	void SetOutlineWidth(float width);
-
 	bool Init() override;
 	void Update(const float delta_time) override;
 	void BeforeDraw() override;
@@ -30,6 +28,12 @@ public:
 	void DrawDepth() override;
 	void DrawGBuffer() override;
 	void DrawOutline() override;
+
+	// アウトラインの太さを設定する
+	void SetOutlineWidth(const float width) { outline_width_ = width; }
+
+	// ディザのレベルを設定する
+	void SetDitherLevel(const float level) { dither_level_ = level; }
 
 private:
 	void UpdateBone();
@@ -52,5 +56,9 @@ protected:
 
 	PipelineStateManager* pipeline_manager_ = nullptr;
 
+	// アウトラインの太さ
 	float outline_width_;
+
+	// ディザのレベル (0-1)
+	float dither_level_ = 0;
 };

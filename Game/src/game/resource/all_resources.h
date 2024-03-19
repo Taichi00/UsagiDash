@@ -1,5 +1,6 @@
 #pragma once
 
+#include "animation.h"
 #include "audio.h"
 #include "bitmap.h"
 #include "collision_model.h"

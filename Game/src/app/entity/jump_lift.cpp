@@ -15,8 +15,12 @@ JumpLift::JumpLift(const Vec3& direction, const float distance) : Entity("jump_l
 	AddComponent(new MeshCollider(game->LoadResource<CollisionModel>(L"assets/model/object/jump_lift.gltf")));
 	AddComponent(new Rigidbody(1000, false, true, 0.1f));
 
-	auto audio_move = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/lift_move.wav"), 80.0f);
-	auto audio_stop = AddComponent<AudioSource>(game->LoadResource<Audio>(L"assets/se/lift_stop.wav"), 80.0f);
+	auto audio_move = AddComponent<AudioSource>(
+		game->LoadResource<Audio>(L"assets/se/lift_move.wav"), 2.0f, 1.0f, 80.0f
+	);
+	auto audio_stop = AddComponent<AudioSource>(
+		game->LoadResource<Audio>(L"assets/se/lift_stop.wav"), 2.0f, 1.0f, 80.0f
+	);
 
 	AddComponent(new JumpLiftController(direction, distance, audio_move, audio_stop));
 	AddComponent(new PauseBehavior());

@@ -102,6 +102,9 @@ public:
 
 	void OnDestroy();
 
+	void SetActive(const bool flag);
+	bool IsActive() const { return is_active_; }
+
 	// 親エンティティを設定する
 	void SetParent(Entity* parent);
 	// 子エンティティを追加する
@@ -112,10 +115,16 @@ public:
 	// 子エンティティの所有権を移動させる
 	std::unique_ptr<Entity> MoveChild(Entity* child);
 
-	Entity* Parent();
+	// 親エンティティを取得する
+	Entity* Parent() const { return parent_; }
+	// 名前から子エンティティを取得する
 	Entity* Child(const std::string& name) const;
+	// 子エンティティを取得する
 	std::vector<Entity*> Children() const;
+	// すべての子エンティティを取得する
 	std::vector<Entity*> AllChildren() const;
+	// すべてのアクティブな子エンティティを取得する
+	std::vector<Entity*> AllActiveChildren() const;
 
 	// 指定したメソッドを再帰的に実行する（親→子）
 	template<typename Func>
@@ -135,7 +144,7 @@ public:
 	{
 		for (const auto& child : children_)
 		{
-			child->ExecuteOnAllChildren(func);
+			child->ExecuteOnAllChildrenBack(func);
 		}
 
 		func(*this);
@@ -163,6 +172,7 @@ public:
 
 private:
 	void RecursiveGetChildren(const Entity* entity, std::vector<Entity*>& list) const;
+	void RecursiveGetActiveChildren(const Entity* entity, std::vector<Entity*>& list) const;
 
 public:
 	Transform* transform;
@@ -173,6 +183,8 @@ public:
 protected:
 	// 登録されているシーンへのポインタ
 	Scene* scene_ = nullptr;
+
+	bool is_active_ = true;
 
 	// 親エンティティへのポインタ
 	Entity* parent_ = nullptr;

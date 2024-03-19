@@ -10,7 +10,7 @@
 #include "game/game.h"
 #include "game/bone.h"
 #include "game/bone_list.h"
-#include "game/animation.h"
+#include "game/resource/animation.h"
 #include "math/vec.h"
 #include "math/quaternion.h"
 #include "game/resource/model.h"
@@ -584,9 +584,9 @@ void AssimpLoader::LoadAnimation(Animation& animation, aiAnimation* src, const B
         auto name = std::string(channel->mNodeName.C_Str());
         auto bone = bones.Find(name);
 
-        std::vector<Animation::Vec3Key> scaling_keys;
-        std::vector<Animation::QuatKey> rotation_keys;
-        std::vector<Animation::Vec3Key> position_keys;
+        std::vector<Vec3Key> scaling_keys;
+        std::vector<QuatKey> rotation_keys;
+        std::vector<Vec3Key> position_keys;
 
         // Šg‘åk¬ƒL[‚Ì“Ç‚Ýž‚Ý
         scaling_keys.resize(channel->mNumScalingKeys);

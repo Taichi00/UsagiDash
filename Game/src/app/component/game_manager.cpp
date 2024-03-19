@@ -14,13 +14,19 @@
 #include "app/component/pause_manager.h"
 #include "app/entity/pause_menu.h"
 #include "app/scene/title_scene.h"
+#include "game/component/gui/button_base.h"
+#include "game/component/timeline_player.h"
+#include "game/component/particle_emitter.h"
+#include "game/physics.h"
+#include "game/component/collider/collider.h"
+#include "game/component/camera.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
 GameManager::GameManager(
 	const SceneState state, 
-	PlayerController2* player, 
-	CameraController* camera, 
+	Entity* player, 
+	Entity* camera, 
 	Label* coin_label
 )
 {
@@ -47,6 +53,17 @@ bool GameManager::Init()
 
 	instance_ = this;
 	GetScene()->DontDestroyOnLoad(GetEntity());
+	
+	if (player_)
+	{
+		player_controller_ = player_->GetComponent<PlayerController2>();
+		player_rigidbody_ = player_->GetComponent<Rigidbody>();
+	}
+
+	if (camera_)
+	{
+		camera_controller_ = camera_->GetComponent<CameraController>();
+	}
 
 	// audio source を取得
 	audio_bgm_ = GetEntity()->GetComponent<AudioSource>();
@@ -54,7 +71,7 @@ bool GameManager::Init()
 	// BGM を再生
 	if (audio_bgm_)
 	{
-		audio_bgm_->Play(0.3f, true);
+		audio_bgm_->Play(true);
 	}
 
 	// coin label の初期化
@@ -78,9 +95,17 @@ bool GameManager::Init()
 
 	// ポーズ
 	pause_manager_ = PauseManager::Get();
-
 	if (pause_manager_)
+	{
 		pause_manager_->Resume();
+	}
+
+	// ポーズメニュー
+	pause_menu_ = GetScene()->FindEntity("pause_menu");
+	if (pause_menu_)
+	{
+		resume_button_ = pause_menu_->Child("resume_button")->GetComponent<ButtonBase>();
+	}
 
 	return true;
 }
@@ -88,7 +113,9 @@ bool GameManager::Init()
 void GameManager::Update(const float delta_time)
 {
 	if (scene_state_ == SCENE_GAME)
+	{
 		PlayerFallen();
+	}
 
 	UpdatePause();
 }
@@ -109,8 +136,9 @@ void GameManager::SetStartPosition(const Vec3& position)
 		return;
 
 	start_position_ = position;
+
 	player_->transform->position = start_position_;
-	camera_->ForceMove();
+	camera_->GetComponent<CameraController>()->ForceMove();
 }
 
 std::string GameManager::GetCoinText(const int n)
@@ -137,7 +165,7 @@ void GameManager::PlayerFallen()
 
 				// リスポーン
 				RespawnPlayer();
-				camera_->ForceMove();
+				camera_controller_->ForceMove();
 				});
 		}
 	}
@@ -162,7 +190,7 @@ void GameManager::RespawnPlayer()
 		player_->transform->position = start_position_ + Vec3(0, 5, 0);
 	}
 
-	player_->GetEntity()->GetComponent<Rigidbody>()->velocity = Vec3(0, 0.1f, 0);
+	player_rigidbody_->velocity = Vec3(0, 0.1f, 0);
 }
 
 void GameManager::StartGame()
@@ -190,8 +218,12 @@ void GameManager::Pause()
 
 	pause_manager_->Pause();
 
-	pause_menu_ = new PauseMenu();
-	GetScene()->CreateEntity(pause_menu_);
+	if (pause_menu_)
+	{
+		// ポーズメニューを表示する
+		pause_menu_->SetActive(true);
+		resume_button_->Pick();
+	}
 }
 
 void GameManager::Resume()
@@ -206,8 +238,8 @@ void GameManager::Resume()
 
 	if (pause_menu_)
 	{
-		pause_menu_->Destroy();
-		pause_menu_ = nullptr;
+		// ポーズメニューを非表示にする
+		pause_menu_->SetActive(false);
 	}
 }
 
@@ -224,4 +256,46 @@ void GameManager::LoadTitle()
 	pause_menu_ = nullptr;
 
 	Game::Get()->LoadScene(new TitleScene());
+}
+
+void GameManager::StageClear(Entity* star)
+{
+	clear_event_ = GetScene()->FindEntity("clear_event");
+	if (!clear_event_)
+		return;
+
+	// 地面の座標を取得する
+	auto floor_position = star->transform->position;
+	RaycastHit hit = {};
+	if (Physics::Raycast(floor_position, Vec3(0, -1, 0), 10, hit, { "map" }))
+	{
+		floor_position = hit.point;
+	}
+
+	// プレイヤーの transform を設定
+	player_->transform->position = floor_position;
+	player_->transform->rotation = Quaternion::Identity();
+	player_->transform->scale = Vec3(1, 1, 1);
+
+	// カメラの transform を設定
+	camera_->transform->position = floor_position;
+	camera_->transform->rotation = Quaternion::Identity();
+	//camera->Focus(false);
+	camera_->GetComponent<Camera>()->SetFocusPosition(floor_position + Vec3(0, 2, 0));
+
+	// star のコライダーを無効にする
+	star->GetComponent<Collider>()->enabled = false;
+
+	player_controller_->enabled = false;
+	player_rigidbody_->enabled = false;
+
+	player_->Child("run_smoke_emitter")->GetComponent<ParticleEmitter>()->Stop();
+	player_->Child("circle_smoke_emitter")->GetComponent<ParticleEmitter>()->Stop();
+	player_->Child("jump_smoke_emitter")->GetComponent<ParticleEmitter>()->Stop();
+
+	camera_controller_->enabled = false;
+
+	// timeline を再生
+	timeline_player_ = clear_event_->GetComponent<TimelinePlayer>();
+	timeline_player_->Play();
 }

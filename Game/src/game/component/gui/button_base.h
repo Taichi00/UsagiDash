@@ -16,6 +16,9 @@ public:
 	// カーソルが外れた瞬間
 	virtual void OnUnhovered();
 
+	// ボタンにカーソルを合わせる
+	void Pick();
+
 protected:
 	// ボタンが押されたときに実行する関数
 	std::function<void()> function_;

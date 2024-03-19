@@ -10,12 +10,13 @@ public:
 	ResourceManager();
 	~ResourceManager();
 
+	// リソースを読み込む
 	template<class T>
-	std::shared_ptr<T> Load(const std::wstring& path) // リソースを読み込む
+	std::shared_ptr<T> Load(const std::wstring& path) 
 	{
 		std::shared_ptr<T> resource;
 
-		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))
 		{
 			resource = T::Load(path);
 
@@ -28,7 +29,7 @@ public:
 
 			resource_map_[typeid(T)][path] = resource;
 		}
-		else // 見つかった場合
+		else
 		{
 			resource = std::static_pointer_cast<T>(resource_map_[typeid(T)][path]);
 		}
@@ -36,10 +37,11 @@ public:
 		return resource;
 	}
 
+	// リソースを取得する
 	template<class T>
-	std::shared_ptr<T> Get(const std::wstring& path) // リソースを取得する
+	std::shared_ptr<T> Get(const std::wstring& path) 
 	{
-		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))
 		{
 			return nullptr;
 		}
@@ -47,10 +49,11 @@ public:
 		return std::static_pointer_cast<T>(resource_map_[typeid(T)][path]);
 	}
 
+	// リソースを開放する
 	template<class T>
-	bool Release(const std::wstring& path)	// リソースを開放する
+	bool Release(const std::wstring& path)	
 	{
-		if (!resource_map_[typeid(T)].contains(path))	// 見つからなかった場合
+		if (!resource_map_[typeid(T)].contains(path))
 		{
 			return false;
 		}
@@ -68,6 +71,7 @@ public:
 		return true;
 	}
 
+	// リソースを追加する
 	template<class T>
 	void Add(const std::wstring& key, const std::shared_ptr<T>& resource)
 	{
@@ -80,6 +84,9 @@ public:
 	void RegisterResourceName(const Resource* resource, const std::wstring& name);
 
 private:
-	std::unordered_map<std::type_index, std::unordered_map<std::wstring, std::shared_ptr<Resource>>> resource_map_;	// リソースマップ
+	// リソースマップ
+	std::unordered_map<std::type_index, std::unordered_map<std::wstring, std::shared_ptr<Resource>>> resource_map_;	
+
+	// 名前からリソースへのマップ
 	std::unordered_map<std::wstring, const Resource*> resource_name_map_;
 };

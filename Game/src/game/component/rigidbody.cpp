@@ -32,6 +32,15 @@ bool Rigidbody::Init()
 
 void Rigidbody::Prepare(const float delta_time)
 {
+	// d—Í
+	if (use_gravity)
+	{
+		velocity += Vec3(0.f, -64.8f, 0.f) * delta_time;
+	}
+
+	// ‹ó‹C’ïR
+	velocity *= 0.995f;
+
 	position = transform->position + velocity * delta_time;
 	position_prev = transform->position;
 	velocity_prev = velocity;
@@ -56,7 +65,7 @@ void Rigidbody::Resolve(const float delta_time)
 
 	auto& hit = collider->GetNearestHit();
 	
-	if (hit.collider != nullptr)
+	if (hit.collider)
 	{
 		auto hitRigidbody = hit.collider->GetRigidbody();
 
@@ -77,7 +86,7 @@ void Rigidbody::Resolve(const float delta_time)
 		tangent = Vec3::Scale(tangent, 1, 0, 1);
 
 		// ÚG–Ê‚©‚ç—£‚ê‚é•ûŒü‚É“®‚¢‚Ä‚¢‚éê‡‚Í–³‹
-		/*if (Vec3::Dot(v, normal) <= 0.2)*/
+		if (Vec3::Dot(v.Normalized(), normal) < 0)
 		{
 			auto angle = Vec3::Angle(normal, Vec3(0, 1, 0));
 

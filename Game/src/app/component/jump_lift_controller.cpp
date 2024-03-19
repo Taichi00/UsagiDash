@@ -41,7 +41,9 @@ void JumpLiftController::Update(const float delta_time)
 		if (distance > distance_)
 		{
 			rigidbody_->velocity = Vec3::Zero();
-			audio_stop_->Play(2);
+
+			audio_move_->Stop();
+			audio_stop_->Play();
 
 			end_position_ = transform->position;
 
@@ -72,14 +74,16 @@ void JumpLiftController::OnCollisionEnter(Collider* collider)
 	if (is_moving_ || is_back_)
 		return;
 
-	if (collider->GetEntity()->tag == "player")
+	auto& layer = collider->GetEntity()->layer;
+
+	if (layer == "player" || layer == "object")
 	{
 		auto y = collider->transform->position.y - transform->position.y;
 
 		// ã‚Éæ‚Á‚Ä‚¢‚½‚ç
 		if (y > 0)
 		{
-			audio_move_->Play(2);
+			audio_move_->Play();
 			is_moving_ = true;
 		}
 	}

@@ -18,6 +18,9 @@ public:
 	// ボタンを削除
 	void RemoveButton(ButtonBase* button);
 
+	// ボタンを選択する
+	void PickButton(ButtonBase* button);
+
 private:
 	void UpdateTarget();
 	void CheckButtonPress();

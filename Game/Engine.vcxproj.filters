@@ -93,7 +93,7 @@
     <ClCompile Include="src\game\bone.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
-    <ClCompile Include="src\game\animation.cpp">
+    <ClCompile Include="src\game\resource\animation.cpp">
       <Filter>ソース ファイル\Game</Filter>
     </ClCompile>
     <ClCompile Include="src\game\component\animator.cpp">
@@ -107,9 +107,6 @@
     </ClCompile>
     <ClCompile Include="src\game\component\mesh_renderer.cpp">
       <Filter>ソース ファイル\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="src\app\component\player_controller.cpp">
-      <Filter>ソース ファイル\App</Filter>
     </ClCompile>
     <ClCompile Include="src\game\component\transform.cpp">
       <Filter>ソース ファイル\Game</Filter>
@@ -152,9 +149,6 @@
     </ClCompile>
     <ClCompile Include="src\game\component\collider\capsule_collider.cpp">
       <Filter>ソース ファイル\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="src\game\physics.cpp">
-      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\game\component\collider\ray.cpp">
       <Filter>ソース ファイル</Filter>
@@ -363,6 +357,15 @@
     <ClCompile Include="src\app\component\metal_ball_controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\game\physics.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\resource\timeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\component\timeline_player.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\assimp_loader.h">
@@ -431,7 +434,7 @@
     <ClInclude Include="src\math\quaternion.h">
       <Filter>ヘッダー ファイル\Math</Filter>
     </ClInclude>
-    <ClInclude Include="src\game\animation.h">
+    <ClInclude Include="src\game\resource\animation.h">
       <Filter>ヘッダー ファイル\Game</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\animator.h">
@@ -448,9 +451,6 @@
     </ClInclude>
     <ClInclude Include="src\game\component\mesh_renderer.h">
       <Filter>ヘッダー ファイル\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\app\component\player_controller.h">
-      <Filter>ヘッダー ファイル\App</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\transform.h">
       <Filter>ヘッダー ファイル\Game</Filter>
@@ -487,9 +487,6 @@
     </ClInclude>
     <ClInclude Include="src\game\component\collider\capsule_collider.h">
       <Filter>ヘッダー ファイル\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="src\game\physics.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\game\component\collider\ray.h">
       <Filter>ヘッダー ファイル</Filter>
@@ -747,6 +744,15 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\app\component\metal_ball_controller.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\physics.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\resource\timeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\component\timeline_player.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

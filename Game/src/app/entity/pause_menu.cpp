@@ -151,8 +151,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 
 		auto resume_button = new Entity("resume_button");
 		{
-			auto as_press = resume_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = resume_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = resume_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = resume_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = resume_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"つづける",
 				text_prop,
@@ -178,8 +178,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 
 		auto option_button = new Entity("option_button");
 		{
-			auto as_press = option_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = option_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = option_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = option_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"フルスクリーン",
 				text_prop,
@@ -205,8 +205,8 @@ PauseMenu::PauseMenu() : Entity("pause_menu")
 
 		auto exit_button = new Entity("exit_button");
 		{
-			auto as_press = exit_button->AddComponent<AudioSource>(audio_press);
-			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover);
+			auto as_press = exit_button->AddComponent<AudioSource>(audio_press, 0.5f);
+			auto as_hover = exit_button->AddComponent<AudioSource>(audio_hover, 0.5f);
 			auto button = exit_button->AddComponent<AnimatedButton>(new AnimatedButton(
 				"タイトルにもどる",
 				text_prop,
