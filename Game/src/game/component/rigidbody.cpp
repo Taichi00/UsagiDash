@@ -61,8 +61,6 @@ void Rigidbody::Resolve(const float delta_time)
 	if (is_static)
 		return;
 
-	Vec3 gnormal = Vec3(0, 1, 0);	// d—Í‚Ì•ûŒü
-
 	auto& hit = collider->GetNearestHit();
 	
 	if (hit.collider)
@@ -85,8 +83,6 @@ void Rigidbody::Resolve(const float delta_time)
 		Vec3 tangent = Vec3::Cross(normal, Vec3::Cross(v, normal)).Normalized();
 		tangent = Vec3::Scale(tangent, 1, 0, 1);
 
-		// ÚG–Ê‚©‚ç—£‚ê‚é•ûŒü‚É“®‚¢‚Ä‚¢‚éê‡‚Í–³‹
-		if (Vec3::Dot(v.Normalized(), normal) < 0)
 		{
 			auto angle = Vec3::Angle(normal, Vec3(0, 1, 0));
 

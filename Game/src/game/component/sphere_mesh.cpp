@@ -100,7 +100,7 @@ std::unique_ptr<Model> SphereMesh::Load(float radius, float r, float g, float b)
     auto& meshes = model->meshes;
     meshes.push_back(mesh);
 
-    float pbr[4] = { 0, 0.8f, 0, 1 };
+    float pbr[4] = { 1, 1, 0, 1 };
     float normal[] = { 0.5f, 0.5f, 1, 1 };
 
     auto material = Material{};

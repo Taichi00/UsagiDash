@@ -30,7 +30,7 @@ void LabelElement::Draw()
 {
 	Element::Draw();
 
-	engine_->DrawText(text_, control_->GetRect(), color_ * control_->GetColor());
+	engine_->DrawText(text_, control_->GetRect(), color_ * control_->WorldColor());
 }
 
 void LabelElement::SetText(const std::string& text)

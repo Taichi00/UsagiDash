@@ -60,7 +60,7 @@ Star::Star() : Entity("star", "star", "item")
 		game->LoadResource<Audio>(L"assets/se/magical-background-6892.wav"), 1.0f, 1.0f, 80.0f
 	);
 	auto audio_pick = AddComponent<AudioSource>(
-		game->LoadResource<Audio>(L"assets/se/DM-CGS-08.wav"), 0.5f
+		game->LoadResource<Audio>(L"assets/se/power-up-sparkle-1-177983.wav"), 0.5f
 	);
 
 	AddComponent(new StarController(confetti, audio_twinkle, audio_pick));

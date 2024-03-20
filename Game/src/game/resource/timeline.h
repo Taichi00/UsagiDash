@@ -27,10 +27,16 @@ public:
 		float radius = 0;
 	};
 
+	struct CameraKey : public Key
+	{
+		Entity* focus_target = nullptr;
+	};
+
 	enum TrackType
 	{
 		TYPE_ANIMATION,
 		TYPE_AUDIO,
+		TYPE_CAMERA,
 	};
 
 	struct AnimationTrack
@@ -41,16 +47,23 @@ public:
 	struct AudioTrack
 	{
 		std::vector<AudioKey> audio_keys;
-		std::vector<FloatKey> volume_keys = { { 0, Easing::LINEAR, 1 } };
-		std::vector<FloatKey> pitch_keys  = { { 0, Easing::LINEAR, 1 } };
+		std::vector<FloatKey> volume_keys;
+		std::vector<FloatKey> pitch_keys;
+	};
+
+	struct CameraTrack
+	{
+		std::vector<CameraKey> camera_keys;
 	};
 
 	struct Track
 	{
 		TrackType type;
 		Entity* target;
+
 		std::vector<AnimationTrack> animation;
 		AudioTrack audio;
+		CameraTrack camera;
 	};
 
 	Timeline() {}

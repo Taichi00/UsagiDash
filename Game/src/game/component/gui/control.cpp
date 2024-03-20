@@ -4,11 +4,14 @@
 #include "engine/engine.h"
 #include "engine/engine2d.h"
 #include "game/component/gui/element/element.h"
-#include<algorithm>
+#include "game/gui_manager.h"
+#include <algorithm>
 
 Control::Control()
 {
 	engine_ = Game::Get()->GetEngine()->GetEngine2D();
+
+	Game::Get()->GetGUIManager()->Add(this);
 
 	parent_size_ = Vec2::Zero();
 	parent_position_ = Vec2::Zero();
@@ -18,6 +21,7 @@ Control::Control()
 
 Control::~Control()
 {
+	Game::Get()->GetGUIManager()->Remove(this);
 }
 
 bool Control::Init()
@@ -29,6 +33,8 @@ bool Control::Init()
 		element.second->Init();
 	}
 
+	Update(0);
+
 	return true;
 }
 
@@ -36,20 +42,25 @@ void Control::Update(const float delta_time)
 {
 	Layout();
 
-	element_z_list_.clear();
 	for (auto& element : element_map_)
 	{
 		element.second->Update();
-		element_z_list_.push_back({ element.second.get(), element.second->ZIndex() });
 	}
-
-	// z index でソートする
-	std::sort(element_z_list_.begin(), element_z_list_.end());
 }
 
 void Control::Draw2D()
 {
-	for (auto& info : element_z_list_)
+	std::vector<ElementInfo> element_z_list;
+	for (auto& element : element_map_)
+	{
+		element_z_list.push_back({ element.second.get(), element.second->ZIndex() });
+	}
+
+	// z index でソートする
+	std::sort(element_z_list.begin(), element_z_list.end());
+
+	// 描画
+	for (auto& info : element_z_list)
 	{
 		info.element->Draw();
 	}
@@ -91,12 +102,14 @@ void Control::Layout()
 		parent_size_ = Vec2(rect.Width(), rect.Height());
 		parent_position_ = Vec2(rect.left, rect.top);
 		parent_matrix = parent_control_->world_matrix_;
+		parent_color_ = parent_control_->color_;
 	}
 	else
 	{
 		// 親がnullptrの場合はレンダーターゲットのサイズ を取得
-		parent_size_ = Vec2(1280, 720);//engine_->RenderTargetSize();
+		parent_size_ = engine_->RenderTargetSize() / engine_->RenderTargetScale();
 		parent_position_ = Vec2::Zero();
+		parent_color_ = Color(1, 1, 1, 1);
 	}
 
 	// サイズの算出
@@ -119,4 +132,6 @@ void Control::Layout()
 	mat = mat * Matrix3x2::Translation(pos);
 
 	world_matrix_ = mat * parent_matrix;
+
+	world_color_ = parent_color_ * color_;
 }

@@ -9,6 +9,7 @@ Camera::Camera()
     fov_ = 60;
     near_ = 0.3f;
     far_ = 1000;
+    focus_ = false;
 
     mtx_view_ = XMMatrixIdentity();
     mtx_proj_ = XMMatrixIdentity();
@@ -49,11 +50,19 @@ Vec3 Camera::GetViewDirection() const
 void Camera::SetFocusPosition(const Vec3& focus_pos)
 {
     focus_position_ = focus_pos;
+
+    // target へのフォーカスは解除
+    focus_target_ = nullptr;
 }
 
 void Camera::SetFocusPosition(float x, float y, float z)
 {
     SetFocusPosition(XMFLOAT3(x, y, z));
+}
+
+void Camera::SetFocusTarget(Entity* focus_target)
+{
+    focus_target_ = focus_target;
 }
 
 void Camera::SetUpDirection(const Vec3& up_dir)
@@ -89,6 +98,12 @@ void Camera::CameraUpdate(const float delta_time)
 
     if (focus_)
     {
+        if (focus_target_)
+        {
+            // focus positionを更新
+            focus_position_ = focus_target_->transform->WorldPosition();
+        }
+
         if (position_ != focus_position_)
         {
             // view 行列

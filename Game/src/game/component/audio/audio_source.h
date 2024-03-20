@@ -40,7 +40,10 @@ public:
 	void Stop();
 
 	void SetVolumePercentage(const float p);
+	float VolumePercentage() const { return volume_percentage_; }
+
 	void SetPitchPercentage(const float p);
+	float PitchPercentage() const { return pitch_percentage_; }
 
 	void SetVolume(const float volume);
 	void SetPitch(const float pitch);
@@ -60,8 +63,10 @@ private:
 
 	// ‰¹—Ê
 	float volume_ = 1;
+	float volume_percentage_ = 1;
 	// ƒsƒbƒ`
 	float pitch_ = 1;
+	float pitch_percentage_ = 1;
 
 	bool is_3d_ = false;
 	bool is_playing_ = false;

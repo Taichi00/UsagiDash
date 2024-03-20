@@ -5,12 +5,14 @@
 #include "game/component/component.h"
 #include "game/resource/timeline.h"
 #include "game/resource/animation.h"
+#include <functional>
 #include <memory>
 #include <vector>
 #include <unordered_map>
 
 class Animator;
 class AudioSource;
+class Camera;
 
 class TimelinePlayer : public Component
 {
@@ -24,8 +26,15 @@ public:
 	// タイムラインを再生する
 	void Play(
 		const float speed = 1,
-		const bool loop = false
+		const bool loop = false,
+		const std::function<void()>& function = []() {}
 	);
+
+	bool IsPlaying() const { return is_playing_; }
+
+	void SetTime(const float time) { time_ = time; }
+
+	float Duration() const;
 
 private:
 	void GetTargetComponents();
@@ -35,10 +44,12 @@ private:
 	void ProcessAnimationTracks(Entity* target, const std::vector<Timeline::AnimationTrack>& tracks);
 	// オーディオトラックの処理
 	void ProcessAudioTrack(Entity* target, const Timeline::AudioTrack& track);
+	// カメラトラックの処理
+	void ProcessCameraTrack(Entity* target, const Timeline::CameraTrack& track);
 
 	// キーを通過したときのみ返す
 	template <typename T>
-	T GetCurrentKey(const std::vector<T>& keys, const float curr_time, const float prev_time)
+	bool GetCurrentKey(const std::vector<T>& keys, const float curr_time, const float prev_time, T& current_key)
 	{
 		int index1 = 0, index2 = 0;
 
@@ -48,9 +59,10 @@ private:
 
 		if (prev_time < key1.time && key1.time <= curr_time)
 		{
-			return key1;
+			current_key = key1;
+			return true;
 		}
-		return {};
+		return false;
 	}
 
 private:
@@ -60,6 +72,7 @@ private:
 	{
 		Animator* animator = nullptr;
 		AudioSource* audio_source = nullptr;
+		Camera* camera = nullptr;
 	};
 
 	// ターゲットエンティティのコンポーネントポインタへのマップ
@@ -73,6 +86,9 @@ private:
 	// 現在の再生時間
 	float time_ = 0;
 	float prev_time_ = 0;
+
+	// 再生終了時に実行する関数
+	std::function<void()> function_;
 
 	bool is_playing_ = false;
 };

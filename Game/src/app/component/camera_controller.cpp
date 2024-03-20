@@ -12,7 +12,7 @@ CameraController::CameraController(Entity* target)
 	distance_ = 20.f;
 
 	target_ = target;
-	angle_ = Vec3(0.5, 0, 0);
+	angle_ = Vec3(0.5f, 0, 0);
 	current_distance_ = distance_;
 
 	focus_height_ = 3;
@@ -38,8 +38,11 @@ void CameraController::BeforeCameraUpdate(const float delta_time)
 	Move(delta_time, move_speed_);
 }
 
-void CameraController::ForceMove()
+void CameraController::ForceMove(const float angle)
 {
+	angle_.x = 0.5f;
+	angle_.y = angle;
+
 	Move(0, 1);
 }
 
@@ -114,12 +117,16 @@ void CameraController::Rotate(const float delta_time)
 		angle_.x = 1.5;
 		angle_velocity_.x = 0;
 	}
+
+	// 回転を更新
+	transform->rotation = Quaternion::FromEuler(angle_);
 }
 
 void CameraController::Move(const float delta_time, const float move_speed)
 {
 	Vec3 target_pos = target_->transform->position + Vec3(0, focus_height_, 0);
-	Vec3 curr_pos = camera_->GetFocusPosition();
+	//Vec3 curr_pos = camera_->GetFocusPosition();
+	Vec3 curr_pos = target_position_;
 
 	Vec3 v = target_pos - curr_pos;
 
@@ -154,5 +161,7 @@ void CameraController::Move(const float delta_time, const float move_speed)
 	
 	// 位置を更新
 	transform->position = Vec3(origin + direction * distance);
-	camera_->SetFocusPosition(origin);
+	//camera_->SetFocusPosition(origin);
+
+	target_position_ = origin;
 }

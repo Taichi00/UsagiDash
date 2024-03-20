@@ -58,6 +58,9 @@ DirectInput::~DirectInput()
 
 void DirectInput::Update()
 {
+	if (!is_active_)
+		return;
+
 	UpdateKey();
 	UpdatePad();
 	UpdateMouse();
@@ -79,6 +82,19 @@ void DirectInput::Refresh()
 	memset(&prev_keys_, 0, sizeof(prev_keys_));
 	memset(&pad_buttons_, 0, sizeof(pad_buttons_));
 	memset(&prev_pad_buttons_, 0, sizeof(prev_pad_buttons_));
+}
+
+void DirectInput::SetActive(bool flag)
+{
+	if (!flag && is_active_)
+	{
+		memset(&keys_, 0, sizeof(keys_));
+		memset(&prev_keys_, 0, sizeof(prev_keys_));
+		memset(&pad_buttons_, 0, sizeof(pad_buttons_));
+		memset(&prev_pad_buttons_, 0, sizeof(prev_pad_buttons_));
+	}
+	
+	is_active_ = flag;
 }
 
 bool DirectInput::GetKey(UINT index)

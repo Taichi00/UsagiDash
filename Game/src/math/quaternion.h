@@ -127,16 +127,17 @@ public:
 	{
 		Vec3 v;
 
-		v.y = asin(2 * x * z + 2 * y * w);
+		float sy = 2 * x * z + 2 * y * w;
+		v.y = asin(sy);
 
-		if (v.y != 0)
+		if (std::abs(sy) < 0.99999f)
 		{
 			v.x = atan2(-(2 * y * z - 2 * x * w), (2 * w * w + 2 * z * z - 1));
 			v.z = atan2(-(2 * x * y - 2 * z * w), (2 * w * w + 2 * x * x - 1));
 		}
 		else
 		{
-			v.x = atan2((2 * y * z + 2 * x * w), (2 * w * w * +2 * y * y - 1));
+			v.x = atan2((2 * y * z + 2 * x * w), (2 * w * w + 2 * y * y - 1));
 			v.z = 0;
 		}
 

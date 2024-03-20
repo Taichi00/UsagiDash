@@ -72,7 +72,7 @@ void Animator::Play(std::shared_ptr<Animation> animation, float speed, bool loop
 
 	current_animations_[layer] = data;
 
-	ProcessChannels(layer, 0);
+	//ProcessChannels(layer, 0);
 }
 
 void Animator::Play(const std::string& name, float speed, bool loop, float blend_time, unsigned int layer)

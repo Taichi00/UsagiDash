@@ -113,6 +113,7 @@ void AudioSource::SetVolumePercentage(const float p)
 	if (!source_voice_)
 		return;
 
+	volume_percentage_ = p;
 	engine_->SetVolume(source_voice_, volume_ * p);
 }
 
@@ -121,6 +122,7 @@ void AudioSource::SetPitchPercentage(const float p)
 	if (!source_voice_)
 		return;
 
+	pitch_percentage_ = p;
 	engine_->SetPitch(source_voice_, pitch_ * p);
 }
 

@@ -15,8 +15,6 @@
 #include <stdexcept>
 #include <stdio.h>
 
-#define _DEBUG 0
-
 Engine::Engine()
 {
 }

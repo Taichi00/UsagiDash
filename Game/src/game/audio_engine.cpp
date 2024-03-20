@@ -18,6 +18,11 @@ AudioEngine::~AudioEngine()
     Cleanup();
 }
 
+void AudioEngine::Update(const float delta_time)
+{
+    UpdateMasterVolume(delta_time);
+}
+
 void AudioEngine::LoadWaveFile(const std::wstring& file_path, WaveData* out_data)
 {
     if (out_data)
@@ -216,6 +221,28 @@ void AudioEngine::RemoveListener()
     listener_ = nullptr;
 }
 
+void AudioEngine::SetMasterVolume(float volume, float time)
+{
+    if (time == 0)
+    {
+        mastering_voice_->SetVolume(volume);
+    }
+    else
+    {
+        curr_volume_ = MasterVolume();
+        next_volume_ = volume;
+        volume_time_ = time;
+        volume_timer_ = 0;
+    }
+}
+
+float AudioEngine::MasterVolume() const
+{
+    float volume = 1;
+    mastering_voice_->GetVolume(&volume);
+    return volume;
+}
+
 void AudioEngine::Init()
 {
     // XAudio2 ‚Ì‰Šú‰»
@@ -286,4 +313,22 @@ void AudioEngine::Cleanup()
         xaudio_ = nullptr;
     }
 
+}
+
+void AudioEngine::UpdateMasterVolume(const float delta_time)
+{
+    if (volume_time_ > 0)
+    {
+        float t = volume_timer_ / volume_time_;
+        if (t >= 1)
+        {
+            t = 1;
+            volume_time_ = 0;
+        }
+
+        float volume = curr_volume_ * (1 - t) + next_volume_ * t;
+        mastering_voice_->SetVolume(volume);
+
+        volume_timer_ += 60.0f * delta_time;
+    }
 }

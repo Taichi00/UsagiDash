@@ -9,11 +9,11 @@ class Bitmap;
 
 class Picture : public Control
 {
-private:
-	Picture();
-
 public:
+	Picture();
 	Picture(const std::shared_ptr<Bitmap> bitmap);
+
+	void Load(const std::shared_ptr<Bitmap> bitmap);
 
 	bool Init() override;
 	void Draw2D() override;

@@ -64,7 +64,7 @@ public:
 	void DrawTransition(const Color& color, const float time, const Vec2 direction, const bool inverse) const;
 
 	// 画像を描画する
-	void DrawBitmap(const Bitmap* bitmap);
+	void DrawBitmap(const Bitmap* bitmap, const Color& color);
 
 	// レンダーターゲットを初期化する
 	void ResetRenderTargets();

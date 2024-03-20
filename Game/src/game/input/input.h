@@ -167,6 +167,9 @@ public:
 	// デバイスを再検知する
 	static void Refresh();
 
+	static void SetActive(const bool flag);
+	static bool IsActive() { return instance_->is_active_; }
+
 	void Update();
 
 	void AddButtonAction(const std::string& name, const std::vector<ButtonActionInfo>& info_list);
@@ -240,6 +243,8 @@ private:
 	std::unordered_map<Button, int> dinput_map_;
 	// XInputのキーコードとのマップ
 	std::unordered_map<Button, int> xinput_map_;
+
+	bool is_active_ = true;
 	
 	static Input* instance_;
 };

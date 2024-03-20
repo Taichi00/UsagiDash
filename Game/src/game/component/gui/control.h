@@ -35,6 +35,7 @@ public:
 	void SetOffset(const Rect2& offset) { offset_ = offset; }
 	void SetAnchor(const Rect2& anchor) { anchor_ = anchor; }
 	void SetColor(const Color& color) { color_ = color; }
+	void SetZIndex(const int z_index) { z_index_ = z_index; }
 
 	Vec2 Size() const { return Vec2(rect_.Width(), rect_.Height()); }
 	Vec2 Pivot() const { return pivot_; }
@@ -46,6 +47,8 @@ public:
 	Rect2 GetRect() const { return rect_; };
 	Matrix3x2 WorldMatrix() const { return world_matrix_; }
 	Color GetColor() const { return color_; }
+	Color WorldColor() const { return world_color_; }
+	int ZIndex() const { return z_index_; }
 
 	Vec2 WorldPosition() const;
 
@@ -80,6 +83,7 @@ private:
 	float rotation_ = 0.0;
 	Vec2 scale_ = Vec2(1, 1);
 	Color color_ = Color::White();
+	int z_index_ = 0;
 
 	Rect2 offset_ = { 0, 0, 0, 0 };
 	Rect2 anchor_ = { 0, 0, 0, 0 };
@@ -89,15 +93,17 @@ private:
 
 	Vec2 parent_size_;
 	Vec2 parent_position_;
+	Color parent_color_;
 
 	Rect2 rect_;
 
 	Matrix3x2 world_matrix_;
 
+	Color world_color_;
+
 	// UI要素のマップ
 	std::map<std::string, std::unique_ptr<Element>> element_map_;
 
-	// z index 順に並べ替えるためのリスト
 	struct ElementInfo
 	{
 		Element* element = nullptr;
@@ -108,5 +114,4 @@ private:
 			return z_index < info.z_index;
 		}
 	};
-	std::vector<ElementInfo> element_z_list_;
 };

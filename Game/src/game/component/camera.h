@@ -24,6 +24,8 @@ public:
 	void SetFocusPosition(const Vec3& focus_pos);
 	void SetFocusPosition(float x, float y, float z);
 
+	void SetFocusTarget(Entity* focus_target);
+
 	void SetUpDirection(const Vec3& up_dir);
 	void SetUpDirection(float x, float y, float z);
 
@@ -45,11 +47,13 @@ private:
 
 	// 注視点
 	Vec3 focus_position_;
+	// 注視対象エンティティ
+	Entity* focus_target_ = nullptr;
 	// 上方向ベクトル
 	Vec3 up_direction_;
 
 	float fov_;
 	float near_, far_;
 
-	bool focus_ = true;
+	bool focus_;
 };

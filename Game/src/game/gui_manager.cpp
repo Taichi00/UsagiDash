@@ -6,6 +6,7 @@
 #include "game/entity.h"
 #include "engine/engine.h"
 #include "engine/engine2d.h"
+#include <algorithm>
 
 GUIManager::GUIManager()
 {
@@ -28,6 +29,21 @@ void GUIManager::Update()
 
 	if (current_picked_button_)
 		CheckButtonPress();
+}
+
+void GUIManager::Add(Control* control)
+{
+	controls_.push_back(control);
+}
+
+void GUIManager::Remove(Control* control)
+{
+	auto it = std::find(controls_.begin(), controls_.end(), control);
+
+	if (it != controls_.end())
+	{
+		controls_.erase(it);
+	}
 }
 
 void GUIManager::AddButton(ButtonBase* button)
@@ -58,6 +74,37 @@ void GUIManager::RemoveButton(ButtonBase* button)
 void GUIManager::PickButton(ButtonBase* button)
 {
 	current_picked_button_ = button;
+}
+
+std::vector<Control*> GUIManager::GetDrawList()
+{
+	struct ControlInfo
+	{
+		Control* control = nullptr;
+		int z_index = 0;
+
+		bool operator<(const ControlInfo& info) const
+		{
+			return z_index < info.z_index;
+		}
+	};
+
+	std::vector<ControlInfo> infos;
+	for (auto control : controls_)
+	{
+		infos.push_back({ control, control->ZIndex() });
+	}
+
+	// É\Å[ÉgÇ∑ÇÈ
+	std::sort(infos.begin(), infos.end());
+
+	std::vector<Control*> list;
+	for (auto& info : infos)
+	{
+		list.push_back(info.control);
+	}
+
+	return list;
 }
 
 void GUIManager::UpdateTarget()

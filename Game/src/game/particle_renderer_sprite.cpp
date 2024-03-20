@@ -171,12 +171,12 @@ void ParticleRendererSprite::UpdateCB()
 
 	// Scene CB
 	auto current_scene = scene_cb_[current_index]->GetPtr<SceneParameter>();
-	auto target_pos = camera->GetFocusPosition();
-	auto light_pos = target_pos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
-	auto light_view = XMMatrixLookAtRH(light_pos, target_pos, { 0, 1, 0 });
+	auto camera_pos = camera->Position();
+	auto light_pos = camera_pos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
+	auto light_view = XMMatrixLookAtRH(light_pos, camera_pos, { 0, 1, 0 });
 	auto light_view_rot = XMQuaternionRotationMatrix(light_view);
 
-	current_scene->camera_position = camera->transform->position;
+	current_scene->camera_position = camera_pos;
 	current_scene->light_view = light_view;
 	current_scene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
 

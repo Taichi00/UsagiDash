@@ -402,12 +402,11 @@ void MeshRenderer::UpdateCB()
 	// SceneParameter
 	auto current_scene = scene_cb_[current_index]->GetPtr<SceneParameter>();
 	auto camera_pos = camera->Position();
-	auto target_pos = camera->GetFocusPosition();
-	auto light_pos = target_pos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
+	auto light_pos = camera_pos + Vec3(0.5, 3.5, 2.5).Normalized() * 500;
 	auto light_world = world;
-
+	
 	current_scene->camera_position = camera_pos;
-	current_scene->light_view = XMMatrixLookAtRH(light_pos, target_pos, {0, 1, 0});
+	current_scene->light_view = XMMatrixLookAtRH(light_pos, camera_pos, {0, 1, 0});
 	current_scene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);
 	current_scene->light_world = light_world;
 }

@@ -82,8 +82,31 @@ void Input::Refresh()
 	instance_->direct_input_->Refresh();
 }
 
+void Input::SetActive(const bool flag)
+{
+	if (!flag && instance_->is_active_)
+	{
+		for (auto& state : instance_->button_action_state_)
+		{
+			state.second = 0;
+		}
+		for (auto& state : instance_->axis_action_state_)
+		{
+			state.second = 0;
+		}
+	}
+
+	instance_->x_input_->SetActive(flag);
+	instance_->direct_input_->SetActive(flag);
+
+	instance_->is_active_ = flag;
+}
+
 void Input::Update()
 {
+	if (!is_active_)
+		return;
+
 	direct_input_->Update();
 	x_input_->Update();
 

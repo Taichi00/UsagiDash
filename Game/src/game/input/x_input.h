@@ -50,6 +50,8 @@ public:
 
 	void Refresh();
 
+	void SetActive(bool flag);
+
 	// ‰Ÿ‰º’†
 	bool GetButton(const int index) const;
 	// ‰Ÿ‚µ‚½uŠÔ
@@ -101,4 +103,6 @@ private:
 	int repeat_start_;
 	// ƒŠƒs[ƒgŠÔŠu
 	int repeat_interval_;
+
+	bool is_active_ = true;
 };

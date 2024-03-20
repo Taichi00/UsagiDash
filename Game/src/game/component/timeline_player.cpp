@@ -2,6 +2,7 @@
 #include "game/entity.h"
 #include "game/component/animator.h"
 #include "game/component/audio/audio_source.h"
+#include "game/component/camera.h"
 
 TimelinePlayer::TimelinePlayer(std::shared_ptr<Timeline> timeline)
 {
@@ -43,19 +44,23 @@ void TimelinePlayer::AfterUpdate(const float delta_time)
 	ProcessTracks();
 
 	prev_time_ = time_;
-	time_ += 60.0f * delta_time;
+	time_ += 60.0f * speed_ * delta_time;
 
 	// 再生終了
 	if (end_flag)
 	{
 		is_playing_ = false;
+
+		// 終了時関数の実行
+		function_();
 	}
 }
 
-void TimelinePlayer::Play(const float speed, const bool loop)
+void TimelinePlayer::Play(const float speed, const bool loop, const std::function<void()>& function)
 {
 	speed_ = speed;
 	loop_ = loop;
+	function_ = function;
 
 	time_ = 0;
 	prev_time_ = -0.1f;
@@ -71,9 +76,14 @@ void TimelinePlayer::Play(const float speed, const bool loop)
 			animator->ClearQueue();
 		}
 	}
+}
 
-	// 1フレーム目を先に処理しておく（カメラの更新が間に合わないため）
-	ProcessTracks();
+float TimelinePlayer::Duration() const
+{
+	if (!timeline_)
+		return 0.0f;
+
+	return timeline_->Duration();
 }
 
 void TimelinePlayer::GetTargetComponents()
@@ -96,6 +106,9 @@ void TimelinePlayer::GetTargetComponents()
 		case Timeline::TYPE_AUDIO:
 			components.audio_source = target->GetComponent<AudioSource>();
 			break;
+		case Timeline::TYPE_CAMERA:
+			components.camera = target->GetComponent<Camera>();
+			break;
 		}
 
 		target_components_map_[target] = components;
@@ -116,6 +129,9 @@ void TimelinePlayer::ProcessTracks()
 		case Timeline::TYPE_AUDIO:
 			ProcessAudioTrack(target, track.audio);
 			break;
+		case Timeline::TYPE_CAMERA:
+			ProcessCameraTrack(target, track.camera);
+			break;
 		}
 	}
 }
@@ -130,8 +146,8 @@ void TimelinePlayer::ProcessAnimationTracks(Entity* target, const std::vector<Ti
 
 		if (!track.animation_keys.empty())
 		{
-			auto key = GetCurrentKey<Timeline::AnimationKey>(track.animation_keys, time_, prev_time_);
-			if (key.animation)
+			Timeline::AnimationKey key = {};
+			if (GetCurrentKey<Timeline::AnimationKey>(track.animation_keys, time_, prev_time_, key))
 			{
 				animator->Play(key.animation, key.speed, key.loop, 0.08f, i);
 			}
@@ -145,8 +161,8 @@ void TimelinePlayer::ProcessAudioTrack(Entity* target, const Timeline::AudioTrac
 
 	if (!track.audio_keys.empty())
 	{
-		auto key = GetCurrentKey<Timeline::AudioKey>(track.audio_keys, time_, prev_time_);
-		if (key.audio)
+		Timeline::AudioKey key = {};
+		if (GetCurrentKey<Timeline::AudioKey>(track.audio_keys, time_, prev_time_, key))
 		{
 			audio_source->Load(key.audio, key.volume, key.pitch, key.radius);
 			audio_source->Play(key.loop);
@@ -163,5 +179,27 @@ void TimelinePlayer::ProcessAudioTrack(Entity* target, const Timeline::AudioTrac
 	{
 		auto pitch = Animation::GetCurrentFloat(track.pitch_keys, time_);
 		audio_source->SetPitchPercentage(pitch);
+	}
+}
+
+void TimelinePlayer::ProcessCameraTrack(Entity* target, const Timeline::CameraTrack& track)
+{
+	auto camera = target_components_map_[target].camera;
+
+	if (!track.camera_keys.empty())
+	{
+		Timeline::CameraKey key = {};
+		if (GetCurrentKey<Timeline::CameraKey>(track.camera_keys, time_, prev_time_, key))
+		{
+			if (key.focus_target)
+			{
+				camera->Focus(true);
+				camera->SetFocusTarget(key.focus_target);
+			}
+			else
+			{
+				camera->Focus(false);
+			}
+		}
 	}
 }

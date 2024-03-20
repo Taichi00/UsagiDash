@@ -24,6 +24,8 @@ public:
 	AudioEngine();
 	~AudioEngine();
 
+	void Update(const float delta_time);
+
 	void LoadWaveFile(const std::wstring& file_path, WaveData* out_data);
 
 	void CreateSourceVoice(const WaveData& wave_data, IXAudio2SourceVoice** source_voice);
@@ -42,9 +44,16 @@ public:
 	void RegisterListener(X3DAUDIO_LISTENER* listener);
 	void RemoveListener();
 
+	// マスターボリュームの設定
+	void SetMasterVolume(float volume, float time);
+	float MasterVolume() const;
+
 private:
 	void Init();
 	void Cleanup();
+
+	// ボリュームフェードの更新
+	void UpdateMasterVolume(const float delta_time);
 
 private:
 	IXAudio2* xaudio_;
@@ -58,4 +67,9 @@ private:
 
 	X3DAUDIO_LISTENER* listener_ = nullptr;
 	X3DAUDIO_CONE listener_directional_cone_ = {};
+
+	float curr_volume_ = 1;
+	float next_volume_ = 1;
+	float volume_time_ = 0;
+	float volume_timer_ = 0;
 };

@@ -2,6 +2,7 @@
 
 #include <vector>
 
+class Control;
 class ButtonBase;
 
 class GUIManager
@@ -12,6 +13,9 @@ public:
 
 	void Update();
 
+	void Add(Control* control);
+	void Remove(Control* control);
+
 	// ボタンを追加
 	void AddButton(ButtonBase* button);
 
@@ -21,11 +25,16 @@ public:
 	// ボタンを選択する
 	void PickButton(ButtonBase* button);
 
+	// z index でソートしたリストを取得する
+	std::vector<Control*> GetDrawList();
+
 private:
 	void UpdateTarget();
 	void CheckButtonPress();
 
 private:
+	// control のリスト
+	std::vector<Control*> controls_;
 	// ボタンのリスト
 	std::vector<ButtonBase*> buttons_;
 

@@ -83,6 +83,8 @@ public:
 
 	void Refresh();
 
+	void SetActive(bool flag);
+
 	// 押下中
 	bool GetKey(UINT index);
 	// 押した瞬間
@@ -219,4 +221,6 @@ private:
 	// マウスのボタン情報
 	int mouse_buttons_[DINPUT_MOUSE_BUTTON_MAX];
 	int prev_mouse_buttons_[DINPUT_MOUSE_BUTTON_MAX];
+
+	bool is_active_ = true;
 };

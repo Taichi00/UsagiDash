@@ -30,12 +30,6 @@ ShadowMap::ShadowMap()
 
 ShadowMap::~ShadowMap()
 {
-	/*auto bm = Game::Get()->GetEngine()->GetGBufferManager();
-	Game::Get()->GetEngine()->RtvHeap()->Free(bm->Get("ShadowMapColor_0")->RtvHandle());
-	Game::Get()->GetEngine()->RtvHeap()->Free(bm->Get("ShadowMapColor_1")->RtvHandle());
-	Game::Get()->GetEngine()->DsvHeap()->Free(bm->Get("ShadowMapDepth")->DsvHandle());
-	Game::Get()->GetEngine()->SrvHeap()->Free(bm->Get("ShadowMapColor_0")->SrvHandle());
-	Game::Get()->GetEngine()->SrvHeap()->Free(bm->Get("ShadowMapColor_1")->SrvHandle());*/
 }
 
 void ShadowMap::BeginRender()
@@ -43,21 +37,6 @@ void ShadowMap::BeginRender()
 	auto engine = Game::Get()->GetEngine();
 	auto commandList = Game::Get()->GetEngine()->CommandList();
 	auto bm = Game::Get()->GetEngine()->GetBufferManager();
-
-	// レンダーターゲットが使用可能になるまで待つ
-	/*D3D12_RESOURCE_BARRIER barriers[] = {
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			bm->Get("ShadowMapColor_0")->Resource().Get(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET
-		),
-		CD3DX12_RESOURCE_BARRIER::Transition(
-			bm->Get("ShadowMapColor_1")->Resource().Get(),
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_RENDER_TARGET
-		),
-	};
-	commandList->ResourceBarrier(_countof(barriers), barriers);*/
 
 	// レンダーターゲットを設定
 	auto rtvHandle = bm->Get("ShadowMapColor_0")->RtvHandle().HandleCPU();
@@ -68,9 +47,7 @@ void ShadowMap::BeginRender()
 	const float clearColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	bm->Get("ShadowMapColor_0")->Clear();
 	bm->Get("ShadowMapColor_1")->Clear();
-	/*commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_0")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);
-	commandList->ClearRenderTargetView(bm->Get("ShadowMapColor_1")->RtvHandle().HandleCPU(), clearColor, 0, nullptr);*/
-
+	
 	// 深度ステンシルビューをクリア
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -128,106 +105,6 @@ bool ShadowMap::CreateShadowBuffer()
 	bm->CreateGBuffer("ShadowMapColor_0", DXGI_FORMAT_R32G32B32A32_FLOAT, { 1, 1, 1, 1 }, width_, height_);
 	bm->CreateGBuffer("ShadowMapColor_1", DXGI_FORMAT_R32G32B32A32_FLOAT, { 1, 1, 1, 1 }, width_, height_);
 	bm->CreateDepthStencilBuffer("ShadowMapDepth", width_, height_);
-
-	// リソースの生成
-	//auto colorDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-	//	DXGI_FORMAT_R32G32B32A32_FLOAT,
-	//	width_, height_,
-	//	1, 1,
-	//	1, 0,
-	//	D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
-	//);
-
-	//auto depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-	//	DXGI_FORMAT_D32_FLOAT,
-	//	width_, height_,
-	//	1, 1,
-	//	1, 0,
-	//	D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-	//);
-
-	//D3D12_CLEAR_VALUE clearColor{}, clearDepth{};
-
-	//clearColor.Format = colorDesc.Format;
-	//clearColor.Color[0] = 1.0f;	clearColor.Color[1] = 1.0f;
-	//clearColor.Color[2] = 1.0f;	clearColor.Color[3] = 1.0f;
-
-	//clearDepth.Format = depthDesc.Format;
-	//clearDepth.DepthStencil.Depth = 1.0f;
-
-	//auto device = Game::Get()->GetEngine()->Device();
-
-	//// Render Target の生成
-	//const auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	//auto hr = device->CreateCommittedResource(
-	//	&heapProps,
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&colorDesc,
-	//	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-	//	&clearColor,
-	//	IID_PPV_ARGS(bm->Get("ShadowMapColor_0")->Resource().ReleaseAndGetAddressOf())
-	//);
-	//if (FAILED(hr))
-	//{
-	//	return false;
-	//}
-
-	//hr = device->CreateCommittedResource(
-	//	&heapProps,
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&colorDesc,
-	//	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-	//	&clearColor,
-	//	IID_PPV_ARGS(bm->Get("ShadowMapColor_1")->Resource().ReleaseAndGetAddressOf())
-	//);
-	//if (FAILED(hr))
-	//{
-	//	return false;
-	//}
-
-	//// Depth Buffer の生成
-	//hr = device->CreateCommittedResource(
-	//	&heapProps,
-	//	D3D12_HEAP_FLAG_NONE,
-	//	&depthDesc,
-	//	D3D12_RESOURCE_STATE_DEPTH_WRITE,
-	//	&clearDepth,
-	//	IID_PPV_ARGS(bm->Get("ShadowMapDepth")->Resource().ReleaseAndGetAddressOf())
-	//);
-	//if (FAILED(hr))
-	//{
-	//	return false;
-	//}
-
-	//bm->Get("ShadowMapColor_0")->Resource()->SetName(L"ShadowMap[0]");
-	//bm->Get("ShadowMapColor_1")->Resource()->SetName(L"ShadowMap[1]");
-
-	//// ディスクリプタの登録
-	//bm->Get("ShadowMapColor_0")->RtvHandle() = Game::Get()->GetEngine()->RtvHeap()->Alloc();
-	//bm->Get("ShadowMapColor_1")->RtvHandle() = Game::Get()->GetEngine()->RtvHeap()->Alloc();
-	//bm->Get("ShadowMapDepth")->DsvHandle() = Game::Get()->GetEngine()->DsvHeap()->Alloc();
-	//bm->Get("ShadowMapColor_0")->SrvHandle() = Game::Get()->GetEngine()->SrvHeap()->Alloc();
-	//bm->Get("ShadowMapColor_1")->SrvHandle() = Game::Get()->GetEngine()->SrvHeap()->Alloc();
-
-	//// ビューの生成
-	//D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-	//rtvDesc.Format = colorDesc.Format;
-	//rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-	//device->CreateRenderTargetView(bm->Get("ShadowMapColor_0")->Resource().Get(), &rtvDesc, bm->Get("ShadowMapColor_0")->RtvHandle().HandleCPU());
-	//device->CreateRenderTargetView(bm->Get("ShadowMapColor_1")->Resource().Get(), &rtvDesc, bm->Get("ShadowMapColor_1")->RtvHandle().HandleCPU());
-
-	//D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-	//dsvDesc.Format = depthDesc.Format;
-	//dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-	//device->CreateDepthStencilView(bm->Get("ShadowMapDepth")->Resource().Get(), &dsvDesc, bm->Get("ShadowMapDepth")->DsvHandle().HandleCPU());
-
-	//D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	//srvDesc.Format = colorDesc.Format;
-	//srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	//srvDesc.Texture2D.MipLevels = 1;
-	//srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	//device->CreateShaderResourceView(bm->Get("ShadowMapColor_0")->Resource().Get(), &srvDesc, bm->Get("ShadowMapColor_0")->SrvHandle().HandleCPU());
-	//device->CreateShaderResourceView(bm->Get("ShadowMapColor_1")->Resource().Get(), &srvDesc, bm->Get("ShadowMapColor_1")->SrvHandle().HandleCPU());
 
 	return true;
 }

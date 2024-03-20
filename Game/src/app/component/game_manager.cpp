@@ -20,6 +20,10 @@
 #include "game/physics.h"
 #include "game/component/collider/collider.h"
 #include "game/component/camera.h"
+#include "app/entity/result_menu.h"	
+#include "app/component/bgm_manager.h"
+#include "game/resource/bitmap.h"
+#include "game/component/gui/picture.h"
 
 GameManager* GameManager::instance_ = nullptr;
 
@@ -27,13 +31,15 @@ GameManager::GameManager(
 	const SceneState state, 
 	Entity* player, 
 	Entity* camera, 
-	Label* coin_label
+	Label* coin_label,
+	const ResultManager::CrownScores& time_scores
 )
 {
 	scene_state_ = state;
 	player_ = player;
 	camera_ = camera;
 	coin_label_ = coin_label;
+	time_scores_ = time_scores;
 }
 
 bool GameManager::Init()
@@ -44,6 +50,7 @@ bool GameManager::Init()
 		instance_->player_ = player_;
 		instance_->camera_ = camera_;
 		instance_->coin_label_ = coin_label_;
+		instance_->time_scores_ = time_scores_;
 		instance_->current_checkpoint_ = nullptr;
 
 		GetEntity()->Destroy();
@@ -65,19 +72,10 @@ bool GameManager::Init()
 		camera_controller_ = camera_->GetComponent<CameraController>();
 	}
 
-	// audio source を取得
-	audio_bgm_ = GetEntity()->GetComponent<AudioSource>();
-
-	// BGM を再生
-	if (audio_bgm_)
-	{
-		audio_bgm_->Play(true);
-	}
-
 	// coin label の初期化
 	if (coin_label_)
 	{
-		coin_label_->SetText(GetCoinText(num_coins_));
+		coin_label_->SetText(GetCoinText(coin_count_));
 
 		coin_label_animator_ = coin_label_->GetEntity()->GetComponent<Animator>();
 	}
@@ -90,6 +88,9 @@ bool GameManager::Init()
 			Color(0.1f, 0.1f, 0.15f),
 			Vec2(1, 1)
 		));
+
+		transition_->SetZIndex(100);
+
 		GetEntity()->AddChild(entity);
 	}
 
@@ -112,19 +113,25 @@ bool GameManager::Init()
 
 void GameManager::Update(const float delta_time)
 {
-	if (scene_state_ == SCENE_GAME)
+	switch (scene_state_)
 	{
+	case SCENE_GAME:
 		PlayerFallen();
-	}
+		UpdatePause();
+		UpdateTime(delta_time);
+		break;
 
-	UpdatePause();
+	case SCENE_RESULT:
+		UpdateResult();
+		break;
+	}
 }
 
 void GameManager::AddCoin(const int n)
 {
-	num_coins_ = std::max(std::min(num_coins_ + n, 9999u), 0u);
+	coin_count_ = std::max(std::min(coin_count_ + n, 9999u), 0u);
 
-	coin_label_->SetText(GetCoinText(num_coins_));
+	coin_label_->SetText(GetCoinText(coin_count_));
 
 	if (coin_label_animator_)
 		coin_label_animator_->Play("get", 1, false);
@@ -138,7 +145,7 @@ void GameManager::SetStartPosition(const Vec3& position)
 	start_position_ = position;
 
 	player_->transform->position = start_position_;
-	camera_->GetComponent<CameraController>()->ForceMove();
+	camera_->GetComponent<CameraController>()->ForceMove(0);
 }
 
 std::string GameManager::GetCoinText(const int n)
@@ -159,13 +166,18 @@ void GameManager::PlayerFallen()
 		// プレイヤーが落下したら
 		if (player_->transform->position.y < -50)
 		{
+			death_count_++;
+
+			Input::SetActive(false);
+
 			// フェードイン
 			transition_->FadeIn(4, Easing::IN_QUAD, [this]() {
 				transition_->FadeOut(4, Easing::OUT_QUAD);
 
 				// リスポーン
 				RespawnPlayer();
-				camera_controller_->ForceMove();
+
+				Input::SetActive(true);
 				});
 		}
 	}
@@ -179,27 +191,81 @@ void GameManager::UpdatePause()
 	}
 }
 
+void GameManager::UpdateTime(const float delta_time)
+{
+	if (!pause_manager_)
+		return;
+
+	if (pause_manager_->IsPaused())
+		return;
+
+	time_ += delta_time;
+}
+
+void GameManager::UpdateResult()
+{
+	// クリア演出再生中
+	if (timeline_player_->IsPlaying())
+	{
+		// 演出スキップ
+		/*if (Input::GetButtonDown("ok"))
+		{
+			timeline_player_->SetTime(timeline_player_->Duration());
+		}*/
+		return;
+	}
+}
+
 void GameManager::RespawnPlayer()
 {
+	float camera_angle = 0;
+
 	if (current_checkpoint_)
 	{
-		player_->transform->position = current_checkpoint_->transform->position + Vec3(0, 5, 0);
+		auto pos = current_checkpoint_->transform->position;
+		auto rot = current_checkpoint_->transform->rotation;
+
+		auto angles = rot.EulerAngles();
+		
+		if (angles.x < 0)
+		{
+			camera_angle = angles.y + 3.14f;
+		}
+		else
+		{
+			camera_angle = -angles.y;
+		}
+
+		player_->transform->position = pos + Vec3(0, 5, 0);
+		player_->transform->rotation = rot * Quaternion::FromEuler(0, 3.14f, 0);
 	}
 	else
 	{
 		player_->transform->position = start_position_ + Vec3(0, 5, 0);
+		player_->transform->rotation = Quaternion::Identity();
 	}
 
 	player_rigidbody_->velocity = Vec3(0, 0.1f, 0);
+
+	camera_controller_->ForceMove(camera_angle);
 }
 
 void GameManager::StartGame()
 {
+	coin_count_ = 0;
+	time_ = 0;
+	death_count_ = 0;
+
+	Game::Get()->GetAudioEngine()->SetMasterVolume(0, 40);
+
+	Input::SetActive(false);
+
 	transition_->FadeIn(2, Easing::LINEAR, [this]() {
 		// 最初のシーンをロードする
 		Game::Get()->LoadScene(new Level1Scene());
-
 		transition_->FadeOut(2);
+		Game::Get()->GetAudioEngine()->SetMasterVolume(1, 5);
+		Input::SetActive(true);
 		});
 }
 
@@ -224,14 +290,13 @@ void GameManager::Pause()
 		pause_menu_->SetActive(true);
 		resume_button_->Pick();
 	}
+
+	BGMManager::Get()->SetVolume(0.5f, 30);
 }
 
 void GameManager::Resume()
 {
 	if (!pause_manager_)
-		return;
-
-	if (scene_state_ != SCENE_GAME)
 		return;
 
 	pause_manager_->Resume();
@@ -241,6 +306,8 @@ void GameManager::Resume()
 		// ポーズメニューを非表示にする
 		pause_menu_->SetActive(false);
 	}
+
+	BGMManager::Get()->SetVolume(1, 30);
 }
 
 void GameManager::TogglePause()
@@ -253,14 +320,22 @@ void GameManager::TogglePause()
 
 void GameManager::LoadTitle()
 {
-	pause_menu_ = nullptr;
+	Game::Get()->GetAudioEngine()->SetMasterVolume(0, 40);
 
-	Game::Get()->LoadScene(new TitleScene());
+	Input::SetActive(false);
+
+	transition_->FadeIn(2, Easing::LINEAR, [this]() {
+		Game::Get()->LoadScene(new TitleScene());
+		Game::Get()->GetAudioEngine()->SetMasterVolume(1, 5);
+		transition_->FadeOut(4, Easing::LINEAR, [this]() {
+			Input::SetActive(true);
+			});
+		});
 }
 
 void GameManager::StageClear(Entity* star)
 {
-	clear_event_ = GetScene()->FindEntity("clear_event");
+	clear_event_ = GetScene()->FindEntity("stage_clear_event");
 	if (!clear_event_)
 		return;
 
@@ -280,8 +355,6 @@ void GameManager::StageClear(Entity* star)
 	// カメラの transform を設定
 	camera_->transform->position = floor_position;
 	camera_->transform->rotation = Quaternion::Identity();
-	//camera->Focus(false);
-	camera_->GetComponent<Camera>()->SetFocusPosition(floor_position + Vec3(0, 2, 0));
 
 	// star のコライダーを無効にする
 	star->GetComponent<Collider>()->enabled = false;
@@ -295,7 +368,19 @@ void GameManager::StageClear(Entity* star)
 
 	camera_controller_->enabled = false;
 
+	// GUIを削除する
+	GetScene()->FindEntity("gui")->Destroy();
+
+	// BGMを止める
+	BGMManager::Get()->SetVolume(0, 10);
+
 	// timeline を再生
 	timeline_player_ = clear_event_->GetComponent<TimelinePlayer>();
-	timeline_player_->Play();
+	timeline_player_->Play(1, false, [this]()
+		{
+			// 演出終了時にリザルトメニューを生成する
+			GetScene()->CreateEntity(new ResultMenu(time_scores_));
+		});
+
+	scene_state_ = SCENE_RESULT;
 }

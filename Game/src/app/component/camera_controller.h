@@ -2,6 +2,7 @@
 
 #include "game/component/component.h"
 #include "math/vec.h"
+#include "math/quaternion.h"
 
 class Entity;
 class Camera;
@@ -17,7 +18,7 @@ public:
 	void BeforeCameraUpdate(const float delta_time) override;
 
 	// 強制的に今のターゲットの位置に移動させる
-	void ForceMove();
+	void ForceMove(const float angle);
 
 private:
 	void Rotate(const float delta_time);
@@ -33,6 +34,8 @@ private:
 
 	Vec3 angle_velocity_;
 	Vec3 angle_;
+
+	Vec3 target_position_;
 
 	float distance_; // カメラのデフォルト距離
 	float current_distance_;

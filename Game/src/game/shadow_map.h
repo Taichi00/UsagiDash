@@ -27,13 +27,6 @@ private:
 	void BlurVertical();
 
 private:
-	/*ComPtr<ID3D12Resource> color_[2];
-	ComPtr<ID3D12Resource> depth_;
-
-	DescriptorHandle rtv_handle_[2];
-	DescriptorHandle dsv_handle_;
-	DescriptorHandle srv_handle_[2];*/
-
 	RootSignature* root_signature_;
 
 	PipelineState* blur_horizontal_pso_;

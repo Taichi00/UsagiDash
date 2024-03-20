@@ -1,11 +1,13 @@
 #pragma once
 
+#define NOMINMAX
+
 #include "game/component/component.h"
 #include "game/entity.h"
+#include "app/component/result_manager.h"
 #include "math/vec.h"
 #include <string>
-
-#define NOMINMAX
+#include <memory>
 
 class PlayerController2;
 class Label;
@@ -17,6 +19,7 @@ class PauseManager;
 class ButtonBase;
 class Rigidbody;
 class TimelinePlayer;
+class Bitmap;
 
 class GameManager : public Component
 {
@@ -25,13 +28,15 @@ public:
 	{
 		SCENE_TITLE,
 		SCENE_GAME,
+		SCENE_RESULT,
 	};
 
 	GameManager(
 		const SceneState state,
 		Entity* player, 
 		Entity* camera, 
-		Label* coin_label
+		Label* coin_label,
+		const ResultManager::CrownScores& time_scores
 	);
 
 	~GameManager() {}
@@ -46,6 +51,8 @@ public:
 
 	// コインを取得する
 	void AddCoin(const int n);
+	// コインの最大数を設定する
+	void SetCoinMax(const unsigned int n) { coin_max_ = n; }
 
 	// スタート位置を設定する
 	void SetStartPosition(const Vec3& position);
@@ -73,13 +80,21 @@ public:
 	// ステージクリア
 	void StageClear(Entity* star);
 
+	// スコア
+	double Time() const { return time_; }
+	unsigned int CoinCount() const { return coin_count_; }
+	unsigned int CoinMax() const { return coin_max_; }
+	unsigned int DeathCount() const { return death_count_; }
+
 private:
 	// コインの枚数テキストを取得する
 	std::string GetCoinText(const int n);
 
 	void PlayerFallen();
-
 	void UpdatePause();
+	void UpdateTime(const float delta_time);
+
+	void UpdateResult();
 
 private:
 	static GameManager* instance_;
@@ -93,11 +108,18 @@ private:
 	Animator* coin_label_animator_ = nullptr;
 	Transition* transition_ = nullptr;
 	PauseManager* pause_manager_ = nullptr;
-	AudioSource* audio_bgm_ = nullptr;
 	Rigidbody* player_rigidbody_ = nullptr;
 
 	// コインの枚数
-	unsigned int num_coins_ = 0;
+	unsigned int coin_count_ = 0;
+	unsigned int coin_max_ = 0;
+	// 経過時間
+	double time_ = 0;
+	// 落下回数
+	unsigned int death_count_ = 0;
+
+	// タイムの王冠スコア
+	ResultManager::CrownScores time_scores_ = {};
 
 	// 現在のチェックポイント
 	Entity* current_checkpoint_ = nullptr;

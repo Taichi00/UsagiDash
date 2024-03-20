@@ -9,6 +9,7 @@
 #include "app/entity/metal_ball_emitter.h"
 #include "app/entity/jump_lift.h"
 #include "app/entity/star.h"
+#include "app/entity/ball.h"
 
 MapLoader::MapLoader(const std::wstring& path)
 {
@@ -41,6 +42,9 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 	
 	auto map_position = transform->position;
 	auto map_scale = transform->scale;
+
+	// コインの枚数
+	unsigned int coin_num = 0;
 
 	// Entityの読み込み
 	for (const auto& entity : map.entities)
@@ -78,6 +82,7 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 		{
 			// コイン
 			new_entity = new Coin("");
+			coin_num++;
 		}
 		else if (class_name == "tutorial")
 		{
@@ -114,6 +119,17 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 				MapFileParser::ToFloat(pairs.at("distance"))
 			);
 		}
+		else if (class_name == "ball")
+		{
+			// ボール
+			auto radius = MapFileParser::ToFloat(pairs.at("radius"));
+
+			new_entity = new Ball(
+				radius,
+				MapFileParser::ToFloat(pairs.at("mass"))
+			);
+			position.y += radius;
+		}
 		else if (class_name == "star")
 		{
 			// スター
@@ -127,5 +143,7 @@ void MapLoader::LoadEntities(const MapFileParser::Map& map)
 			scene->CreateEntity(new_entity);
 		}
 	}
+
+	GameManager::Get()->SetCoinMax(coin_num);
 }
 

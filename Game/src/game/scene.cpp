@@ -20,6 +20,8 @@
 #include "game/game.h"
 #include "game/resource_manager.h"
 #include "engine/engine2d.h"
+#include "game/gui_manager.h"
+#include "game/component/gui/control.h"
 #include <chrono>
 
 Scene::Scene()
@@ -142,11 +144,7 @@ bool Scene::Init()
 void Scene::Update(const float delta_time)
 {
 	UpdateEntityList();
-
-	// Cameraの更新
-	for (auto& entity : entity_list_) entity->BeforeCameraUpdate(delta_time);
-	for (auto& entity : entity_list_) entity->CameraUpdate(delta_time);
-
+	
 	// エンティティの更新
 	for (auto& entity : entity_list_) entity->BeforeUpdate(delta_time);
 	for (auto& entity : entity_list_) entity->Update(delta_time);
@@ -159,11 +157,18 @@ void Scene::Update(const float delta_time)
 
 	for (auto & entity : entity_list_) entity->AfterUpdate(delta_time);
 
+	// Cameraの更新
+	for (auto& entity : entity_list_) entity->BeforeCameraUpdate(delta_time);
+	for (auto& entity : entity_list_) entity->CameraUpdate(delta_time);
+
 	// 変換行列の更新
 	for (auto& entity : entity_list_) entity->TransformUpdate(delta_time);
 
 	// 定数バッファの更新
 	UpdateCB();
+
+	// 音声の更新
+	Game::Get()->GetAudioEngine()->Update(delta_time);
 }
 
 void Scene::AfterUpdate()
@@ -229,7 +234,17 @@ void Scene::Draw()
 	
 	// 2D描画
 	engine->GetEngine2D()->BeginRenderD2D();
-	for (auto& entity : entity_list_) entity->Draw2D();
+
+	// z index でソートする
+	auto control_list = Game::Get()->GetGUIManager()->GetDrawList();
+	for (auto control : control_list)
+	{
+		if (!control->GetEntity()->IsActive() || !control->enabled)
+			continue;
+
+		control->Draw2D();
+	}
+
 	engine->GetEngine2D()->EndRenderD2D();
 
 	// レンダリングの終了
@@ -428,7 +443,7 @@ Entity* Scene::CreateEntity(Entity* entity)
 {
 	root_entity_->AddChild(entity);
 
-	entity->ExecuteOnAllChildrenBack(
+	entity->ExecuteOnAllChildren(
 		[this](Entity& e) {
 			e.RegisterScene(this);
 			e.Init();
@@ -781,7 +796,7 @@ void Scene::UpdateCB()
 	auto cameraPos = camera->Position();
 	currentScene->camera_position = cameraPos;
 
-	auto targetPos = camera->GetFocusPosition();
+	auto targetPos = cameraPos;
 	auto lightPos = targetPos + Vec3(0.5f, 3.5f, 2.5f).Normalized() * 500;
 	currentScene->light_view = XMMatrixLookAtRH(lightPos, targetPos, { 0, 1, 0 });
 	currentScene->light_proj = XMMatrixOrthographicRH(100, 100, 0.1f, 1000.0f);

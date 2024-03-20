@@ -23,7 +23,7 @@ TutorialTextController::TutorialTextController(const std::string& text, const st
 
 bool TutorialTextController::Init()
 {
-    label_ = GetScene()->FindEntity("tutorial_label")->GetComponent<TutorialLabelController>();
+    label_ = GetScene()->FindEntity("gui")->Child("tutorial_label")->GetComponent<TutorialLabelController>();
     player_ = GetScene()->FindEntity("player")->GetComponent<PlayerController2>();
     collider_ = GetEntity()->GetComponent<Collider>();
 

@@ -322,14 +322,24 @@ void Engine2D::DrawTransition(const Color& color, const float time, const Vec2 d
 	d2d_device_context_->SetTransform(transform);
 }
 
-void Engine2D::DrawBitmap(const Bitmap* bitmap)
+void Engine2D::DrawBitmap(const Bitmap* bitmap, const Color& color)
 {
-	d2d_device_context_->DrawBitmap(
-		bitmap->Data().Get(),
-		0,
-		1.f,
-		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
-		);
+	// êFïœä∑
+	D2D1_MATRIX_5X4_F matrix = D2D1::Matrix5x4F(
+		color.r, 0, 0, 0,
+		0, color.g, 0, 0,
+		0, 0, color.b, 0,
+		0, 0, 0, color.a,
+		0, 0, 0, 0
+	);
+
+	ComPtr<ID2D1Effect> effect;
+	d2d_device_context_->CreateEffect(CLSID_D2D1ColorMatrix, &effect);
+
+	effect->SetInput(0, bitmap->Data().Get());
+	effect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, matrix);
+
+	d2d_device_context_->DrawImage(effect.Get());
 }
 
 void Engine2D::ResetRenderTargets()
